@@ -70,7 +70,11 @@ export function turningMeasures(
   stepMm: number = SAMPLE_STEP_MM,
   extraS: readonly number[] = [],
 ): TurningMeasures {
-  const { s, thetaRad: th, windowUsed: w } = windowedTurning(points, windowMm, stepMm, extraS);
+  return summarizeTurning(windowedTurning(points, windowMm, stepMm, extraS));
+}
+
+/** Θmax and ΘΣ from already-computed window samples (see the header for the formulas). */
+export function summarizeTurning({ s, thetaRad: th, windowUsed: w }: WindowedTurning): TurningMeasures {
   if (th.length === 0) return { thetaMaxDeg: 0, thetaSumDeg: 0 };
   let total = th[0]! + th[th.length - 1]!;
   if (s.length > 1) {

@@ -63,6 +63,8 @@ describe('mock build guard', () => {
     // the guard entry really was bundled (its real-mode error text is there)
     expect(out).toContain('The real optimizer lands in V3');
     expect(out).toContain('Real scoring lands in V5');
+    // and the measure Worker was bundled too (its handler's error text)
+    expect(out).toContain('no case loaded');
     for (const m of MARKERS) expect(out.includes(m), `${m} found in a real build`).toBe(false);
   }, 120_000);
 

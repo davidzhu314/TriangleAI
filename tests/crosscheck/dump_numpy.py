@@ -19,8 +19,23 @@ sys.path.insert(0, str(HERE))
 
 import numpy_measures as nm  # noqa: E402
 
-SYNTH = HERE.parents[1] / "tests" / "fixtures" / "synthetic"
+REPO = HERE.parents[1]
+SYNTH = REPO / "tests" / "fixtures" / "synthetic"
 OUT = HERE / "numpy-synthetic.json"
+OUT_CASES = HERE / "numpy-cases.json"
+
+# Bundled cases cross-checked against the TypeScript (spec 4.9: 0.1 mm / 0.5 deg), with the routes
+# to check. Add generated cases here when D6-min lands.
+CASES = {
+    "fixture-y": {
+        "dir": REPO / "client" / "public" / "cases" / "fixture-y",
+        "routes": {
+            "trunk": (["e_aorta"], [False]),
+            "to-left": (["e_aorta", "e_left"], [False, False]),
+            "to-right": (["e_aorta", "e_right"], [False, False]),
+        },
+    },
+}
 
 
 def r9(x):
@@ -30,36 +45,56 @@ def r9(x):
     return 0.0 if v == 0 else v
 
 
+def edges_of(cl, case):
+    edges = {}
+    for eid, m in nm.measure_case(cl, case).items():
+        edges[eid] = {
+            "L_mm": r9(m.L_mm),
+            "theta_max_deg": r9(m.theta_max_deg),
+            "theta_sum_deg": r9(m.theta_sum_deg),
+            "r_min_mm": r9(m.r_min_mm),
+            "proximity_clearance_mm": r9(m.proximity_clearance_mm),
+            "overlapping_zones": m.overlapping_zones,
+        }
+    return edges
+
+
+def route_of(cl, case, edge_ids, reversed_flags):
+    c = nm.route_costs(cl, case, edge_ids, reversed_flags)
+    return {
+        "edges": list(edge_ids),
+        "reversed": list(reversed_flags),
+        "L_mm": r9(c.L_mm),
+        "theta_max_deg": r9(c.theta_max_deg),
+        "theta_sum_deg": r9(c.theta_sum_deg),
+        "r_min_mm": r9(c.r_min_mm),
+        "heavy_crossings": c.heavy_crossings,
+        "proximity_penalty": r9(c.proximity_penalty),
+    }
+
+
+def render_cases() -> str:
+    result = {}
+    for name, spec in CASES.items():
+        read = lambda f: json.loads((spec["dir"] / f).read_text(encoding="utf-8"))
+        case, cl = read("case.json"), read("centerlines.json")
+        routes = {rid: route_of(cl, case, e, r) for rid, (e, r) in spec["routes"].items()}
+        result[name] = {"edges": edges_of(cl, case), "routes": routes}
+    return json.dumps(result, indent=1, sort_keys=True) + "\n"
+
+
 def render() -> str:
     result = {}
     for d in sorted(p for p in SYNTH.iterdir() if (p / "expected.json").is_file()):
         read = lambda f: json.loads((d / f).read_text(encoding="utf-8"))
         case, cl, exp = read("case.json"), read("centerlines.json"), read("expected.json")
-        edges = {}
-        for eid, m in nm.measure_case(cl, case).items():
-            edges[eid] = {
-                "L_mm": r9(m.L_mm),
-                "theta_max_deg": r9(m.theta_max_deg),
-                "theta_sum_deg": r9(m.theta_sum_deg),
-                "r_min_mm": r9(m.r_min_mm),
-                "proximity_clearance_mm": r9(m.proximity_clearance_mm),
-                "overlapping_zones": m.overlapping_zones,
-            }
-        by_id = {e["id"]: e for e in cl["edges"]}
-        routes = {}
-        for r in exp.get("routes", []):
-            polys = [by_id[e]["points"] for e in r["edges"]]
-            tmax, tsum = nm.route_turning_measures(polys, r["reversed"])
-            routes[r["id"]] = {
-                "L_mm": r9(nm.route_length_mm(polys, r["reversed"])),
-                "theta_max_deg": r9(tmax),
-                "theta_sum_deg": r9(tsum),
-            }
-        result[d.name] = {"edges": edges, "routes": routes}
+        routes = {r["id"]: route_of(cl, case, r["edges"], r["reversed"]) for r in exp.get("routes", [])}
+        result[d.name] = {"edges": edges_of(cl, case), "routes": routes}
     return json.dumps(result, indent=1, sort_keys=True) + "\n"
 
 
 if __name__ == "__main__":
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
-        f.write(render())
-    print(f"wrote {OUT.name}")
+    for out, text in ((OUT, render()), (OUT_CASES, render_cases())):
+        with open(out, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        print(f"wrote {out.name}")
