@@ -379,6 +379,121 @@ def junction():
     return case, cl, edges, routes
 
 
+def _seg_point_dist(p, a, b):
+    """Exact distance from point p to segment ab (3D tuples)."""
+    ab = [b[i] - a[i] for i in range(3)]
+    ap = [p[i] - a[i] for i in range(3)]
+    L2 = sum(x * x for x in ab)
+    t = 0.0 if L2 == 0 else max(0.0, min(1.0, sum(ap[i] * ab[i] for i in range(3)) / L2))
+    q = [a[i] + t * ab[i] for i in range(3)]
+    return math.dist(p, q)
+
+
+def _planar_seg_dist(a0, a1, b0, b1):
+    """Exact distance between two segments in the y = 0 plane: 0 if they cross, else the smallest
+    endpoint-to-segment distance (true for non-crossing segments in a plane)."""
+    def orient(p, q, r):
+        return (q[0] - p[0]) * (r[2] - p[2]) - (q[2] - p[2]) * (r[0] - p[0])
+
+    o1, o2 = orient(a0, a1, b0), orient(a0, a1, b1)
+    o3, o4 = orient(b0, b1, a0), orient(b0, b1, a1)
+    if o1 * o2 < 0 and o3 * o4 < 0:
+        return 0.0
+    return min(_seg_point_dist(b0, a0, a1), _seg_point_dist(b1, a0, a1),
+               _seg_point_dist(a0, b0, b1), _seg_point_dist(a1, b0, b1))
+
+
+def diamond():
+    """Multi-path graph for the optimizer (V3): one entry, one target, four paths.
+
+    Every edge is straight and lies in the R-S plane. u(t) = (sin t, 0, cos t) points t degrees from
+    +S toward +R. Junction n1 is the origin, and the target is nT = (0, 0, 2 * 40 * cos 45).
+      trunk  e0: n0 (0, 0, -40) -> n1, 40 mm, r 6
+      A      e1: n1 -> nA = 40 u(45), e2: nA -> nT (direction u(-45)); r 5 (wide)
+      B      e3: n1 -> nB = b u(-30), e4: nB -> nT (direction u(30)), b = nT_z / (2 cos 30); r 1.2 (narrow)
+      C      e5: n1 -> nT straight up; r 0.8, too narrow for a 0.89 mm wire plus 1 mm
+      D      e6: n0 -> nT straight; r 6, crossing the forbidden zone forbidden_d
+    A proximity zone sits on e3 between 20 and 30 mm, so route B has penalty 1 and A stays >= 10 mm away.
+    The corners are >= 2w apart and >= w from the route ends, so route theta_max = max delta and
+    theta_sum = sum delta.
+    """
+    def u(t):
+        r = math.radians(t)
+        return (math.sin(r), 0.0, math.cos(r))
+
+    def line(p, q, n):
+        return [tuple(p[i] + (q[i] - p[i]) * k / n for i in range(3)) for k in range(n + 1)]
+
+    def plus(p, d, s):
+        return tuple(p[i] + d[i] * s for i in range(3))
+
+    a = 40.0
+    n0, n1 = (0.0, 0.0, -40.0), (0.0, 0.0, 0.0)
+    nT = (0.0, 0.0, 2 * a * math.cos(math.radians(45)))
+    nA = plus(n1, u(45), a)
+    b = nT[2] / (2 * math.cos(math.radians(30)))
+    nB = plus(n1, u(-30), b)
+    seg = {  # edge: (from, to, from pos, to pos, radius, vessel)
+        "e0": ("n0", "n1", n0, n1, 6.0, "trunk"),
+        "e1": ("n1", "nA", n1, nA, 5.0, "wide_out"),
+        "e2": ("nA", "nT", nA, nT, 5.0, "wide_back"),
+        "e3": ("n1", "nB", n1, nB, 1.2, "narrow_out"),
+        "e4": ("nB", "nT", nB, nT, 1.2, "narrow_back"),
+        "e5": ("n1", "nT", n1, nT, 0.8, "pinhole"),
+        "e6": ("n0", "nT", n0, nT, 6.0, "bypass"),
+    }
+    edges = []
+    for eid, (f, t, p, q, r, v) in seg.items():
+        n = math.ceil(math.dist(p, q) - 1e-9)
+        P = line(p, q, n)
+        edges.append({"id": eid, "from": f, "to": t, "vessel": v, "points": pts(P), "radii_mm": [r6(r)] * len(P)})
+    cl = {
+        "nodes": [
+            {"id": "n0", "pos": pts([n0])[0], "kind": "entry"},
+            {"id": "n1", "pos": pts([n1])[0], "kind": "branch"},
+            {"id": "nA", "pos": pts([nA])[0], "kind": "branch"},
+            {"id": "nB", "pos": pts([nB])[0], "kind": "branch"},
+            {"id": "nT", "pos": pts([nT])[0], "kind": "target"},
+        ],
+        "edges": edges,
+    }
+    zones = [
+        {"id": "prox_b", "kind": "critical_branch", "tier": "proximity", "edge": "e3", "from_mm": 20, "to_mm": 30},
+        {"id": "forbidden_d", "kind": "dissection", "tier": "forbidden", "edge": "e6", "from_mm": 30, "to_mm": 50},
+    ]
+    z0, z1 = plus(n1, u(-30), 20.0), plus(n1, u(-30), 30.0)
+
+    def clear(eid):
+        _, _, p, q, _, _ = seg[eid]
+        return 0.0 if eid == "e3" else _planar_seg_dist(p, q, z0, z1)
+
+    exp = {}
+    for eid, (_, _, p, q, r, v) in seg.items():
+        on = [z["id"] for z in zones if z["edge"] == eid]
+        exp[eid] = edge_expect(math.dist(p, q), 0.0, 0.0, r, clear(eid), on,
+                               notes=f"Straight {v} edge; clearance to prox_b by exact segment distance.")
+
+    up = (0.0, 0.0, 1.0)
+    routes = [
+        route_expect("A-wide", ["e0", "e1", "e2"], [False] * 3, 3 * a, [corner_deg(up, u(45)), corner_deg(u(45), u(-45))],
+                     r_min=5.0, heavy=0, clearances=[min(clear(e) for e in ("e0", "e1", "e2"))],
+                     notes="Takeoff 45, corner 90: theta_max 90, theta_sum 135. Wide and clear of prox_b."),
+        route_expect("B-narrow", ["e0", "e3", "e4"], [False] * 3, a + 2 * b, [corner_deg(up, u(-30)), corner_deg(u(-30), u(30))],
+                     r_min=1.2, heavy=0, clearances=[0.0],
+                     notes="Takeoff 30, corner 60: shorter and gentler than A, but narrow and through prox_b."),
+        route_expect("C-pinhole", ["e0", "e5"], [False, False], a + nT[2], [0.0],
+                     r_min=0.8, heavy=0, clearances=[min(clear(e) for e in ("e0", "e5"))],
+                     notes="Straight but r 0.8 mm: 1.6 mm is under 0.89 + 1 mm, so too narrow for every preset."),
+        route_expect("D-bypass", ["e6"], [False], math.dist(n0, nT), [],
+                     r_min=6.0, heavy=0, clearances=[clear("e6")],
+                     notes="Straight and wide, but it crosses forbidden_d, so it is never routed."),
+    ]
+    case = case_json("synthetic-diamond", "Synthetic: four paths, one target",
+                     [{"id": "in", "name": "Entry", "node": "n0"}], [{"id": "top", "name": "Top", "node": "nT"}],
+                     zones, sorted({s[5] for s in seg.values()}))
+    return case, cl, exp, routes
+
+
 FIXTURES = {
     "straight": straight,
     "arc90": arc90,
@@ -386,6 +501,7 @@ FIXTURES = {
     "y-branch": y_branch,
     "bend": bend,
     "junction": junction,
+    "diamond": diamond,
 }
 
 
