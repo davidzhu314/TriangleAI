@@ -29,6 +29,12 @@ export const FEEDBACK_TEMPLATES = {
   'drive.back_out': 'Back-outs: {n}, at {penalty} points each. Aim the tip before you push.',
   'result.over_budget': "Fluoro went {over_s} s over this case's {budget_s} s allowance, which cost a star.",
   'result.over_budget_kept': "Fluoro went {over_s} s over this case's {budget_s} s allowance.",
+  'replay.wrong_branch': 'Wrong branch: into the {vessel}; the plan goes into the {expected_vessel}.',
+  'replay.prolapse': 'Prolapse in the {vessel}.',
+  'replay.force_spike': 'Force spike: {force_n} N, above {threshold_n} N.',
+  'replay.back_out': 'Back-out: pulled back {dist_mm} mm.',
+  'replay.contrast_puff': 'Contrast puff.',
+  'replay.target_reached': 'Reached the {target}.',
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;

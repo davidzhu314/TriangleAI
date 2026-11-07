@@ -265,6 +265,12 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'drive.back_out': { n: 1, penalty: 5 },
   'result.over_budget': { over_s: 17.5, budget_s: 60 },
   'result.over_budget_kept': { over_s: 17.5, budget_s: 60 },
+  'replay.wrong_branch': { vessel: 'Right branch', expected_vessel: 'Left branch' },
+  'replay.prolapse': { vessel: 'Right branch' },
+  'replay.force_spike': { force_n: 0.6, threshold_n: 0.5 },
+  'replay.back_out': { dist_mm: 21 },
+  'replay.contrast_puff': {},
+  'replay.target_reached': { target: 'Left branch' },
 };
 
 describe('feedback templates (§6.4)', () => {
