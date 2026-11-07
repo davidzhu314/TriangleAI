@@ -1,0 +1,46 @@
+{
+ "axes": "RAS",
+ "entries": [
+  {
+   "id": "in",
+   "name": "Entry",
+   "node": "n0"
+  }
+ ],
+ "id": "synthetic-straight",
+ "physics": {
+  "available": false
+ },
+ "riskZones": [
+  {
+   "edge": "e0",
+   "from_mm": 40,
+   "id": "prox_self",
+   "kind": "critical_branch",
+   "tier": "proximity",
+   "to_mm": 60
+  }
+ ],
+ "schema": "threadsim.case/1",
+ "source": {
+  "dataset": "threadsim-synthetic-test-fixture",
+  "kind": "parametric",
+  "license": "own work"
+ },
+ "targets": [
+  {
+   "id": "out",
+   "name": "Target",
+   "node": "n1"
+  }
+ ],
+ "title": "Synthetic: straight line",
+ "units": "mm",
+ "vessels": [
+  {
+   "id": "aorta",
+   "kind": "artery",
+   "name": "aorta"
+  }
+ ]
+}

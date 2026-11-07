@@ -32,3 +32,4 @@ One line per decision: date · who · decision · why. Append only. A decision t
 
 ## Log
 
+- 2026-11-07 · Vaibhav · **5 mm-window turning, defined.** θ_w(s) is the angle between the chords p(s)−p(s−5 mm) and p(s+5 mm)−p(s). Θmax = max θ_w. ΘΣ = (1/w)∫θ_w ds + both end windows, which is the §4.2 sum of 5 mm-window angles. The full algorithm is in `tests/crosscheck/README.md`; the TypeScript in V2 follows it. Why: it is exact on arcs (θmax = w/R, ΘΣ = L/R) and conserves turning across straight-to-curve transitions. On a helix it differs from κL by the window's own smoothing (0.8° over two turns), so the helix fixture's closed form is (L/w)·θ_w.

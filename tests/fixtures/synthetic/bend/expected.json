@@ -1,0 +1,18 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 71.415927,
+   "notes": "Straight-arc-straight: L = 40 + R*pi/2; the arc is longer than 2w so the peak window angle is w/R; total turning 90 deg.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 6.0,
+   "theta_max_deg": 14.323945,
+   "theta_sum_deg": 90.0
+  }
+ },
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}
