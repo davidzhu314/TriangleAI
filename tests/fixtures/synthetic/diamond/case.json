@@ -1,0 +1,84 @@
+{
+ "axes": "RAS",
+ "entries": [
+  {
+   "id": "in",
+   "name": "Entry",
+   "node": "n0"
+  }
+ ],
+ "id": "synthetic-diamond",
+ "physics": {
+  "available": false
+ },
+ "riskZones": [
+  {
+   "edge": "e3",
+   "from_mm": 20,
+   "id": "prox_b",
+   "kind": "critical_branch",
+   "tier": "proximity",
+   "to_mm": 30
+  },
+  {
+   "edge": "e6",
+   "from_mm": 30,
+   "id": "forbidden_d",
+   "kind": "dissection",
+   "tier": "forbidden",
+   "to_mm": 50
+  }
+ ],
+ "schema": "threadsim.case/1",
+ "source": {
+  "dataset": "threadsim-synthetic-test-fixture",
+  "kind": "parametric",
+  "license": "own work"
+ },
+ "targets": [
+  {
+   "id": "top",
+   "name": "Top",
+   "node": "nT"
+  }
+ ],
+ "title": "Synthetic: four paths, one target",
+ "units": "mm",
+ "vessels": [
+  {
+   "id": "bypass",
+   "kind": "artery",
+   "name": "bypass"
+  },
+  {
+   "id": "narrow_back",
+   "kind": "artery",
+   "name": "narrow_back"
+  },
+  {
+   "id": "narrow_out",
+   "kind": "artery",
+   "name": "narrow_out"
+  },
+  {
+   "id": "pinhole",
+   "kind": "artery",
+   "name": "pinhole"
+  },
+  {
+   "id": "trunk",
+   "kind": "artery",
+   "name": "trunk"
+  },
+  {
+   "id": "wide_back",
+   "kind": "artery",
+   "name": "wide_back"
+  },
+  {
+   "id": "wide_out",
+   "kind": "artery",
+   "name": "wide_out"
+  }
+ ]
+}

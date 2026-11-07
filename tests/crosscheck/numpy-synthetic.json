@@ -25,6 +25,138 @@
   },
   "routes": {}
  },
+ "diamond": {
+  "edges": {
+   "e0": {
+    "L_mm": 40.0,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 20.0,
+    "r_min_mm": 6.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e1": {
+    "L_mm": 39.99999965,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 19.318516445,
+    "r_min_mm": 5.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e2": {
+    "L_mm": 39.99999965,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 32.235428776,
+    "r_min_mm": 5.0,
+    "theta_max_deg": 8.103e-06,
+    "theta_sum_deg": 2.6739e-05
+   },
+   "e3": {
+    "L_mm": 32.659863214,
+    "overlapping_zones": [
+     "prox_b"
+    ],
+    "proximity_clearance_mm": 0.0,
+    "r_min_mm": 1.2,
+    "theta_max_deg": 1.4254e-05,
+    "theta_sum_deg": 3.3519e-05
+   },
+   "e4": {
+    "L_mm": 32.659863214,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 2.659863214,
+    "r_min_mm": 1.2,
+    "theta_max_deg": 9.542e-06,
+    "theta_sum_deg": 3.1982e-05
+   },
+   "e5": {
+    "L_mm": 56.568542,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 9.999999729,
+    "r_min_mm": 0.8,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e6": {
+    "L_mm": 96.568542,
+    "overlapping_zones": [
+     "forbidden_d"
+    ],
+    "proximity_clearance_mm": 9.999999729,
+    "r_min_mm": 6.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  },
+  "routes": {
+   "A-wide": {
+    "L_mm": 119.9999993,
+    "edges": [
+     "e0",
+     "e1",
+     "e2"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 5.0,
+    "reversed": [
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 90.0,
+    "theta_sum_deg": 135.000026905
+   },
+   "B-narrow": {
+    "L_mm": 105.319726427,
+    "edges": [
+     "e0",
+     "e3",
+     "e4"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 1.0,
+    "r_min_mm": 1.2,
+    "reversed": [
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 60.000000772,
+    "theta_sum_deg": 90.029761304
+   },
+   "C-pinhole": {
+    "L_mm": 96.568542,
+    "edges": [
+     "e0",
+     "e5"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 2.7e-08,
+    "r_min_mm": 0.8,
+    "reversed": [
+     false,
+     false
+    ],
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "D-bypass": {
+    "L_mm": 96.568542,
+    "edges": [
+     "e6"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 2.7e-08,
+    "r_min_mm": 6.0,
+    "reversed": [
+     false
+    ],
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  }
+ },
  "helix": {
   "edges": {
    "e0": {

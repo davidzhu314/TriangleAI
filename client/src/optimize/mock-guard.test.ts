@@ -61,7 +61,7 @@ describe('mock build guard', () => {
   it('a build without VITE_ENGINE=mock contains no mock module', async () => {
     const out = await bundleWith(undefined);
     // the guard entry really was bundled (its real-mode error text is there)
-    expect(out).toContain('The real optimizer lands in V3');
+    expect(out).toContain('optimize: pass the LoadedCase');
     expect(out).toContain('Real scoring lands in V5');
     // and the measure Worker was bundled too (its handler's error text)
     expect(out).toContain('no case loaded');
@@ -88,7 +88,15 @@ describe('engine entry points', () => {
       const s = await import('../score/index');
       expect(o.engineMode).toBe('real');
       expect(s.engineMode).toBe('real');
-      await expect(o.optimize({ caseId: 'fixture-y', targetId: 'left_branch' })).rejects.toThrow(/V3/);
+      await expect(o.optimize({ caseId: 'fixture-y', targetId: 'left_branch' })).rejects.toThrow(/LoadedCase/);
+      // the real optimizer, not the mock: no placeholder three-route frontier, no recorded runs
+      const { loadFixtureY } = await import('./fixture-y.testutil');
+      const real = await o.optimize({ caseId: 'fixture-y', targetId: 'left_branch' }, loadFixtureY());
+      expect(real.kind).toBe('frontier');
+      if (real.kind === 'frontier') {
+        expect(real.recordedRunsUsed).toBe(false);
+        expect(real.routes.map((r) => r.presetId).sort()).toEqual(['soft_angled', 'standard_j']);
+      }
     } finally {
       vi.unstubAllEnvs();
     }

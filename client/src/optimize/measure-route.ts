@@ -75,7 +75,46 @@ export function orientRoute(graph: RouteGraph, edgeIds: readonly string[], optio
   return { edges, reversed, nodes };
 }
 
+/**
+ * Which route edge a window sample at arc length `s` belongs to (DECISIONS.md, "Turn attribution").
+ *
+ * A junction's turn is felt by every window within w of it, so a sample within w of a junction
+ * belongs to the edge entered there: a turn into a branch counts once, against that branch. When
+ * two junctions are less than w apart, the nearest junction wins and a tie goes to the junction
+ * entered first. So a short middle edge keeps the turn into it and is never skipped. A sample
+ * with no junction within w belongs to the edge it lies on.
+ *
+ * Returns an edge index: 0 is the first edge, and junction k (0-based) enters edge k + 1.
+ */
+export function attributeSample(s: number, junctionS: readonly number[], w: number): number {
+  let nearest = -1;
+  let best = Infinity;
+  for (let k = 0; k < junctionS.length; k++) {
+    const d = Math.abs(s - junctionS[k]!);
+    if (d <= w && d < best) {
+      best = d;
+      nearest = k;
+    }
+  }
+  if (nearest >= 0) return nearest + 1;
+  let idx = 0;
+  while (idx < junctionS.length && junctionS[idx]! <= s) idx++;
+  return idx;
+}
+
 export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], options: MeasureRouteOptions = {}): RouteMeasures {
+  return measureRouteDetailed(graph, edgeIds, options).measures;
+}
+
+export interface DetailedRouteMeasures {
+  measures: RouteMeasures;
+  route: OrientedRoute;
+  /** Largest 5 mm-window turn attributed to each route edge, degrees (junctions count for the entered edge). */
+  edgeMaxTurnDeg: number[];
+}
+
+/** measureRoute plus what the optimizer's constraint checks need. */
+export function measureRouteDetailed(graph: RouteGraph, edgeIds: readonly string[], options: MeasureRouteOptions = {}): DetailedRouteMeasures {
   const route = orientRoute(graph, edgeIds, options);
   const { points, junctionS } = joinRoute(
     route.edges.map((e) => e.pointsMm as readonly Point3[]),
@@ -84,14 +123,17 @@ export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], opti
   const wt = windowedTurning(points, undefined, undefined, junctionS);
   const turning = summarizeTurning(wt);
 
-  // the edge holding the sharpest window: a sample at a junction counts for the edge being entered
-  let sharpestTurnEdge: string | null = null;
-  if (turning.thetaMaxDeg > 0) {
-    let k = 0;
-    for (let i = 1; i < wt.thetaRad.length; i++) if (wt.thetaRad[i]! > wt.thetaRad[k]!) k = i;
-    const s = wt.s[k]!;
-    sharpestTurnEdge = route.edges[junctionS.filter((j) => j <= s).length]!.id;
+  const edgeOf = (s: number) => attributeSample(s, junctionS, wt.windowUsed);
+  const edgeMaxTurnDeg = route.edges.map(() => 0);
+  let k = -1;
+  for (let i = 0; i < wt.thetaRad.length; i++) {
+    const idx = edgeOf(wt.s[i]!);
+    const deg = (wt.thetaRad[i]! * 180) / Math.PI;
+    if (deg > edgeMaxTurnDeg[idx]!) edgeMaxTurnDeg[idx] = deg;
+    if (k < 0 || wt.thetaRad[i]! > wt.thetaRad[k]!) k = i;
   }
+  let sharpestTurnEdge: string | null = null;
+  if (turning.thetaMaxDeg > 0 && k >= 0) sharpestTurnEdge = route.edges[edgeOf(wt.s[k]!)]!.id;
 
   const onRoute = new Set(route.edges.map((e) => e.id));
   const crossings: ZoneCrossing[] = [];
@@ -125,5 +167,5 @@ export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], opti
     proximityPenalty,
     estFluoroS: lengthM * 100 * FLUORO_S_PER_CM + (turning.thetaSumDeg / DEG_PER_TURN) * FLUORO_S_PER_TURN,
   };
-  return { cost, violations, crossings, sharpestTurnEdge };
+  return { measures: { cost, violations, crossings, sharpestTurnEdge }, route, edgeMaxTurnDeg };
 }

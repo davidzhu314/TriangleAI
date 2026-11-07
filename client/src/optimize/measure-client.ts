@@ -4,12 +4,13 @@
  *   const measurer = createMeasureWorker();
  *   await measurer.load(loadedCase);
  *   const m = await measurer.measureRoute(['e_aorta', 'e_left']);   // RouteMeasures
+ *   const f = await measurer.optimize({ caseId, targetId });       // Frontier | NoSafeRoute
  *
  * Calls resolve in the order they were sent. A rejected call means the request was bad (unknown
  * edge, a chain that doesn't connect, no case loaded); the Worker keeps running.
  */
 
-import type { LoadedCase, RouteMeasures } from '../contracts';
+import type { LoadedCase, OptimizeRequest, OptimizeResult, RouteMeasures } from '../contracts';
 import { stripMesh, type EdgeMeasuresMessage, type MeasureRequest, type MeasureResponse } from './measure-protocol';
 import type { MeasureRouteOptions } from './measure-route';
 
@@ -25,6 +26,8 @@ export interface MeasureWorkerClient {
   load(c: LoadedCase): Promise<{ edges: number; buildMs: number }>;
   measureRoute(edges: readonly string[], options?: MeasureRouteOptions): Promise<RouteMeasures>;
   edgeMeasures(edge: string): Promise<EdgeMeasuresMessage>;
+  /** The frontier or "no safe route" for the loaded case (spec §4.3–4.7). */
+  optimize(request: OptimizeRequest): Promise<OptimizeResult>;
   terminate(): void;
 }
 
@@ -65,6 +68,11 @@ export function createMeasureWorker(createPort: () => MeasurePort = defaultPort)
         : { type: 'measureRoute', edges: [...edges] };
       const res = await send(msg);
       if (res.ok && res.type === 'measureRoute') return res.result;
+      throw new Error('unexpected response');
+    },
+    async optimize(request) {
+      const res = await send({ type: 'optimize', request });
+      if (res.ok && res.type === 'optimize') return res.result;
       throw new Error('unexpected response');
     },
     async edgeMeasures(edge) {
