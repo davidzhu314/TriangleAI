@@ -62,7 +62,7 @@ describe('mock build guard', () => {
     const out = await bundleWith(undefined);
     // the guard entry really was bundled (its real-mode error text is there)
     expect(out).toContain('optimize: pass the LoadedCase');
-    expect(out).toContain('Real scoring lands in V5');
+    expect(out).toContain('score: case mismatch'); // the real scorer (V5)
     // and the measure Worker was bundled too (its handler's error text)
     expect(out).toContain('no case loaded');
     for (const m of MARKERS) expect(out.includes(m), `${m} found in a real build`).toBe(false);
@@ -111,7 +111,7 @@ describe('engine entry points', () => {
       expect(o.engineMode).toBe('mock');
       const r = await o.optimize({ caseId: 'fixture-y', targetId: 'left_branch' });
       expect(r.kind).toBe('frontier');
-      const result = await s.scoreAttempt({ log: {} as never, optimized: r, weights: {} });
+      const result = await s.scoreAttempt({ log: {} as never, optimized: r, weights: {}, case: {} as never });
       expect(result.feedback).toHaveLength(3);
     } finally {
       vi.unstubAllEnvs();

@@ -59,33 +59,7 @@ export class RouteEnumerator {
     const to = this.graph.targets.get(targetId);
     if (from === undefined) throw new Error(`unknown entry ${entryId}`);
     if (to === undefined) throw new Error(`unknown target ${targetId}`);
-    const preset = getPreset(presetId);
-    return this.pathsFor(from, to, presetId).map((p) => {
-      const m = this.measure(from, p);
-      const violations: ConstraintViolation[] = [];
-      m.route.edges.forEach((e, i) => {
-        const diameterM = 2 * e.measures.rMinM;
-        if (diameterM < preset.minVesselDiameterM) {
-          violations.push({ kind: 'too_narrow', edge: e.id, diameterM, requiredM: preset.minVesselDiameterM });
-        }
-        const turnDeg = m.edgeMaxTurnDeg[i]!;
-        if (turnDeg > preset.maxTurnDeg) violations.push({ kind: 'turn_too_sharp', edge: e.id, turnDeg, maxTurnDeg: preset.maxTurnDeg });
-      });
-      violations.push(...m.measures.violations);
-      return {
-        id: routeId(entryId, presetId, p.edges),
-        entryId,
-        targetId,
-        presetId,
-        edges: [...p.edges],
-        nodes: [...p.nodes],
-        feasible: violations.length === 0,
-        cost: { ...m.measures.cost },
-        violations,
-        crossings: m.measures.crossings.map((c) => ({ ...c })),
-        sharpestTurnEdge: m.measures.sharpestTurnEdge,
-      };
-    });
+    return this.pathsFor(from, to, presetId).map((p) => assembleRoute(entryId, targetId, presetId, p, this.measure(from, p)));
   }
 
   private pathsFor(from: string, to: string, presetId: WirePresetId): GraphPath[] {
@@ -117,6 +91,46 @@ export class RouteEnumerator {
     }
     return m;
   }
+}
+
+/** A Route from a measured path, with the preset's constraint checks (§4.4). */
+function assembleRoute(entryId: string, targetId: string, presetId: WirePresetId, p: GraphPath, m: DetailedRouteMeasures): Route {
+  const preset = getPreset(presetId);
+  const violations: ConstraintViolation[] = [];
+  m.route.edges.forEach((e, i) => {
+    const diameterM = 2 * e.measures.rMinM;
+    if (diameterM < preset.minVesselDiameterM) {
+      violations.push({ kind: 'too_narrow', edge: e.id, diameterM, requiredM: preset.minVesselDiameterM });
+    }
+    const turnDeg = m.edgeMaxTurnDeg[i]!;
+    if (turnDeg > preset.maxTurnDeg) violations.push({ kind: 'turn_too_sharp', edge: e.id, turnDeg, maxTurnDeg: preset.maxTurnDeg });
+  });
+  violations.push(...m.measures.violations);
+  return {
+    id: routeId(entryId, presetId, p.edges),
+    entryId,
+    targetId,
+    presetId,
+    edges: [...p.edges],
+    nodes: [...p.nodes],
+    feasible: violations.length === 0,
+    cost: { ...m.measures.cost },
+    violations,
+    crossings: m.measures.crossings.map((c) => ({ ...c })),
+    sharpestTurnEdge: m.measures.sharpestTurnEdge,
+  };
+}
+
+/**
+ * Measure and check one route the optimizer may not have enumerated (a path past the DFS cap or
+ * outside Yen's k). Same measures and constraint checks as the optimizer's own routes. Throws
+ * RouteError if the edges don't connect from the entry.
+ */
+export function routeFor(graph: RouteGraph, entryId: string, targetId: string, presetId: WirePresetId, edges: readonly string[]): Route {
+  const from = graph.entries.get(entryId);
+  if (from === undefined) throw new Error(`unknown entry ${entryId}`);
+  const m = measureRouteDetailed(graph, edges, { startNode: from });
+  return assembleRoute(entryId, targetId, presetId, { edges: [...edges], nodes: m.route.nodes }, m);
 }
 
 function dedupe<T>(items: T[]): T[] {

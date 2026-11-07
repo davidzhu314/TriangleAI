@@ -336,3 +336,31 @@ def route_costs(centerlines: dict, case: dict, edge_ids, reversed_flags) -> Rout
         line = sub_polyline(by_id[z["edge"]]["points"], z["from_mm"], z["to_mm"])
         penalty += max(0.0, 1.0 - polyline_distance(joined, line) / PROXIMITY_SCALE_MM)
     return RouteCosts(length_mm(joined), tmax, tsum, r_min, len(heavy), penalty)
+
+
+# ---------------------------------------------------------------- V5: drive path fidelity (spec 6.2)
+
+
+def ras_mm_to_yup_m(points) -> np.ndarray:
+    """The loader's frame change: RAS mm -> Y-up metres, [-x, z, y] / 1000."""
+    P = _as_points(points)
+    return np.stack([-P[:, 0], P[:, 2], P[:, 1]], axis=1) / 1000.0
+
+
+def mean_tip_distance_m(tips, polylines) -> float:
+    """Spec 6.2 fidelity: (1/N) sum over tips of the distance to the nearest point on any segment.
+
+    Independent of the TypeScript: every tip against every segment at once, with NumPy broadcasting.
+    """
+    T = np.asarray(tips, dtype=float).reshape(-1, 3)
+    if len(T) == 0:
+        return 0.0
+    A = np.concatenate([np.asarray(p, dtype=float)[:-1] for p in polylines])
+    B = np.concatenate([np.asarray(p, dtype=float)[1:] for p in polylines])
+    AB = B - A  # (S, 3)
+    AP = T[:, None, :] - A[None, :, :]  # (N, S, 3)
+    len2 = np.einsum("sk,sk->s", AB, AB)
+    t = np.where(len2 > 0, np.einsum("nsk,sk->ns", AP, AB) / np.where(len2 > 0, len2, 1.0), 0.0)
+    t = np.clip(t, 0.0, 1.0)
+    D = np.linalg.norm(AP - t[:, :, None] * AB[None, :, :], axis=2)
+    return float(D.min(axis=1).mean())

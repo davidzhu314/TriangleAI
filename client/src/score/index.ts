@@ -1,28 +1,24 @@
 /**
- * Scoring entry point for the app. Import from here, never from ./mock.
+ * Scoring entry point for the app. Import from here, never from ./mock or the modules below.
  *
- * With VITE_ENGINE=mock, `scoreAttempt` returns the V1 mock CaseResult (placeholder numbers). In a
- * real build the mock is not bundled. Real scoring lands in V5; until then, a real build rejects
- * with an error saying so.
+ * In a real build `scoreAttempt` runs the V5 scoring engine (./score): plan and drive scores, stars
+ * and feedback, computed from the event log and the optimizer's output. With VITE_ENGINE=mock it
+ * returns the V1 mock CaseResult (placeholder numbers), and the mock is not bundled otherwise.
  */
 
-import type { CaseResult, EventLog, OptimizeResult, Weights } from '../contracts';
+import type { CaseResult } from '../contracts';
+import { scoreCase, type ScoreInput } from './score';
 
 export { engineMode, type EngineMode } from '../optimize/engine-mode';
+export { scoreCase, referenceFor, type ScoreInput } from './score';
+export { FEEDBACK_TEMPLATES, fillTemplate, type TemplateId } from './templates';
+export { applyFluoroBudget, starsFor } from './stars';
+export type { ForceReference } from './reference';
 
-export interface ScoreInput {
-  /** The drive's event log (scores come from it alone, plus the plan below). */
-  log: EventLog;
-  /** What the optimizer returned for this case and target. */
-  optimized: OptimizeResult;
-  /** The player's weights when they chose the route. */
-  weights: Weights;
-}
-
-export async function scoreAttempt(_input: ScoreInput): Promise<CaseResult> {
+export async function scoreAttempt(input: ScoreInput): Promise<CaseResult> {
   if (import.meta.env.VITE_ENGINE === 'mock') {
     const { mockCaseResult } = await import('./mock');
     return mockCaseResult();
   }
-  throw new Error('Real scoring lands in V5. Build or run with VITE_ENGINE=mock to use the mock.');
+  return scoreCase(input);
 }
