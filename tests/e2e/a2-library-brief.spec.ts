@@ -39,19 +39,29 @@ async function importBroken(page: Page, name: string): Promise<ReturnType<Page['
   return result;
 }
 
-test('Library shows fixture-y as the next case, with the honesty line', async ({ page }) => {
-  await page.goto('/#/library');
+/** fixture-y's block: the next-case card when V6 picks it, otherwise its row among the other cases. */
+async function fixtureY(page: Page) {
   const next = page.getByTestId('next-case');
-  await expect(next.getByRole('heading', { name: 'Test fixture: Y branch' })).toBeVisible();
-  await expect(next.getByText('Beginner')).toBeVisible();
-  await expect(next.getByText('Planning only')).toBeVisible();
-  await expect(next.getByText('No stars yet')).toBeVisible();
+  await expect(next).toBeVisible();
+  const isNext = (await next.getByRole('heading', { name: 'Test fixture: Y branch' }).count()) > 0;
+  return { block: isNext ? next : page.locator('.case-row', { hasText: 'Test fixture: Y branch' }), isNext };
+}
+
+test('Library shows fixture-y with its badges, a next case, and the honesty line', async ({ page }) => {
+  await page.goto('/#/library');
+  await expect(page.getByTestId('next-case').getByRole('heading')).toBeVisible(); // V6 nextCase picks which case leads
+  const { block } = await fixtureY(page);
+  await expect(block.getByText('Test fixture: Y branch')).toBeVisible();
+  await expect(block.getByText('Beginner')).toBeVisible();
+  await expect(block.getByText('Planning only')).toBeVisible();
+  await expect(block.getByText('No stars yet')).toBeVisible();
   await expect(page.getByText(HONESTY)).toBeVisible();
 });
 
 test('Case brief shows the case fields and goes to Plan', async ({ page }) => {
   await page.goto('/#/library');
-  await page.getByTestId('next-case').getByRole('link', { name: 'Open case' }).click();
+  const { block, isNext } = await fixtureY(page);
+  await block.getByRole('link', { name: isNext ? 'Open case' : 'Test fixture: Y branch' }).click();
   await expect(page).toHaveURL(/#\/case\/fixture-y$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Test fixture: Y branch' })).toBeVisible();
   const card = page.getByTestId('scenario-card');
