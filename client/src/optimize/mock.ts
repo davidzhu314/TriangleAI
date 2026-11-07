@@ -83,7 +83,8 @@ function leftRoute(presetId: WirePresetId): Route {
 /** Synchronous mock result. Returns fresh objects on every call, so callers may mutate them. */
 export function mockOptimizeSync(request: OptimizeRequest): OptimizeResult {
   if (request.caseId !== MOCK_CASE_ID) {
-    throw new Error(`mock optimizer only knows ${MOCK_CASE_ID}, got ${request.caseId}`);
+    // the marker literal must stay in a string the bundle keeps (build guard test)
+    throw new Error(`[THREADSIM_MOCK_OPTIMIZER] mock optimizer only knows ${MOCK_CASE_ID}, got ${request.caseId}`);
   }
   const presets = PRESET_ORDER.filter((p) => !request.presetIds || request.presetIds.includes(p));
   const entryOk = !request.entryIds || request.entryIds.includes(ENTRY);
@@ -110,7 +111,7 @@ export function mockOptimizeSync(request: OptimizeRequest): OptimizeResult {
       suggestion: null,
     };
   }
-  throw new Error(`mock optimizer has no answer for target ${request.targetId} with these entries and presets`);
+  throw new Error(`[THREADSIM_MOCK_OPTIMIZER] mock optimizer has no answer for target ${request.targetId} with these entries and presets`);
 }
 
 /** Async like the real Worker-backed optimizer will be (V3). */

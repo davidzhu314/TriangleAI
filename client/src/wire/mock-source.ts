@@ -1,9 +1,10 @@
 /**
- * V1 MOCK wire source: the tip walks the planned path at constant speed. Aroovee builds the Drive
- * screen on it until RailWireSource lands (V4). Screens still get sources only through select.ts.
+ * V1 MOCK wire source: the tip walks the planned path. Aroovee builds the Drive screen on it until
+ * RailWireSource lands (V4). Screens still get sources only through select.ts, and only a
+ * VITE_ENGINE=mock build may import this file (build guard: optimize/mock-guard.test.ts).
  *
- * - Push > 0 walks forward and push < 0 walks back, at `speedMps` whatever the stick magnitude.
- *   With `autoWalk`, it walks forward with no input.
+ * - Tip speed = push × `speedMps`. Push is clamped to −1..1, so a half push walks at half speed
+ *   and a negative push pulls back. With `autoWalk`, push is taken as 1.
  * - Rotate turns the roll angle at `rollRadPerS`.
  * - Fluoro and contrast puffs are recorded as given.
  * - Contact force is always 0, because the mock models none (no force proxy, no force_spike).
@@ -34,7 +35,7 @@ import {
 import { cumulativeArclength, joinRoute, pointAt, subPolyline, type Point3 } from '../optimize/measures';
 
 export interface MockWireOptions {
-  /** Tip speed along the path, m/s. Default 0.02. */
+  /** Tip speed along the path at full push, m/s. Default 0.02. */
   speedMps?: number;
   /** Roll rate at full rotate, rad/s. Default π. */
   rollRadPerS?: number;
@@ -135,9 +136,9 @@ export class MockWireSource implements WireSource {
     }
     this.roll += this.input.rotate * this.rollRate * DT;
 
-    const dir = this.reached ? 0 : this.autoWalk ? 1 : Math.sign(this.input.push);
+    const push = this.reached ? 0 : this.autoWalk ? 1 : this.input.push;
     const prevS = this.s;
-    this.s = Math.min(Math.max(this.s + dir * this.speed * DT, 0), g.lengthM);
+    this.s = Math.min(Math.max(this.s + push * this.speed * DT, 0), g.lengthM);
     if (this.s > prevS) {
       // moving forward again starts a new retreat episode
       if (this.retreating) {
@@ -162,7 +163,7 @@ export class MockWireSource implements WireSource {
 
   async stop(): Promise<EventLog> {
     this.halt();
-    if (!this.log) throw new Error('MockWireSource.stop: not started');
+    if (!this.log) throw new Error('[THREADSIM_MOCK_WIRE] MockWireSource.stop: not started');
     const out = structuredClone(this.log);
     this.log = null;
     this.geom = null;
@@ -219,15 +220,15 @@ function edgeIndexAt(edgeEnds: number[], s: number): number {
 /** Orient the path's edges from the entry node and join them into one polyline (metres). */
 function buildPath(c: LoadedCase, entryId: string, path: string[]): PathGeometry {
   const entry = c.entries.find((e) => e.id === entryId);
-  if (!entry) throw new Error(`MockWireSource: unknown entry ${entryId}`);
-  if (path.length === 0) throw new Error('MockWireSource: empty path');
+  if (!entry) throw new Error(`[THREADSIM_MOCK_WIRE] MockWireSource: unknown entry ${entryId}`);
+  if (path.length === 0) throw new Error('[THREADSIM_MOCK_WIRE] MockWireSource: empty path');
   const byId = new Map(c.edges.map((e) => [e.id, e]));
   let at = entry.node;
   const polys: Point3[][] = [];
   const reversed: boolean[] = [];
   for (const id of path) {
     const e = byId.get(id);
-    if (!e) throw new Error(`MockWireSource: unknown edge ${id}`);
+    if (!e) throw new Error(`[THREADSIM_MOCK_WIRE] MockWireSource: unknown edge ${id}`);
     if (e.from === at) {
       reversed.push(false);
       at = e.to;
@@ -235,7 +236,7 @@ function buildPath(c: LoadedCase, entryId: string, path: string[]): PathGeometry
       reversed.push(true);
       at = e.from;
     } else {
-      throw new Error(`MockWireSource: edge ${id} does not continue from node ${at}`);
+      throw new Error(`[THREADSIM_MOCK_WIRE] MockWireSource: edge ${id} does not continue from node ${at}`);
     }
     polys.push(e.points);
   }

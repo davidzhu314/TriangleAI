@@ -108,7 +108,30 @@ describe('MockWireSource', () => {
     });
     const last = states[states.length - 1]!;
     expect(last.rollRad).toBeCloseTo(Math.PI, 9); // clamped to 1 → π rad/s for 1 s
-    expect(last.s).toBeCloseTo(0.02, 12); // clamped push still walks at constant speed
+    expect(last.s).toBeCloseTo(0.02, 12); // push clamped to 1 → full speed
+  });
+
+  it('scales speed by push, forward and back', async () => {
+    const { log } = await drive((src, tick) => {
+      src.control({ push: 0.5, rotate: 0, fluoro: false, contrastPuff: false });
+      for (let i = 0; i < 60; i++) tick(); // 2 s at 0.01 m/s
+      src.control({ push: -0.25, rotate: 0, fluoro: false, contrastPuff: false });
+      for (let i = 0; i < 30; i++) tick(); // 1 s back at 0.005 m/s
+      src.control({ push: 0, rotate: 0, fluoro: false, contrastPuff: false });
+      for (let i = 0; i < 30; i++) tick(); // hold
+    });
+    expect(log.samples[60]!.s).toBeCloseTo(0.02, 12);
+    expect(log.samples[90]!.s).toBeCloseTo(0.015, 12);
+    expect(log.samples[120]!.s).toBeCloseTo(0.015, 12);
+    expect(log.samples[61]!.s - log.samples[62]!.s).toBeCloseTo(0.005 / 30, 12);
+  });
+
+  it('never pulls back past the entry', async () => {
+    const { log } = await drive((src, tick) => {
+      src.control({ push: -1, rotate: 0, fluoro: false, contrastPuff: false });
+      for (let i = 0; i < 30; i++) tick();
+    });
+    expect(log.samples.every((s) => s.s === 0)).toBe(true);
   });
 
   it('gives identical logs for identical inputs', async () => {

@@ -19,7 +19,8 @@ import { MOCK_CASE_ID, mockRouteId } from '../optimize/mock';
 /** Fill `{key}` placeholders from values. Every number in the text therefore comes from `values`. */
 export function fillTemplate(template: string, values: Record<string, number | string>): string {
   return template.replace(/\{(\w+)\}/g, (_, k: string) => {
-    if (!(k in values)) throw new Error(`template value missing: ${k}`);
+    // the marker literal must stay in a string the bundle keeps (build guard test)
+    if (!(k in values)) throw new Error(`[THREADSIM_MOCK_SCORE] template value missing: ${k}`);
     return String(values[k]);
   });
 }
