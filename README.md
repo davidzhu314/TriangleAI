@@ -27,6 +27,25 @@ pytest physics
 
 Physics setup (CathSim) lives in `physics/README.md` (written in D1). The app runs without it, in rail mode.
 
+## What's in the app
+
+One case is one pass through six screens, each at its own hash route:
+
+| Screen | Route | What it does |
+| --- | --- | --- |
+| Library | `#/library` | The next case, with its stars, then the other cases; drag-and-drop `case.zip` import showing each validation result |
+| Case brief | `#/case/<id>` | Scenario, targets, entry sites, arch type and fluoro budget |
+| Plan | `#/case/<id>/plan` | Pick entry, target and wire preset, build the route by branch points, live cost panel |
+| Compare | `#/case/<id>/compare` | Frontier routes overlaid, weight sliders, keep or switch |
+| Drive | `#/case/<id>/drive` | Front and X-ray views, HUD (vessel, distance, wall force, fluoro), keyboard and gamepad, difficulty ladder |
+| Results | `#/case/<id>/results` | The one thing to change, plan and drive scores, stars, replay timeline, next case |
+
+- **Views are 2D for now.** Plan, Compare, Drive and Results draw the case as a flat front view in SVG, until three.js is added.
+- **Driving needs `client/src/wire/select.ts`, which isn't on main yet.** Until it lands, Drive shows the planned route and says driving isn't available. The end-to-end tests drive the full app through a test-only harness (`tests/e2e/harness/`) that plugs in the rail wire. The harness is never part of the build.
+- **Design system:** `DESIGN.md`, `client/src/styles/tokens.css` and `theme.css`, light and dark (following the OS setting). Every colour and size in the UI is a token. Icons are in `client/src/assets/icons/`.
+- **Numbers:** every number on screen comes from the engine (`client/src/optimize`, `client/src/score`) or the case file, with a formula tooltip. A missing value shows as a dash.
+- **Mock build:** `VITE_ENGINE=mock pnpm build` runs on the engine mocks and shows a "Mock data" badge.
+
 ## Who owns what
 
 David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
