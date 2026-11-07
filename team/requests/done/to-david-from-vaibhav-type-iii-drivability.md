@@ -41,4 +41,4 @@ Related: `team/requests/to-all-from-vaibhav-contract-steerability.md` adds a `ca
 
 ## Answer
 
-<David writes one line here>
+David: Yes. Retuning type-iii so every frontier route is steerable under the §5.3 branch-entry rule, while keeping the ~120° right-iliac turn and at least three frontier routes to rcca. Also retuning the low-tort lcca origin so the soft angled wire can enter it.
