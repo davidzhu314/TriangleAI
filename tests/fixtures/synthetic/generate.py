@@ -55,6 +55,32 @@ def case_json(fid, title, entries, targets, zones, vessels):
     }
 
 
+PROXIMITY_SCALE_MM = 10.0  # spec 4.6: proximity penalty = sum of max(0, 1 - clearance / 10 mm)
+
+
+def corner_deg(u_in, u_out):
+    """Deflection between unit travel directions, degrees (the takeoff angle at a junction)."""
+    d = sum(x * y for x, y in zip(u_in, u_out))
+    return math.degrees(math.acos(max(-1.0, min(1.0, d))))
+
+
+def route_expect(rid, edges, reversed_flags, L, junction_deg, r_min, heavy, clearances, notes):
+    """Closed-form route answers. Corners between straight legs >= w give theta_max = theta_sum = delta."""
+    return {
+        "id": rid,
+        "edges": edges,
+        "reversed": reversed_flags,
+        "L_mm": r6(L),
+        "junction_deg": [r6(x) for x in junction_deg],
+        "theta_max_deg": r6(max(junction_deg, default=0.0)),
+        "theta_sum_deg": r6(sum(junction_deg)),
+        "r_min_mm": r6(r_min),
+        "heavy_crossings": heavy,
+        "proximity_penalty": r6(sum(max(0.0, 1.0 - c / PROXIMITY_SCALE_MM) for c in clearances)),
+        "notes": notes,
+    }
+
+
 def edge_expect(L, tmax, tsum, rmin, clearance, overlaps, notes=None):
     d = {
         "L_mm": r6(L),
@@ -232,7 +258,24 @@ def y_branch():
         [{"id": "right", "name": "Right daughter", "node": "n2"}, {"id": "left", "name": "Left daughter", "node": "n3"}],
         zones, ["trunk", "right", "left"],
     )
-    return case, cl, exp
+    # Routes. Each corner joins straight legs >= 5 mm, so theta_max = theta_sum = delta (see junction()).
+    # Proximity penalty = sum over proximity zones of max(0, 1 - clearance/10 mm), where the route's
+    # clearance to a zone is its smallest edge clearance.
+    up = (0.0, 0.0, 1.0)
+    neg_u1 = tuple(-c for c in u1)
+    c_e1 = 10.0 * math.sin(between)
+    routes = [
+        route_expect("trunk-to-right", ["e0", "e1"], [False, False], trunk_len + len1, [corner_deg(up, u1)],
+                     r_min=4.0, heavy=1, clearances=[min(10.0, c_e1)],
+                     notes="30 deg takeoff; crosses heavy_e1; nearest approach to prox_e2 is 10 sin 75 from e1."),
+        route_expect("trunk-to-left", ["e0", "e2"], [False, False], trunk_len + len2, [corner_deg(up, u2)],
+                     r_min=5.0, heavy=0, clearances=[0.0],
+                     notes="45 deg takeoff; runs through prox_e2, so its penalty is 1."),
+        route_expect("right-to-left", ["e1", "e2"], [True, False], len1 + len2, [corner_deg(neg_u1, u2)],
+                     r_min=4.0, heavy=1, clearances=[0.0],
+                     notes="e1 walked back to the junction, then e2: delta = 180 - 75 = 105 deg."),
+    ]
+    return case, cl, exp, routes
 
 
 def bend():
@@ -314,30 +357,18 @@ def junction():
         "e2": edge_expect(L2, 0.0, 0.0, 5.0, None, [], notes="Straight child, 45 deg takeoff from +S toward +A."),
     }
 
-    def dot(a, b):
-        return sum(x * y for x, y in zip(a, b))
-
-    def corner(u_in, u_out):
-        return math.degrees(math.acos(max(-1.0, min(1.0, dot(u_in, u_out)))))
-
     neg_u1 = tuple(-c for c in u1)
     routes = [
-        {"id": "parent-only", "edges": ["e0"], "reversed": [False], "L_mm": Lp, "junction_deg": [],
-         "notes": "One straight edge: no turning."},
-        {"id": "parent-to-retro", "edges": ["e0", "e1"], "reversed": [False, False], "L_mm": Lp + L1,
-         "junction_deg": [corner(up, u1)], "notes": "Flagged turn: 120 deg takeoff; theta_max = theta_sum = 120."},
-        {"id": "parent-to-side", "edges": ["e0", "e2"], "reversed": [False, False], "L_mm": Lp + L2,
-         "junction_deg": [corner(up, u2)], "notes": "45 deg takeoff, out of the R-S plane."},
-        {"id": "retro-to-side", "edges": ["e1", "e2"], "reversed": [True, False], "L_mm": L1 + L2,
-         "junction_deg": [corner(neg_u1, u2)],
-         "notes": "e1 walked backwards into the branch point, then e2: delta = acos(-u1 . u2) = acos(cos(45) / 2)."},
+        route_expect("parent-only", ["e0"], [False], Lp, [], r_min=8.0, heavy=0, clearances=[],
+                     notes="One straight edge: no turning."),
+        route_expect("parent-to-retro", ["e0", "e1"], [False, False], Lp + L1, [corner_deg(up, u1)], r_min=4.0, heavy=0,
+                     clearances=[], notes="Flagged turn: 120 deg takeoff; theta_max = theta_sum = 120."),
+        route_expect("parent-to-side", ["e0", "e2"], [False, False], Lp + L2, [corner_deg(up, u2)], r_min=5.0, heavy=0,
+                     clearances=[], notes="45 deg takeoff, out of the R-S plane."),
+        route_expect("retro-to-side", ["e1", "e2"], [True, False], L1 + L2, [corner_deg(neg_u1, u2)], r_min=4.0, heavy=0,
+                     clearances=[],
+                     notes="e1 walked backwards into the branch point, then e2: delta = acos(-u1 . u2) = acos(cos(45) / 2)."),
     ]
-    for r in routes:
-        r["L_mm"] = r6(r["L_mm"])
-        total = sum(r["junction_deg"])
-        r["theta_max_deg"] = r6(max(r["junction_deg"], default=0.0))
-        r["theta_sum_deg"] = r6(total)
-        r["junction_deg"] = [r6(x) for x in r["junction_deg"]]
 
     case = case_json(
         "synthetic-junction", "Synthetic: junction with 120 and 45 degree takeoffs",

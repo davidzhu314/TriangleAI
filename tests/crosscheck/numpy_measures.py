@@ -296,3 +296,43 @@ def route_turning_measures(polylines, reversed_flags, window_mm: float = WINDOW_
 
 def route_length_mm(polylines, reversed_flags) -> float:
     return length_mm(join_route(polylines, reversed_flags)[0])
+
+
+PROXIMITY_SCALE_MM = 10.0  # spec 4.6
+
+
+@dataclass
+class RouteCosts:
+    L_mm: float
+    theta_max_deg: float
+    theta_sum_deg: float
+    r_min_mm: float
+    heavy_crossings: int
+    proximity_penalty: float
+
+
+def route_costs(centerlines: dict, case: dict, edge_ids, reversed_flags) -> RouteCosts:
+    """Route-level geometric costs (spec 4.6), independent of any preset.
+
+    heavy_crossings: distinct heavy-tier zones lying on a route edge (overlapping it).
+    proximity_penalty: sum over proximity-tier zones of max(0, 1 - clearance / 10 mm), where the
+    clearance is measured from the whole joined route polyline to the zone.
+    """
+    by_id = {e["id"]: e for e in centerlines["edges"]}
+    zones = case.get("riskZones", [])
+    polys = [by_id[e]["points"] for e in edge_ids]
+    joined, starts = join_route(polys, reversed_flags)
+    tmax, tsum = turning_measures(joined, extra_s=starts)
+    r_min = min(r_min_mm(by_id[e]["radii_mm"]) for e in edge_ids)
+    heavy = set()
+    for e in edge_ids:
+        L = length_mm(by_id[e]["points"])
+        for zid in overlapping_zones(e, L, [z for z in zones if z.get("tier") == "heavy"]):
+            heavy.add(zid)
+    penalty = 0.0
+    for z in zones:
+        if z.get("tier") != "proximity":
+            continue
+        line = sub_polyline(by_id[z["edge"]]["points"], z["from_mm"], z["to_mm"])
+        penalty += max(0.0, 1.0 - polyline_distance(joined, line) / PROXIMITY_SCALE_MM)
+    return RouteCosts(length_mm(joined), tmax, tsum, r_min, len(heavy), penalty)

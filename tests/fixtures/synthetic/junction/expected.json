@@ -34,9 +34,12 @@
    "edges": [
     "e0"
    ],
+   "heavy_crossings": 0,
    "id": "parent-only",
    "junction_deg": [],
    "notes": "One straight edge: no turning.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 8.0,
    "reversed": [
     false
    ],
@@ -49,11 +52,14 @@
     "e0",
     "e1"
    ],
+   "heavy_crossings": 0,
    "id": "parent-to-retro",
    "junction_deg": [
     120.0
    ],
    "notes": "Flagged turn: 120 deg takeoff; theta_max = theta_sum = 120.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 4.0,
    "reversed": [
     false,
     false
@@ -67,11 +73,14 @@
     "e0",
     "e2"
    ],
+   "heavy_crossings": 0,
    "id": "parent-to-side",
    "junction_deg": [
     45.0
    ],
    "notes": "45 deg takeoff, out of the R-S plane.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 5.0,
    "reversed": [
     false,
     false
@@ -85,11 +94,14 @@
     "e1",
     "e2"
    ],
+   "heavy_crossings": 0,
    "id": "retro-to-side",
    "junction_deg": [
     69.295189
    ],
    "notes": "e1 walked backwards into the branch point, then e2: delta = acos(-u1 . u2) = acos(cos(45) / 2).",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 4.0,
    "reversed": [
     true,
     false

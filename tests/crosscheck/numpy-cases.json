@@ -1,0 +1,80 @@
+{
+ "fixture-y": {
+  "edges": {
+   "e_aorta": {
+    "L_mm": 100.0,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 12.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e_left": {
+    "L_mm": 49.999944762,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e_right": {
+    "L_mm": 59.999979033,
+    "overlapping_zones": [
+     "plaque_r"
+    ],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 4.0,
+    "theta_max_deg": 0.000572923,
+    "theta_sum_deg": 0.002750177
+   }
+  },
+  "routes": {
+   "to-left": {
+    "L_mm": 149.999944762,
+    "edges": [
+     "e_aorta",
+     "e_left"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     false,
+     false
+    ],
+    "theta_max_deg": 45.0,
+    "theta_sum_deg": 45.000015289
+   },
+   "to-right": {
+    "L_mm": 159.999979033,
+    "edges": [
+     "e_aorta",
+     "e_right"
+    ],
+    "heavy_crossings": 1,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 4.0,
+    "reversed": [
+     false,
+     false
+    ],
+    "theta_max_deg": 30.000154797,
+    "theta_sum_deg": 30.002184638
+   },
+   "trunk": {
+    "L_mm": 100.0,
+    "edges": [
+     "e_aorta"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 12.0,
+    "reversed": [
+     false
+    ],
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  }
+ }
+}
