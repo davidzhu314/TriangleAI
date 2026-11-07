@@ -81,8 +81,9 @@ describe('loadCase on fixture-y', () => {
 
   it('lists bundled cases from index.json', async () => {
     const list = await listBundledCases('/cases/', diskFetch);
-    expect(list.map((x) => x.id)).toEqual(['fixture-y']);
-    expect(loaded(await loadCase(list[0]!.source, { fetch: diskFetch })).id).toBe('fixture-y');
+    expect(list.map((x) => x.id)).toEqual(['low-tort', 'type-iii', 'fixture-y']);
+    const fixture = list.find((x) => x.id === 'fixture-y')!;
+    expect(loaded(await loadCase(fixture.source, { fetch: diskFetch })).id).toBe('fixture-y');
   });
 
   it('rejects a package with a missing file or bad JSON', async () => {

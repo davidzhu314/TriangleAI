@@ -79,3 +79,14 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Axes** "head up" means the targets' mean S is not below the entries' mean S; otherwise a flip of S is offered.
   - **Physics** allows a case only when it is a CathSim phantom (`source.kind` `cathsim`, known phantom id) served by the physics process (`origin` `physics`). A case that claims physics any other way gets a Planning only warning. Cases that never claimed physics get `planningOnly: true` and no message.
 - 2026-11-07 · David · **Decimation is vertex clustering** on one grid shared by all vessel meshes, with the cell size bisected to just under the target. It is deterministic and has no dependency. It is cruder than quadric simplification, which we can switch to if real CT meshes look poor. Output keeps node names and transforms, recomputes normals and flattens the node hierarchy. Compressed GLBs (any `extensionsRequired`) cannot be decimated, and the warning says so.
+- 2026-11-07 · David · **D6-min: bovine is not implemented yet.** `generateArch` takes `bovine` but refuses `true`, and both committed cases are non-bovine. D6 adds the shared BCA–LCCA origin for the ladder's bovine variant.
+- 2026-11-07 · David · **D6-min: the Type III 120° turn is in a tortuous right iliac, not at the arch takeoff.** V3 builds its frontier only from safe routes, and its sharpest preset limit is 110° (soft angled, illustrative). A 120° brachiocephalic takeoff would make every femoral route to the right carotid unsafe and leave only right-arm routes, and a vessel tree gives at most two of those. So in `type-iii` (seed 251):
+  - **Brachiocephalic takeoff:** steep but passable at 97.5°. It needs the soft angled wire; standard J (80°) fails.
+  - **Right femoral route:** the scenario's tortuous right iliac gives it a 120.1° turn, flagged as too sharp for every preset.
+  - **Frontier:** right radial, left radial and left femoral. They come from extra entries (`fem_l`, `rad_r`, `rad_l`) with no anastomosis, and V3 on `lane/vaibhav` gives exactly these three.
+- 2026-11-07 · David · **D6-min generator** (`tools/generator/`). Each vessel is a centripetal Catmull–Rom spline through control points. Branches start at a point on the parent spline and share that node, and centerlines are resampled about 1 mm apart from the splines.
+  - **Determinism:** arithmetic and `Math.sqrt` only, plus the mulberry32 PRNG. Coordinates are rounded to 4 decimals.
+  - **Arch type** sets how high the arch rises and where the origins sit along it.
+  - **Tortuosity:** seeded offsets on interior control points, scaled by `tortuosity` and a per-vessel weight. `type-iii` weights the right iliac 1.6 and the left 0.4.
+  - **Absent entries:** a branch with no entry becomes a short stub ending at an `end` node.
+  - **Catalog:** `tools/catalog.ts` owns `client/public/cases/index.json` in ladder order (low-tort, type-iii, fixture-y). Each builder writes only its own folder.
