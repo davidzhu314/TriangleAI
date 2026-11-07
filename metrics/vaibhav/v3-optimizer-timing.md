@@ -1,6 +1,6 @@
 # V3 — optimizer and re-rank timing
 
-Written by `UPDATE_METRICS=1 pnpm exec vitest run client/src/optimize/rank.test.ts`. The same test asserts re-rank p95 < 16 ms and typical optimize p95 < 50 ms (spec §4.5, §4.9) on every CI run.
+Written by `UPDATE_METRICS=1 pnpm exec vitest run client/src/optimize/rank.test.ts`. The same test asserts re-rank p95 < 16 ms and typical optimize median < 50 ms (spec §4.5, §4.9) on every CI run.
 
 Machine: win32 x64, Node v26.10.0. Main thread, after a warm-up. Optimize is a cold call each time (fresh enumerator; graph prebuilt), so it includes path enumeration and every route's measures.
 
