@@ -8,6 +8,7 @@
  * Producer and consumer: David (physics/ server and client/src/wire/physics*).
  */
 import type { Vec3 } from './events';
+import type { WirePresetId } from './optimizer';
 
 /** WebSocket path on the physics process. */
 export const PHYSICS_WS_PATH = '/wire';
@@ -31,7 +32,7 @@ export interface PhysicsStartMessage {
   phantom: PhantomId;
   target: PhantomTargetId;
   /** Wire preset id, e.g. "standard_j" (presets are defined in optimizer.ts, spec §4.3). */
-  preset: string;
+  preset: WirePresetId;
 }
 
 export interface PhysicsControlMessage {

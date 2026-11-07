@@ -7,8 +7,9 @@
  *
  * Producers: rail and physics/replay sources. Consumer: Vaibhav's scoring.
  */
+import type { WirePresetId } from './optimizer';
 
-/** A point or vector in metres, Y-up. */
+/** A 3D point [x, y, z]. After load: metres, Y-up. Stored case files: mm, RAS (see case.ts). */
 export type Vec3 = [number, number, number];
 
 export const EVENT_LOG_SCHEMA = 'threadsim.eventlog/1';
@@ -110,7 +111,7 @@ export interface EventLog {
   caseId: string;
   entryId: string;
   targetId: string;
-  presetId: string;
+  presetId: WirePresetId;
   /** Planned path, entry to target, as centerline edge ids. */
   path: string[];
   /** Sample rate the samples were written at; EVENT_SAMPLE_HZ. */
