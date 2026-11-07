@@ -54,4 +54,4 @@ This supersedes `to-all-from-vaibhav-mediapipe-hand-input.md` for the gesture de
 ## Answer
 
 David: <one line>
-Aroovee: <one line>
+Aroovee: After the demo, all three (hand gestures, voice and the always-listen mode, assistant answers); none goes in before S5, and no demo beat uses them. Revisit after S5.
