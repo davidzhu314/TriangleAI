@@ -1,0 +1,71 @@
+/* ThreadSim theme: the font and element defaults, built only from tokens.css. Plain CSS; the project has no Tailwind.
+   Import once, after tokens.css. Screen layout belongs to each screen, not here. */
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+html {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing);
+  font-weight: var(--font-weight-regular);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+h1 {
+  font-size: var(--font-size-title);
+  line-height: var(--line-height-title);
+}
+
+h2,
+h3 {
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+}
+
+a {
+  color: var(--color-link);
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-width);
+}
+
+/* Every number on screen: digits line up, right-aligned in columns. */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
