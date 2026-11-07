@@ -18,7 +18,7 @@ export interface HandSpec {
   handedness?: 'Left' | 'Right';
   /** 0 straight … 1 fully curled. Default 0 each. */
   flex?: Partial<Record<FingerName, number>>;
-  /** 'out' (thumb up), 'folded' (across the palm), or a pinch: thumb tip this far from the index tip, ÷ palm size. */
+  /** 'out' (thumb up), 'folded' (across the palm), or a pinch: the value `pinchRatio` should read (2D thumb-to-index distance). */
   thumb?: 'out' | 'folded' | { pinch: number };
   /** Twist, clockwise as the user sees it, degrees. */
   rollDeg?: number;
@@ -76,8 +76,13 @@ export function syntheticHand(spec: HandSpec = {}): HandObservation {
   let tip: V;
   const thumb = spec.thumb ?? 'out';
   if (thumb === 'out') tip = add(mul(F, 0.04), mul(U, 0.09));
-  else if (thumb === 'folded') tip = add(mul(F, 0.07), mul(U, 0.015), mul(S, 0.02));
-  else tip = add(pts[8]!, mul(U, thumb.pinch * palm));
+  else if (thumb === 'folded') tip = add(mul(F, 0.075), mul(U, 0.02), mul(S, 0.008)); // tucked against the index knuckle
+  else {
+    // place the thumb so the 2D pinch ratio (as pinchRatio measures it, before roll) is exactly `pinch`
+    const xy = (a: V) => Math.hypot(a[0], a[1]);
+    const scale2d = Math.max(xy(pts[9]!), xy(add(pts[17]!, mul(pts[5]!, -1))));
+    tip = add(pts[8]!, mul(U, thumb.pinch * scale2d));
+  }
   pts[1] = cmc;
   for (let j = 2; j <= 4; j++) pts[j] = add(cmc, mul(add(tip, mul(cmc, -1)), (j - 1) / 3));
 
@@ -132,7 +137,7 @@ export const frame = (tMs: number, ...hands: HandObservation[]): HandFrame => ({
 export const gun = (curl = 0.42, rollDeg = 0, extra: HandSpec = {}): HandObservation =>
   syntheticHand({ flex: { index: curl, middle: curl, ring: 1, pinky: 1 }, thumb: 'out', rollDeg, ...extra });
 
-/** Point pose; `pinch` sets the thumb-to-index distance ÷ palm size (default: thumb folded). */
+/** Point pose; `pinch` sets the 2D pinch ratio (default: thumb folded). */
 export const point = (extra: HandSpec = {}, pinch?: number): HandObservation =>
   syntheticHand({ flex: { index: 0, middle: 1, ring: 1, pinky: 1 }, thumb: pinch === undefined ? 'folded' : { pinch }, ...extra });
 

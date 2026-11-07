@@ -203,8 +203,8 @@ describe('5. point and pinch, mirroring, and which hand drives', () => {
     expect(p.at(-1)!.pointer!.x).toBeGreaterThan(before.x + 0.05);
   });
 
-  it('pinch ratio is the thumb-to-index distance over palm size', () => {
-    expect(pinchRatio(point({}, 0.1).world)).toBeCloseTo(0.1, 6);
+  it('pinch ratio is the 2D thumb-to-index distance over the larger of palm length and knuckle width', () => {
+    expect(pinchRatio(point({}, 0.1).image)).toBeCloseTo(0.1, 6);
   });
 
   it('mirroring flips x but keeps MediaPipe’s real-hand label; swapHandedness swaps it', () => {

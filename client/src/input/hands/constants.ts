@@ -20,20 +20,23 @@ export interface GunLimits {
 }
 
 export const GUN: Readonly<{ enter: GunLimits; stay: GunLimits }> = {
-  enter: { gripCurlMin: 0.5, thumbUpMin: 0.45, barrelGapMaxDeg: 25 },
-  stay: { gripCurlMin: 0.35, thumbUpMin: 0.3, barrelGapMaxDeg: 40 },
+  enter: { gripCurlMin: 0.5, thumbUpMin: 0.4, barrelGapMaxDeg: 30 },
+  // tuned on a real clip: twisting and aiming loosen ring and pinky to 0.2–0.3, open the barrel to
+  // ~53° and lower the thumb to ~0.25 at a 90° twist
+  stay: { gripCurlMin: 0.2, thumbUpMin: 0.2, barrelGapMaxDeg: 55 },
 };
 
 export interface PointLimits {
-  /** Index flexion must be below this (extended). */
+  /** Index flexion must be at most this (extended). Not checked while pinching at the STAY level. */
   indexCurlMax: number;
   /** Middle, ring and pinky flexion must be above this (curled). */
   othersCurlMin: number;
 }
 
 export const POINT: Readonly<{ enter: PointLimits; stay: PointLimits }> = {
-  enter: { indexCurlMax: 0.3, othersCurlMin: 0.5 },
-  stay: { indexCurlMax: 0.45, othersCurlMin: 0.35 },
+  // a real pointing index reads ~0.34 curl, and ~0.5 while pinching (it bends to meet the thumb)
+  enter: { indexCurlMax: 0.45, othersCurlMin: 0.45 },
+  stay: { indexCurlMax: 0.6, othersCurlMin: 0.3 },
 };
 
 /**
@@ -66,7 +69,7 @@ export const DEBOUNCE_MS = 150;
  * drops, ms (one noisy frame is not a release). Lost tracking, a low score or a dropped thumb
  * release at once.
  */
-export const RELEASE_GRACE_MS = 150;
+export const RELEASE_GRACE_MS = 250;
 /** Hands scored below this are treated as lost. */
 export const MIN_SCORE = 0.6;
 

@@ -6,7 +6,7 @@
  * from the camera (toward the user).
  */
 
-import { FULL_CURL_DEG, GUN, POINT, PULL_ABOVE, PULL_FULL_AT, PUSH_BELOW, PUSH_FULL_AT, TWIST_DEAD_DEG, TWIST_FULL_DEG } from './constants';
+import { FULL_CURL_DEG, GUN, PINCH_EXIT, POINT, PULL_ABOVE, PULL_FULL_AT, PUSH_BELOW, PUSH_FULL_AT, TWIST_DEAD_DEG, TWIST_FULL_DEG } from './constants';
 import { FINGER_MCP, LM, type Finger, type GestureConfig, type HandObservation, type Landmark } from './types';
 
 type V = [number, number, number];
@@ -103,11 +103,18 @@ export function gunChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): P
   ];
 }
 
-/** The point pose, check by check: index extended; middle, ring and pinky curled. The thumb is free (it pinches). */
-export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): PoseCheck[] {
+/**
+ * The point pose, check by check: index extended; middle, ring and pinky curled. The thumb is free
+ * (it pinches). While keeping the pose, the index check is waived when `pinch` (pinchRatio of the
+ * image landmarks) says the thumb is at the fingertip: a real index bends to meet the thumb, and that
+ * must not drop the pose mid-pinch.
+ */
+export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter', pinch = Infinity): PoseCheck[] {
   const lim = POINT[level];
+  const index = atMost('index straight', flexion(w, 'index'), lim.indexCurlMax);
+  if (level === 'stay' && !index.ok && pinch < PINCH_EXIT) index.ok = true;
   return [
-    atMost('index straight', flexion(w, 'index'), lim.indexCurlMax),
+    index,
     above('middle curl', flexion(w, 'middle'), lim.othersCurlMin),
     above('ring curl', flexion(w, 'ring'), lim.othersCurlMin),
     above('pinky curl', flexion(w, 'pinky'), lim.othersCurlMin),
@@ -116,7 +123,7 @@ export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter'):
 
 export const allOk = (checks: readonly PoseCheck[]): boolean => checks.every((c) => c.ok);
 export const isGun = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(gunChecks(w, level));
-export const isPoint = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(pointChecks(w, level));
+export const isPoint = (w: readonly Landmark[], level: PoseLevel = 'enter', pinch = Infinity): boolean => allOk(pointChecks(w, level, pinch));
 /** The thumb is still up enough to keep the gun (failing this releases at once). */
 export const thumbStillUp = (w: readonly Landmark[]): boolean => thumbUp(w) > GUN.stay.thumbUpMin;
 
@@ -159,9 +166,17 @@ export function rotateFromTwist(deg: number): number {
   return Math.sign(deg) * clamp((m - TWIST_DEAD_DEG) / (TWIST_FULL_DEG - TWIST_DEAD_DEG), 0, 1);
 }
 
-/** Pinch: thumb tip to index tip ÷ palm size. */
-export function pinchRatio(w: readonly Landmark[]): number {
-  return norm(sub(v(w[LM.THUMB_TIP]!), v(w[LM.INDEX_TIP]!))) / palmSize(w);
+/**
+ * Pinch, on IMAGE landmarks: the 2D thumb-tip to index-tip distance, ÷ the larger of the 2D palm length
+ * (wrist → middle MCP) and the 2D knuckle width (index MCP → pinky MCP). 2D, because the tracker's depth
+ * is poorest exactly when the thumb tip hides behind the fingertip: on a real clip the 3D distance saw
+ * 1 of 8 pinches, this saw all 8. The larger of two normalisers stays steady when the hand points at
+ * the camera (the palm length foreshortens, the knuckle width doesn't).
+ */
+export function pinchRatio(image: readonly Landmark[]): number {
+  const d2 = (a: number, b: number) => Math.hypot(image[a]!.x - image[b]!.x, image[a]!.y - image[b]!.y);
+  const scale = Math.max(d2(LM.WRIST, LM.MIDDLE_MCP), d2(LM.INDEX_MCP, LM.PINKY_MCP));
+  return scale > 0 ? d2(LM.THUMB_TIP, LM.INDEX_TIP) / scale : Infinity;
 }
 
 export type Vec = V;

@@ -97,7 +97,7 @@ export function createGestureMachine(config: GestureConfig): GestureMachine {
     }
 
     const w = hand.world;
-    const pinch = pinchRatio(w);
+    const pinch = pinchRatio(hand.image);
     let enteredPinch = false;
     if (!pinched && pinch < PINCH_ENTER) {
       pinched = true;
@@ -109,7 +109,7 @@ export function createGestureMachine(config: GestureConfig): GestureMachine {
 
     // keep an engaged pose at the STAY level, with a grace period; a dropped thumb releases at once
     if (status === 'gun' || status === 'point') {
-      const holds = status === 'gun' ? isGun(w, 'stay') : isPoint(w, 'stay');
+      const holds = status === 'gun' ? isGun(w, 'stay') : isPoint(w, 'stay', pinch);
       if (holds) brokenSinceMs = null;
       else brokenSinceMs ??= t;
       const thumbDropped = status === 'gun' && !thumbStillUp(w);
