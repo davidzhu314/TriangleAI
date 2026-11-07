@@ -8,4 +8,4 @@ Meanwhile: nothing else on main depends on it. The flip has to land together wit
 
 ## Answer
 
-<Vaibhav writes one line here>
+Human (for the team): approved David making the flip on lane/david so the retune can merge; done in PR #23 (it.fails → it, comment updated, DRIVABILITY_REQUEST constant removed).
