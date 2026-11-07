@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MEASURE_LOWER_IS_BETTER, type CostVector, type Frontier, type MeasureKey, type NoSafeRoute } from '../contracts';
 import { loadFixtureY, readFixtureY } from './fixture-y.testutil';
 import { lengthMm, routeTurningMeasures, zoneOverlapsEdge } from './measures';
-import { buildMockLoadedCase } from './mock-case';
+import { buildTestLoadedCase } from './case-builder.testutil';
 import { mockOptimize, mockOptimizeSync, mockRouteId } from './mock';
 
 describe('mock LoadedCase from fixture-y', () => {
@@ -30,7 +30,7 @@ describe('mock LoadedCase from fixture-y', () => {
   it('marks a target unreachable when its node is cut off', () => {
     const { caseJson, centerlines } = readFixtureY();
     const cut = { ...centerlines, edges: centerlines.edges.filter((e) => e.id !== 'e_right') };
-    const t = buildMockLoadedCase(caseJson, cut).targets.find((x) => x.id === 'right_branch')!;
+    const t = buildTestLoadedCase(caseJson, cut).targets.find((x) => x.id === 'right_branch')!;
     expect(t.reachable).toBe(false);
   });
 });
