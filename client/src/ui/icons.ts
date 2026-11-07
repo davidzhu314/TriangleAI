@@ -2,6 +2,11 @@
  * The A1 icon set, inlined so currentColor and the theme reach inside (DESIGN.md: Iconography).
  * Every icon is decorative and sits beside its text label; never use one alone.
  */
+import backOut from '../assets/icons/back-out.svg?raw';
+import forceSpike from '../assets/icons/force-spike.svg?raw';
+import prolapse from '../assets/icons/prolapse.svg?raw';
+import star from '../assets/icons/star.svg?raw';
+import wrongBranch from '../assets/icons/wrong-branch.svg?raw';
 import badgePhysics from '../assets/icons/badge-physics.svg?raw';
 import badgePlanningOnly from '../assets/icons/badge-planning-only.svg?raw';
 import contrastPuff from '../assets/icons/contrast-puff.svg?raw';
@@ -22,6 +27,11 @@ import physicsOffline from '../assets/empty/physics-offline.svg?raw';
 import { h } from './dom';
 
 const ICONS = {
+  'back-out': backOut,
+  'force-spike': forceSpike,
+  prolapse,
+  star,
+  'wrong-branch': wrongBranch,
   'badge-physics': badgePhysics,
   'badge-planning-only': badgePlanningOnly,
   'contrast-puff': contrastPuff,

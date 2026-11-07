@@ -50,6 +50,19 @@ export const FORMULA_TEXT: Partial<Record<FormulaRef, string>> = {
   'measure.sim_peak_force': 'Peak wall force in the arch segment, from pre-recorded runs (spec §4.6).',
   'measure.sim_success_rate': 'Share of pre-recorded runs that reached the target (spec §4.6).',
   'rank.weighted': 'S = Σ w_k ĉ_k: each measure min–max normalised to 0–1 across the candidates, weighted by your sliders; lower is better (spec §4.8).',
+  // Results (A6): the plan checks run in order and the first that fails caps the score (spec §6.1).
+  'plan.feasible': 'First check: a route that breaks a hard constraint scores 0, and the broken constraint is named (spec §6.1).',
+  'plan.heavy_cap': 'Second check: crossing more heavy risk zones than the fewest any safe route needs caps the plan score at 40 (spec §6.1).',
+  'plan.frontier_cap': 'Third check: a route that another route beats on every measure is off the frontier, capped at 80 (spec §6.1).',
+  'plan.regret':
+    'PlanScore = 100 × (1 − min(1, R / R_max)). R = S(your route) − the lowest S, at your own weights; R_max is the regret of the worst feasible route (spec §6.1).',
+  'drive.fidelity': 'Mean distance from the driven tip path to the planned centerline: 0 mm scores 100, 10 mm or more scores 0 (spec §6.2).',
+  'drive.gentleness': 'Peak and cumulative wall force against a reference drive of the best frontier route (spec §6.2). Illustrative.',
+  'drive.radiation': 'Fluoro seconds against the route\'s estimated fluoro time; within the estimate scores 100 (spec §6.2). Illustrative.',
+  'drive.errors': '100, less 10 per wrong branch, 15 per prolapse and 5 per back-out, never below 0 (spec §6.2).',
+  'drive.total': 'The weighted sum of fidelity, gentleness, radiation and errors. Time is shown, never scored (spec §6.2).',
+  'result.stars': '1 star for reaching the target, 2 for plan ≥ 70 and drive ≥ 60, 3 for both ≥ 85 (spec §6.3).',
+  'result.fluoro_budget': 'Going over the case\'s fluoro allowance costs a star, never progress (spec §6.5). Illustrative.',
 };
 
 export interface Formatted {

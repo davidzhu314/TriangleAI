@@ -209,33 +209,6 @@
   font-size: var(--font-size-meta);
 }
 
-/* Number tooltips (DESIGN.md: Components): the formula, on hover and on keyboard focus. */
-.tip {
-  position: relative;
-  cursor: help;
-}
-
-.tip:hover::after,
-.tip:focus-visible::after {
-  content: attr(data-tip);
-  position: absolute;
-  right: 0;
-  top: 100%;
-  z-index: 6;
-  width: var(--size-palette);
-  margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-surface-inverse);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-control);
-  box-shadow: var(--shadow-float); /* taste-skill-ignore: a tooltip floats over the panel */
-  font-size: var(--font-size-meta);
-  line-height: var(--line-height-meta);
-  font-weight: var(--font-weight-regular);
-  text-align: left;
-  white-space: normal;
-}
-
 /* Tablet: route setup above, the view and the cost panel side by side. */
 @media (max-width: 1100px) {
   .plan-layout {

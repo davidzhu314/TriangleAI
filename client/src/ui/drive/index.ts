@@ -86,7 +86,7 @@ function noPlan(root: HTMLElement, key: string, c: LoadedCase): void {
   );
 }
 
-export async function renderDrive(root: HTMLElement, key: string): Promise<void> {
+export async function renderDrive(root: HTMLElement, key: string, getWireSource: WireFactory = selectTsWireSource): Promise<void> {
   disposeDrive();
   await loadBundled().catch(() => undefined);
   const e = entry(key);
@@ -94,7 +94,7 @@ export async function renderDrive(root: HTMLElement, key: string): Promise<void>
   if (!e || !c) return notFound(root, key);
   const plan = savedPlan(key);
   if (!plan) return noPlan(root, key, c);
-  mountDrive(root, { key, c, plan, getWireSource: selectTsWireSource });
+  mountDrive(root, { key, c, plan, getWireSource });
 }
 
 export interface DriveOptions {
@@ -230,7 +230,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   restart.addEventListener('click', () => void start());
   const exit = h('a', { class: 'btn btn-secondary', href: href.brief(key) }, 'Exit to case');
   const finish = h('button', { type: 'button', class: 'btn btn-primary', hidden: true, 'data-testid': 'finish-drive' }, 'Finish drive');
-  finish.addEventListener('click', () => void stopAndSave().then((saved) => saved && setBanner('Drive saved. The scores come with the Results screen.', 'neutral')));
+  finish.addEventListener('click', () =>
+    void stopAndSave().then((saved) => {
+      if (!saved) return;
+      setBanner('Drive saved. Opening Results.', 'neutral');
+      location.hash = href.results(key);
+    }),
+  );
   const actions = h('div', { class: 'hud-actions' }, restart, exit, finish);
 
   const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), overview.el, actions);

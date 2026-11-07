@@ -9,7 +9,7 @@
  */
 import { listBundledCases, loadCase, type CaseSource } from '../case';
 import type { CaseLoadResult, EventLog, LoadedCase, Stars, ValidationFix, Weights, WirePresetId } from '../contracts';
-import { bestStars, nextCase as nextOpenCase, type ProgressRecord } from '../score';
+import { adaptiveSuggestion, bestStars, nextCase as nextOpenCase, type ProgressRecord, type Suggestion } from '../score';
 
 export type CatalogOrigin = 'bundled' | 'imported' | 'physics';
 
@@ -98,14 +98,37 @@ const HISTORY_KEY = 'threadsim.progress.v1';
 /** Open mode: every case playable on a fresh browser (V6 handoff: the demo build uses 'open'). */
 const LADDER_MODE = 'open';
 
-/** Saved attempts. Nothing writes them until the Results screen (A6), so today this is empty. */
+/** A stored record V6 can read: anything else is dropped, so a bad entry can't make V6 throw while a screen renders. */
+function isRecord(r: unknown): r is ProgressRecord {
+  if (!r || typeof r !== 'object') return false;
+  const o = r as Record<string, unknown>;
+  return Number.isInteger(o.seq) && typeof o.caseId === 'string' && typeof o.reachedTarget === 'boolean' && [0, 1, 2, 3].includes(o.stars as number) && typeof o.fluoroOverBudgetS === 'number';
+}
+
+/** Saved attempts, one per scored Results screen (A6). Malformed or repeated-seq entries are skipped. */
 export function progressHistory(): ProgressRecord[] {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]');
-    return Array.isArray(parsed) ? (parsed as ProgressRecord[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    const seen = new Set<number>();
+    return parsed.filter((r): r is ProgressRecord => isRecord(r) && !seen.has(r.seq) && !!seen.add(r.seq));
   } catch {
     return [];
   }
+}
+
+/** Write the history back; storage blocked means progress lasts for this page only (V6: never throw on storage). */
+export function saveProgressHistory(history: readonly ProgressRecord[]): void {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    // private mode or full: the Results screen still shows the result
+  }
+}
+
+/** V6's adaptive suggestion over the catalogue, in the Library's mode. */
+export function suggestion(list: CatalogEntry[]): Suggestion {
+  return adaptiveSuggestion(uniqueCases(list), progressHistory(), LADDER_MODE);
 }
 
 /** Loaded cases with each case id once, catalogue order first (V6 throws on a repeated id; imports can share one). */
@@ -228,6 +251,8 @@ export function savedPlan(key: string): SavedPlan | undefined {
 export interface SavedDrive {
   plan: SavedPlan;
   log: EventLog;
+  /** Set once Results has recorded this drive in the progress history, so a refresh never records it twice. */
+  recordedSeq?: number;
 }
 
 const DRIVES_KEY = 'threadsim.drives.v1';
