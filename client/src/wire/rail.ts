@@ -34,7 +34,8 @@ import {
   type WirePreset,
   type WirePresetId,
 } from '../contracts';
-import { angleBetween, cumulativeArclength, cross, joinRoute, norm, pointAt, sub, windowedTurning, type Point3 } from '../optimize/measures';
+import { angleBetween, cumulativeArclength, joinRoute, norm, pointAt, sub, windowedTurning, type Point3 } from '../optimize/measures';
+import { BRANCH_ENTRY_DEG, headingAt, leavingDirection, pickBranch, rollFrame, tipDirection } from '../optimize/steerability';
 import { getPreset } from '../optimize/presets';
 
 // ---------------------------------------------------------------- constants (illustrative)
@@ -43,8 +44,8 @@ import { getPreset } from '../optimize/presets';
 export const RAIL_SPEED_MPS = 0.02;
 /** Roll rate at full rotate, rad/s. */
 export const RAIL_ROLL_RAD_PER_S = Math.PI;
-/** Spec §5.3: a branch is entered when the tip points within this of it. */
-export const BRANCH_ENTRY_DEG = 25;
+/** Spec §5.3: a branch is entered when the tip points within this of it (shared with the steerability check). */
+export { BRANCH_ENTRY_DEG, rollFrame, tipDirection };
 /** Spec §5.3: the force proxy grows only when tip and vessel directions differ by more than this. */
 export const WALL_ANGLE_DEG = 30;
 /** Force proxy gain, N per (m/s) of push at a 90° mismatch (and while stuck). */
@@ -173,39 +174,14 @@ const unit = (v: Point3): Point3 => {
   return n > EPS ? [v[0] / n, v[1] / n, v[2] / n] : [0, 0, 0];
 };
 
-/**
- * Roll reference for a heading t: the world +Z axis made perpendicular to t, or +X when t is
- * within ~25° of ±Z. φ = 0 points the tip toward it, and φ = π/2 toward t × n0.
- */
-export function rollFrame(t: Point3): { n0: Point3; b0: Point3 } {
-  const ref: Point3 = Math.abs(t[2]) > 0.9 ? [1, 0, 0] : [0, 0, 1];
-  const d = ref[0] * t[0] + ref[1] * t[1] + ref[2] * t[2];
-  const n0 = unit([ref[0] - d * t[0], ref[1] - d * t[1], ref[2] - d * t[2]]);
-  return { n0, b0: cross(t, n0) };
-}
-
-/** The tip direction: the heading t bent by the preset's tip angle, rolled by φ. */
-export function tipDirection(t: Point3, tipAngleDeg: number, rollRad: number): Point3 {
-  const a = tipAngleDeg / DEG;
-  const { n0, b0 } = rollFrame(t);
-  const c = Math.cos(rollRad);
-  const s = Math.sin(rollRad);
-  return unit([
-    Math.cos(a) * t[0] + Math.sin(a) * (c * n0[0] + s * b0[0]),
-    Math.cos(a) * t[1] + Math.sin(a) * (c * n0[1] + s * b0[1]),
-    Math.cos(a) * t[2] + Math.sin(a) * (c * n0[2] + s * b0[2]),
-  ]);
-}
-
 /** Heading over the last window before arc length s on a polyline. */
 function headingBefore(g: { points: Point3[]; cs: Float64Array }, s: number): Point3 {
-  return unit(sub(pointAt(g.points, s, g.cs), pointAt(g.points, s - RAIL_WINDOW_M, g.cs)));
+  return headingAt(g.points, g.cs, s, RAIL_WINDOW_M);
 }
 
 /** Direction of an edge leaving `node`: its first window. */
 function edgeDirection(o: OrientedEdge): Point3 {
-  const cs = cumulativeArclength(o.points);
-  return unit(sub(pointAt(o.points, RAIL_WINDOW_M, cs), o.points[0]!));
+  return leavingDirection(o.points, RAIL_WINDOW_M);
 }
 
 export interface BranchChoice {
@@ -224,17 +200,9 @@ export function chooseBranch(model: RailModel, walked: readonly WalkStep[], roll
   const cands = (model.adjacency.get(node) ?? []).filter((id) => id !== last.id).map((id) => oriented(model, id, node));
   if (cands.length === 0) return null;
   const t = headingBefore(g, g.lengthM);
-  const tip = tipDirection(t, model.preset.tipAngleDeg, rollRad);
   const dirs = cands.map(edgeDirection);
-  let best = 0;
-  for (let i = 1; i < cands.length; i++) if (angleBetween(tip, dirs[i]!) < angleBetween(tip, dirs[best]!) - EPS) best = i;
-  let how: BranchChoice['how'] = 'pointed';
-  if (angleBetween(tip, dirs[best]!) * DEG > BRANCH_ENTRY_DEG) {
-    how = 'continued';
-    best = 0;
-    for (let i = 1; i < cands.length; i++) if (angleBetween(t, dirs[i]!) < angleBetween(t, dirs[best]!) - EPS) best = i;
-  }
-  return { edge: cands[best]!.id, how, turnDeg: angleBetween(t, dirs[best]!) * DEG };
+  const { index, how } = pickBranch(t, model.preset.tipAngleDeg, rollRad, dirs)!;
+  return { edge: cands[index]!.id, how, turnDeg: angleBetween(t, dirs[index]!) * DEG };
 }
 
 // ---------------------------------------------------------------- state and step
