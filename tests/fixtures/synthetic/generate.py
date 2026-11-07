@@ -270,12 +270,91 @@ def bend():
     return case, cl, exp
 
 
+def junction():
+    """Parent edge up +S into a branch point; two straight children at known takeoff angles.
+
+    Takeoff (deflection) angle delta = angle between the wire's travel direction
+    at the end of one edge and at the start of the next.
+
+    Route-level closed form, for a corner between two straight legs that are each
+    at least w long: theta_w(s) peaks at exactly delta when s is at the corner, so
+    theta_max = delta. Within w of the corner, the forward chord direction is
+    d*u_in + (w - d)*u_out, a point moving uniformly along the segment from u_out
+    to u_in. Seen from the origin, its angle from the bisector is odd about the
+    midpoint, so the mean of theta_w over each side is delta/2. Then
+    (1/w) * integral theta_w ds = delta, and theta_sum = delta. Per-edge turning is
+    0 on every edge, since each edge is straight.
+    """
+    Lp, L1, L2 = 60, 50, 40
+    d1 = math.radians(120.0)  # e1: 120 deg takeoff in the R-S plane
+    d2 = math.radians(45.0)  # e2: 45 deg takeoff in the A-S plane
+    up = (0.0, 0.0, 1.0)
+    u1 = (math.sin(d1), 0.0, math.cos(d1))
+    u2 = (0.0, math.sin(d2), math.cos(d2))
+
+    P0 = [(0.0, 0.0, float(-Lp + i)) for i in range(Lp + 1)]
+    P1 = [tuple(c * i for c in u1) for i in range(L1 + 1)]
+    P2 = [tuple(c * i for c in u2) for i in range(L2 + 1)]
+    cl = {
+        "nodes": [
+            {"id": "n0", "pos": pts([P0[0]])[0], "kind": "entry"},
+            {"id": "n1", "pos": [0.0, 0.0, 0.0], "kind": "branch"},
+            {"id": "n2", "pos": pts([P1[-1]])[0], "kind": "target"},
+            {"id": "n3", "pos": pts([P2[-1]])[0], "kind": "target"},
+        ],
+        "edges": [
+            {"id": "e0", "from": "n0", "to": "n1", "vessel": "parent", "points": pts(P0), "radii_mm": [8.0] * (Lp + 1)},
+            {"id": "e1", "from": "n1", "to": "n2", "vessel": "retro", "points": pts(P1), "radii_mm": [4.0] * (L1 + 1)},
+            {"id": "e2", "from": "n1", "to": "n3", "vessel": "side", "points": pts(P2), "radii_mm": [5.0] * (L2 + 1)},
+        ],
+    }
+    edges = {
+        "e0": edge_expect(Lp, 0.0, 0.0, 8.0, None, [], notes="Straight parent along +S."),
+        "e1": edge_expect(L1, 0.0, 0.0, 4.0, None, [], notes="Straight child, 120 deg takeoff from +S toward +R."),
+        "e2": edge_expect(L2, 0.0, 0.0, 5.0, None, [], notes="Straight child, 45 deg takeoff from +S toward +A."),
+    }
+
+    def dot(a, b):
+        return sum(x * y for x, y in zip(a, b))
+
+    def corner(u_in, u_out):
+        return math.degrees(math.acos(max(-1.0, min(1.0, dot(u_in, u_out)))))
+
+    neg_u1 = tuple(-c for c in u1)
+    routes = [
+        {"id": "parent-only", "edges": ["e0"], "reversed": [False], "L_mm": Lp, "junction_deg": [],
+         "notes": "One straight edge: no turning."},
+        {"id": "parent-to-retro", "edges": ["e0", "e1"], "reversed": [False, False], "L_mm": Lp + L1,
+         "junction_deg": [corner(up, u1)], "notes": "Flagged turn: 120 deg takeoff; theta_max = theta_sum = 120."},
+        {"id": "parent-to-side", "edges": ["e0", "e2"], "reversed": [False, False], "L_mm": Lp + L2,
+         "junction_deg": [corner(up, u2)], "notes": "45 deg takeoff, out of the R-S plane."},
+        {"id": "retro-to-side", "edges": ["e1", "e2"], "reversed": [True, False], "L_mm": L1 + L2,
+         "junction_deg": [corner(neg_u1, u2)],
+         "notes": "e1 walked backwards into the branch point, then e2: delta = acos(-u1 . u2) = acos(cos(45) / 2)."},
+    ]
+    for r in routes:
+        r["L_mm"] = r6(r["L_mm"])
+        total = sum(r["junction_deg"])
+        r["theta_max_deg"] = r6(max(r["junction_deg"], default=0.0))
+        r["theta_sum_deg"] = r6(total)
+        r["junction_deg"] = [r6(x) for x in r["junction_deg"]]
+
+    case = case_json(
+        "synthetic-junction", "Synthetic: junction with 120 and 45 degree takeoffs",
+        [{"id": "in", "name": "Entry", "node": "n0"}],
+        [{"id": "retro", "name": "Retro child", "node": "n2"}, {"id": "side", "name": "Side child", "node": "n3"}],
+        [], ["parent", "retro", "side"],
+    )
+    return case, cl, edges, routes
+
+
 FIXTURES = {
     "straight": straight,
     "arc90": arc90,
     "helix": helix,
     "y-branch": y_branch,
     "bend": bend,
+    "junction": junction,
 }
 
 
@@ -287,14 +366,13 @@ def render() -> dict[str, str]:
     """Return {relative path: file text} for every fixture file."""
     out = {}
     for name, fn in FIXTURES.items():
-        case, cl, exp = fn()
+        case, cl, exp, *rest = fn()
         out[f"{name}/case.json"] = dump(case)
         out[f"{name}/centerlines.json"] = dump(cl)
-        out[f"{name}/expected.json"] = dump({
-            "window_mm": WINDOW_MM,
-            "tolerance": TOL,
-            "edges": exp,
-        })
+        expected = {"window_mm": WINDOW_MM, "tolerance": TOL, "edges": exp}
+        if rest:
+            expected["routes"] = rest[0]
+        out[f"{name}/expected.json"] = dump(expected)
     return out
 
 

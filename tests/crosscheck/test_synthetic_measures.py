@@ -169,3 +169,66 @@ def test_polyline_distance_point_segments():
     assert nm.polyline_distance([[5, 2, 0]], [[0, 0, 0], [10, 0, 0]]) == pytest.approx(2.0)
     # parallel segments
     assert nm.polyline_distance([[0, 0, 0], [10, 0, 0]], [[2, 7, 0], [8, 7, 0]]) == pytest.approx(7.0)
+
+
+# ---------------------------------------------------------------- routes
+
+
+def route_cases():
+    for name in FIXTURES:
+        _, _, exp = load(name)
+        for r in exp.get("routes", []):
+            yield pytest.param(name, r["id"], id=f"{name}:{r['id']}")
+
+
+def run_route(name, rid):
+    _, cl, exp = load(name)
+    r = next(x for x in exp["routes"] if x["id"] == rid)
+    by_id = {e["id"]: e for e in cl["edges"]}
+    polys = [by_id[e]["points"] for e in r["edges"]]
+    tmax, tsum = nm.route_turning_measures(polys, r["reversed"])
+    return r, nm.route_length_mm(polys, r["reversed"]), tmax, tsum
+
+
+def test_junction_fixture_has_routes():
+    assert "junction" in FIXTURES
+    assert any(r["junction_deg"] == [120.0] for r in load("junction")[2]["routes"])
+
+
+@pytest.mark.parametrize("name,rid", list(route_cases()))
+def test_route_measures(name, rid):
+    r, L, tmax, tsum = run_route(name, rid)
+    assert L == pytest.approx(r["L_mm"], abs=MM)
+    assert tmax == pytest.approx(r["theta_max_deg"], abs=DEG)
+    assert tsum == pytest.approx(r["theta_sum_deg"], abs=DEG)
+
+
+@pytest.mark.parametrize("step", [0.25, 0.3, 0.37, 0.5])
+def test_route_corner_peak_is_grid_independent(step):
+    """With the junction sampled, the 120 deg corner reads 120 deg for any grid step."""
+    _, cl, _ = load("junction")
+    by_id = {e["id"]: e for e in cl["edges"]}
+    tmax, tsum = nm.route_turning_measures([by_id["e0"]["points"], by_id["e1"]["points"]], [False, False], step_mm=step)
+    assert tmax == pytest.approx(120.0, abs=1e-6)
+    assert tsum == pytest.approx(120.0, abs=DEG)
+
+
+def test_route_of_one_edge_equals_edge_measures():
+    for name in FIXTURES:
+        _, cl, _ = load(name)
+        for e in cl["edges"]:
+            assert nm.route_turning_measures([e["points"]], [False]) == nm.turning_measures(e["points"])
+
+
+def test_join_route_gap_becomes_segment():
+    P, starts = nm.join_route([[[0, 0, 0], [0, 0, 10]], [[0, 1, 10], [0, 1, 20]]], [False, False])
+    assert len(P) == 4
+    assert starts == [pytest.approx(11.0)]
+    assert nm.length_mm(P) == pytest.approx(21.0)
+
+
+def test_numpy_dump_is_current():
+    """numpy-synthetic.json (read by the TypeScript tests) matches a fresh NumPy run."""
+    import dump_numpy
+
+    assert dump_numpy.OUT.read_text(encoding="utf-8") == dump_numpy.render(), "run python tests/crosscheck/dump_numpy.py"

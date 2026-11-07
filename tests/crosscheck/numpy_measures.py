@@ -67,12 +67,15 @@ def _angle_between(u: np.ndarray, v: np.ndarray) -> np.ndarray:
 # ------------------------------------------------------------ turning
 
 
-def windowed_turning(points, window_mm: float = WINDOW_MM, step_mm: float = SAMPLE_STEP_MM):
+def windowed_turning(points, window_mm: float = WINDOW_MM, step_mm: float = SAMPLE_STEP_MM, extra_s=()):
     """Turning angle over a sliding window, as a function of arc length.
 
     theta_w(s) = angle between chord p(s) - p(s - w) and chord p(s + w) - p(s),
     for s in [w, L - w], sampled every <= step_mm. If L < 2w the window shrinks
     to w = L/2 and there is one sample at s = L/2.
+
+    extra_s: additional arc lengths to sample (route junctions); those strictly
+    inside (w, L - w) are merged into the grid. Per-edge measures pass none.
 
     Returns (s, theta_rad, w_used).
     """
@@ -84,13 +87,16 @@ def windowed_turning(points, window_mm: float = WINDOW_MM, step_mm: float = SAMP
     span = L - 2.0 * w
     n = max(1, int(np.ceil(span / step_mm - 1e-9)))
     s = np.linspace(w, L - w, n + 1)
+    extra = np.asarray([x for x in extra_s if w < x < L - w], dtype=np.float64)
+    if len(extra):
+        s = np.unique(np.concatenate([s, extra]))
     a = point_at(P, s - w)
     b = point_at(P, s)
     c = point_at(P, s + w)
     return s, _angle_between(b - a, c - b), w
 
 
-def turning_measures(points, window_mm: float = WINDOW_MM, step_mm: float = SAMPLE_STEP_MM):
+def turning_measures(points, window_mm: float = WINDOW_MM, step_mm: float = SAMPLE_STEP_MM, extra_s=()):
     """(theta_max_deg, theta_sum_deg) over the 5 mm window.
 
     Theta_max = max_s theta_w(s).
@@ -99,7 +105,7 @@ def turning_measures(points, window_mm: float = WINDOW_MM, step_mm: float = SAMP
     [w, L - w]  (trapezoid rule), plus theta_w(w) + theta_w(L - w) for the two
     end windows, where theta_w is held constant. On an arc this is exactly L/R.
     """
-    s, th, w = windowed_turning(points, window_mm, step_mm)
+    s, th, w = windowed_turning(points, window_mm, step_mm, extra_s)
     if len(th) == 0:
         return 0.0, 0.0
     total = th[0] + th[-1]
@@ -241,3 +247,52 @@ def measure_case(centerlines: dict, case: dict) -> dict[str, EdgeMeasures]:
     edges_by_id = {e["id"]: e for e in centerlines["edges"]}
     zones = case.get("riskZones", [])
     return {eid: measure_edge(e, zones, edges_by_id) for eid, e in edges_by_id.items()}
+
+
+# ------------------------------------------------------------ routes
+
+
+JOIN_EPS_MM = 1e-6
+
+
+def join_route(polylines, reversed_flags):
+    """Join a route's edges, each walked forward or backward, into one polyline.
+
+    Each edge is reversed when its flag is set. A shared junction point (gap at
+    most JOIN_EPS_MM) appears once; a larger gap is kept as a straight connecting
+    segment. Returns (points, junction_s): junction_s is the arc length, along the
+    joined polyline, of the start of every edge after the first.
+    """
+    if len(polylines) != len(reversed_flags):
+        raise ValueError("one reversed flag per edge")
+    parts = []
+    for P, rev in zip(polylines, reversed_flags):
+        P = _as_points(P)
+        parts.append(P[::-1] if rev else P)
+    out = [parts[0]]
+    starts = []
+    for P in parts[1:]:
+        prev_end = out[-1][-1]
+        joined_len = length_mm(np.vstack(out))
+        if np.linalg.norm(P[0] - prev_end) <= JOIN_EPS_MM:
+            P = P[1:]
+            starts.append(joined_len)
+        else:
+            starts.append(joined_len + float(np.linalg.norm(P[0] - prev_end)))
+        out.append(P)
+    return np.vstack(out), starts
+
+
+def route_turning_measures(polylines, reversed_flags, window_mm: float = WINDOW_MM, step_mm: float = SAMPLE_STEP_MM):
+    """Route-level (theta_max_deg, theta_sum_deg).
+
+    The same 5 mm-window algorithm as the per-edge measures, run on the joined
+    route polyline, so windows span branch points. Junction arc lengths are added
+    to the sample grid, which makes a corner's peak exact wherever the grid falls.
+    """
+    P, starts = join_route(polylines, reversed_flags)
+    return turning_measures(P, window_mm, step_mm, extra_s=starts)
+
+
+def route_length_mm(polylines, reversed_flags) -> float:
+    return length_mm(join_route(polylines, reversed_flags)[0])
