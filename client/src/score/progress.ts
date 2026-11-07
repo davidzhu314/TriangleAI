@@ -19,6 +19,11 @@ export interface ProgressRecord {
   /** After the radiation budget (CaseResult.stars). */
   stars: Stars;
   fluoroOverBudgetS: number;
+  /**
+   * Assistant hints used during the attempt. Counted only: progression ignores it until the team
+   * decides whether a hint marks the attempt "assisted" (team/requests/to-all-from-vaibhav-hands-voice-assist.md).
+   */
+  hintsUsed?: number;
 }
 
 /** The fields of LoadedCase the ladder reads; a LoadedCase satisfies it. */

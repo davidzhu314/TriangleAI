@@ -17,6 +17,7 @@ export type { ForceReference } from './reference';
 export { LOW_TORTUOSITY_MAX } from './constants';
 export { ILLUSTRATIVE_CONSTANTS, type IllustrativeConstant } from './illustrative';
 export { replayTimeline, type ReplayMarker, type ReplayTimeline } from './replay';
+export { driveAssist, MAX_ASSIST_LINES, planAssistLine, type DriveAssist } from './live';
 export {
   adaptiveSuggestion,
   bestStars,
