@@ -28,7 +28,7 @@ Losing the hand, a low tracking score, or dropping the thumb releases control on
 ```ts
 import { createGestureMachine, mergeControl } from '../input';
 
-const hands = createGestureMachine({ dominant: 'Right', mirrored: true }); // raw front-camera frames
+const hands = createGestureMachine({ dominant: 'Right', mirrored: true }); // raw front-camera frames; labels kept as MediaPipe reports them
 // for each HandLandmarker result (VIDEO mode), with the video frame's timestamp:
 const g = hands.step({ tMs: video.currentTime * 1000, hands: toHandObservations(result) });
 ```

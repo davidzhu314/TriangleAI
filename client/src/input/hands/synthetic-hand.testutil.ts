@@ -4,7 +4,7 @@
  *
  * Built in the user's view (x right, y down, z toward the user), with the fingers pointing at the
  * screen (−z), thumb up, index knuckle on top. `cameraFrame: true` returns what an un-mirrored front
- * camera would report instead (x flipped, handedness label swapped), for `mirrored: true` configs.
+ * camera would report instead (x flipped; MediaPipe Tasks still labels the real hand), for `mirrored: true` configs.
  */
 
 import { FULL_CURL_DEG } from './constants';
@@ -86,7 +86,7 @@ export function syntheticHand(spec: HandSpec = {}): HandObservation {
   const obs: HandObservation = { handedness: hand, score: spec.score ?? 0.95, image, world };
   if (!spec.cameraFrame) return obs;
   return {
-    handedness: hand === 'Right' ? 'Left' : 'Right',
+    handedness: hand,
     score: obs.score,
     image: image.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z })),
     world: world.map((p) => ({ x: -p.x, y: p.y, z: p.z })),

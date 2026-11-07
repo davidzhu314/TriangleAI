@@ -14,7 +14,7 @@ export interface Landmark {
 }
 
 export interface HandObservation {
-  /** As MediaPipe reports it (it assumes a mirrored image; see GestureConfig.mirrored). */
+  /** As MediaPipe reports it. Tasks Vision 1.2.2 on a raw webcam frame reports the person's real hand (see GestureConfig.swapHandedness). */
   handedness: 'Left' | 'Right';
   /** 0..1 */
   score: number;
@@ -47,10 +47,16 @@ export interface GestureConfig {
   /** Which hand drives. */
   dominant: 'Right' | 'Left';
   /**
-   * True when frames come from an un-mirrored front camera (MediaPipe's default input): x and
-   * handedness are flipped once, in `toUserView`, so everything after works in the user's view.
+   * True when frames come from an un-mirrored front camera (MediaPipe's default input): x is
+   * flipped once, in `toUserView`, so the pointer and poses work in the user's (selfie) view.
    */
   mirrored: boolean;
+  /**
+   * Swap MediaPipe's Left/Right label. Default false: tested with Tasks Vision 1.2.2 on a raw webcam,
+   * the label already names the person's real hand (DECISIONS.md, "Hand labels"). Set it only for a
+   * MediaPipe build or camera path that reports the opposite hand.
+   */
+  swapHandedness?: boolean;
 }
 
 export const LM = {

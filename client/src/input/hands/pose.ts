@@ -36,14 +36,16 @@ const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x
 
 /**
  * Mirroring and handedness, in one place. An un-mirrored front-camera frame shows the user's right
- * hand on the image's left, and MediaPipe (which assumes a mirrored image) labels it 'Left'. With
- * `mirrored`, x is flipped in both landmark sets and the label is swapped, so everything after works
- * in the user's view.
+ * hand on the image's left: with `mirrored`, x is flipped in both landmark sets so everything after
+ * works in the user's (selfie) view. The Left/Right label is a separate question: MediaPipe Tasks
+ * Vision 1.2.2 already reports the person's real hand on raw webcam frames, so it is kept unless
+ * `swapHandedness` is set.
  */
-export function toUserView(h: HandObservation, config: Pick<GestureConfig, 'mirrored'>): HandObservation {
-  if (!config.mirrored) return h;
+export function toUserView(h: HandObservation, config: Pick<GestureConfig, 'mirrored' | 'swapHandedness'>): HandObservation {
+  const handedness = config.swapHandedness ? (h.handedness === 'Left' ? 'Right' : 'Left') : h.handedness;
+  if (!config.mirrored) return handedness === h.handedness ? h : { ...h, handedness };
   return {
-    handedness: h.handedness === 'Left' ? 'Right' : 'Left',
+    handedness,
     score: h.score,
     image: h.image.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z })),
     world: h.world.map((p) => ({ x: -p.x, y: p.y, z: p.z })),

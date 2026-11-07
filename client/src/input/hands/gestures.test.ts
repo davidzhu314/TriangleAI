@@ -67,12 +67,14 @@ describe('poses', () => {
     expect(pinchRatio(point({}, 0.1).world)).toBeCloseTo(0.1, 6);
   });
 
-  it('mirroring flips x and handedness, in one place', () => {
+  it('mirroring flips x but keeps MediaPipe’s real-hand label; swapHandedness swaps it, in the same place', () => {
     const user = gun(0.2, 20);
     const cam = gun(0.2, 20, { cameraFrame: true });
-    expect(cam.handedness).toBe('Left');
+    expect(cam.handedness).toBe('Right'); // the person's right hand, as Tasks Vision 1.2.2 reports it
     const back = toUserView(cam, { mirrored: true });
     expect(back.handedness).toBe('Right');
+    expect(toUserView(cam, { mirrored: true, swapHandedness: true }).handedness).toBe('Left');
+    expect(toUserView(user, { mirrored: false, swapHandedness: true }).handedness).toBe('Left');
     back.world.forEach((p, i) => expect(p.x).toBeCloseTo(user.world[i]!.x, 12));
     back.image.forEach((p, i) => expect(p.x).toBeCloseTo(user.image[i]!.x, 12));
   });
