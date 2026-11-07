@@ -7,7 +7,7 @@
  * The wire comes only from client/src/wire/select.ts (David). Until that file exists the glob below finds nothing,
  * the screen says driving isn't available yet, and the HUD shows dashes: never a made-up number.
  */
-import type { LoadedCase, Route, WireSource, WireState } from '../../contracts';
+import type { EventLog, LoadedCase, Route, WireFallback, WireSource, WireState } from '../../contracts';
 import { buildGraph, routeFor, type RouteGraph } from '../../optimize';
 import { ILLUSTRATIVE_CONSTANTS } from '../../score';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
@@ -18,13 +18,30 @@ import { labelled, type IconName } from '../icons';
 import { vesselName } from '../plan/warnings';
 import { href } from '../router';
 import { renderShell } from '../shell';
-import { entry, loadBundled, loadedCase, savedPlan, type SavedPlan } from '../store';
+import { entry, loadBundled, loadedCase, saveDrive, savedPlan, type SavedPlan } from '../store';
 import './drive.css';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 
 type SelectModule = { selectWireSource?: (c: LoadedCase) => Promise<WireSource> };
 /** Empty until David adds select.ts; Vite resolves the glob at build time, so a missing file is not an error. */
 const SELECT = import.meta.glob<SelectModule>('../../wire/select.ts');
+
+/** Where the Drive screen gets its wire. Null means no wire is available in this build. */
+export type WireFactory = (c: LoadedCase) => Promise<WireSource | null>;
+
+/** The app's only wire factory: David's select.ts. The screen never constructs a concrete source itself. */
+export const selectTsWireSource: WireFactory = async (c) => {
+  const load = SELECT['../../wire/select.ts'];
+  const select = load ? (await load()).selectWireSource : undefined;
+  return select ? select(c) : null;
+};
+
+/** Each fallback reason in words for the trainee (contracts/wire.ts WireFallbackReason). */
+export const FALLBACK_WORDS: Readonly<Record<WireFallback['reason'], string>> = {
+  socket_failed: 'the connection to the physics process failed',
+  socket_stalled: 'the physics process stopped answering',
+  server_unavailable: 'the physics process isn\'t running',
+};
 
 const FORCE_THRESHOLD = ILLUSTRATIVE_CONSTANTS.find((r) => r.id === 'rail.force_spike');
 
@@ -77,6 +94,20 @@ export async function renderDrive(root: HTMLElement, key: string): Promise<void>
   if (!e || !c) return notFound(root, key);
   const plan = savedPlan(key);
   if (!plan) return noPlan(root, key, c);
+  mountDrive(root, { key, c, plan, getWireSource: selectTsWireSource });
+}
+
+export interface DriveOptions {
+  key: string;
+  c: LoadedCase;
+  plan: SavedPlan;
+  /** The app passes selectTsWireSource; tests may inject a real or fake source here. */
+  getWireSource: WireFactory;
+}
+
+/** Mount the Drive screen for a case and a saved plan. */
+export function mountDrive(root: HTMLElement, { key, c, plan, getWireSource }: DriveOptions): void {
+  disposeDrive();
   const graph: RouteGraph = buildGraph(c);
   let planned: Route | null = null;
   try {
@@ -84,10 +115,10 @@ export async function renderDrive(root: HTMLElement, key: string): Promise<void>
   } catch {
     planned = null;
   }
-  mount(root, key, c, graph, plan, planned);
+  mount(root, key, c, graph, plan, planned, getWireSource);
 }
 
-function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph, plan: SavedPlan, planned: Route | null): void {
+function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph, plan: SavedPlan, planned: Route | null, getWireSource: WireFactory): void {
   const target = c.targets.find((t) => t.id === plan.targetId)?.name ?? plan.targetId;
   const expert = c.difficulty === 'expert';
   const live: Live = { state: null, fluoroUsedS: 0, lastT: null, mode: expert ? 'xray' : 'front' };
@@ -190,13 +221,17 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     }),
   );
   const banner = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-banner' });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch), banner);
+  /** The fallback notice stays up for the rest of the drive (DESIGN.md: notices never stop the drive). */
+  const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
   restart.addEventListener('click', () => void start());
   const exit = h('a', { class: 'btn btn-secondary', href: href.brief(key) }, 'Exit to case');
-  const actions = h('div', { class: 'hud-actions' }, restart, exit);
+  const finish = h('button', { type: 'button', class: 'btn btn-primary', hidden: true, 'data-testid': 'finish-drive' }, 'Finish drive');
+  finish.addEventListener('click', () => void stopAndSave().then((saved) => saved && setBanner('Drive saved. The scores come with the Results screen.', 'neutral')));
+  const actions = h('div', { class: 'hud-actions' }, restart, exit, finish);
 
   const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), overview.el, actions);
   const body = h('div', { class: 'drive' }, h('h1', { class: 'visually-hidden' }, `Drive: ${c.title}`), stage);
@@ -216,7 +251,10 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     }
     const fluoroOn = s ? s.fluoro : held.has('fluoro');
     view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], tip: s?.tip ?? null, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
-    modeLabel.textContent = `${live.mode === 'front' ? 'Front view' : 'X-ray'} · ${source ? `${source.mode} mode` : 'wire not connected'}`;
+    // The wire's own state says which mode is driving: after a fallback it reports rail.
+    const wireMode = s?.mode ?? fellBackTo ?? source?.mode;
+    modeLabel.textContent = `${live.mode === 'front' ? 'Front view' : 'X-ray'} · ${wireMode ? `${wireMode} mode` : 'wire not connected'}`;
+    finish.hidden = !(s?.atTarget && source);
     if (!s) return;
     vesselCell.textContent = vesselName(c, s.edge);
     const remaining = planned ? Math.max(0, planned.cost.lengthM - s.s) : null;
@@ -234,8 +272,10 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       forceBar.classList.toggle('meter-over', s.contactForceN > threshold);
     }
     overview.setWire(s.wire.map((p) => `${(p[0] * 1000).toFixed(2)},${(-p[1] * 1000).toFixed(2)}`).join(' '));
+    const offRoute = !plan.edges.includes(s.edge);
     if (s.atTarget) setBanner(`The wire reached the ${target}.`, 'neutral');
     else if (threshold !== undefined && s.contactForceN > threshold) setBanner('Wall force over the threshold. Ease off and rotate.', 'warning');
+    else if (offRoute) setBanner(`Off the planned route: the tip is in the ${vesselName(c, s.edge)}. Pull back and rotate toward the planned branch.`, 'warning');
     else if (budget !== undefined && live.fluoroUsedS > budget) setBanner('Fluoro is over this case\'s budget.', 'warning');
     else if (banner.classList.contains('drive-banner-warning')) setBanner('', null);
   }
@@ -284,33 +324,56 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
 
   let unsubscribe: (() => void)[] = [];
+  let fellBackTo: 'rail' | null = null;
+
+  /** End the drive and keep its EventLog with the plan and weights for Results (A6). Scores are not computed here. */
+  async function stopAndSave(): Promise<boolean> {
+    const running = source;
+    if (!running || !live.state) return false;
+    source = null;
+    unsubscribe.forEach((u) => u());
+    unsubscribe = [];
+    const log = await running.stop().catch(() => null);
+    if (!log) return false;
+    saveDrive(key, { plan, log });
+    sync();
+    return true;
+  }
+
   async function start(): Promise<void> {
     unsubscribe.forEach((u) => u());
     unsubscribe = [];
-    if (source) await source.stop().catch(() => undefined);
+    if (source) await source.stop().catch(() => undefined); // a restart discards the unfinished drive
+    source = null;
     live.state = null;
     live.fluoroUsedS = 0;
     live.lastT = null;
-    const load = SELECT['../../wire/select.ts'];
-    const select = load ? (await load()).selectWireSource : undefined;
-    if (!select) {
-      source = null;
+    fellBackTo = null;
+    notice.textContent = '';
+    notice.className = 'drive-banner';
+    const next = await getWireSource(c);
+    if (!next) {
       setBanner('Driving isn\'t available yet in this build. The view shows your planned route.', 'neutral');
       sync();
       return;
     }
-    source = await select(c);
+    source = next;
     unsubscribe.push(
-      source.onState((s) => {
+      next.onState((s) => {
         if (live.lastT !== null && s.fluoro) live.fluoroUsedS += Math.max(0, s.t - live.lastT);
         live.lastT = s.t;
         live.state = s;
         sync();
       }),
-      source.onFallback((f) => setBanner(`The physics wire stopped (${f.reason.replace('_', ' ')}), so the drive switched to rail mode.`, 'warning')),
+      next.onFallback((f) => {
+        fellBackTo = f.to;
+        notice.textContent = `The ${f.from} wire stopped because ${FALLBACK_WORDS[f.reason]}. The drive goes on in rail mode.`;
+        notice.className = 'drive-banner drive-banner-warning';
+        sync();
+      }),
     );
     setBanner('', null);
-    await source.start({ case: c, entryId: plan.entryId, targetId: plan.targetId, presetId: plan.presetId, path: plan.edges });
+    await next.start({ case: c, entryId: plan.entryId, targetId: plan.targetId, presetId: plan.presetId, path: plan.edges });
     sync();
   }
 
@@ -323,8 +386,8 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     window.removeEventListener('keydown', keydown);
     window.removeEventListener('keyup', keyup);
     window.removeEventListener('blur', blur);
+    void stopAndSave(); // leaving mid-drive keeps what was driven
     unsubscribe.forEach((u) => u());
-    if (source) void source.stop().catch(() => undefined);
     view.dispose();
   };
 }

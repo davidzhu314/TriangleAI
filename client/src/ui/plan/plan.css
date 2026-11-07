@@ -1,19 +1,6 @@
 /* Plan screen. Every value is a token; the only raw numbers are the tablet and phone widths
    (DESIGN.md: Responsive Behavior). */
 
-/* ---------------------------------------------------------------- focus layout: no global sidebar */
-.app-focus {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.app-focus .topbar {
-  padding-inline: var(--space-4) var(--size-sheet-inset);
-}
-
-.app-focus .sheet {
-  margin-left: var(--size-sheet-inset);
-}
-
 /* ---------------------------------------------------------------- palette | view well | cost panel */
 .plan-layout {
   display: grid;
@@ -268,16 +255,8 @@
 
 /* Phone: view on top, cost panel below, route setup in a bottom sheet. */
 @media (max-width: 640px) {
-  .app-focus .sheet {
-    margin-left: 0;
-  }
-
   .plan-layout {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .app-focus .topbar {
-    padding-inline: var(--space-4);
   }
 
   .plan-well {

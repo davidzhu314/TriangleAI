@@ -8,7 +8,7 @@
  *   package that happens to share its id (every broken test package is "fixture-y").
  */
 import { listBundledCases, loadCase, type CaseSource } from '../case';
-import type { CaseLoadResult, LoadedCase, Stars, ValidationFix, Weights, WirePresetId } from '../contracts';
+import type { CaseLoadResult, EventLog, LoadedCase, Stars, ValidationFix, Weights, WirePresetId } from '../contracts';
 import { bestStars, nextCase as nextOpenCase, type ProgressRecord } from '../score';
 
 export type CatalogOrigin = 'bundled' | 'imported' | 'physics';
@@ -221,4 +221,36 @@ const memoryPlans = new Map<string, SavedPlan>();
 
 export function savedPlan(key: string): SavedPlan | undefined {
   return readPlans()[key] ?? memoryPlans.get(key);
+}
+
+// ---------------------------------------------------------------- the drive handed from Drive to Results (A6)
+/** A finished or exited drive: its EventLog with the plan and weights it was driven on. Results scores it. */
+export interface SavedDrive {
+  plan: SavedPlan;
+  log: EventLog;
+}
+
+const DRIVES_KEY = 'threadsim.drives.v1';
+const memoryDrives = new Map<string, SavedDrive>();
+
+function readDrives(): Record<string, SavedDrive> {
+  try {
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(DRIVES_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, SavedDrive>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Keep the latest drive per case for this session; never sent anywhere. */
+export function saveDrive(key: string, drive: SavedDrive): void {
+  try {
+    sessionStorage.setItem(DRIVES_KEY, JSON.stringify({ ...readDrives(), [key]: drive }));
+  } catch {
+    memoryDrives.set(key, drive);
+  }
+}
+
+export function savedDrive(key: string): SavedDrive | undefined {
+  return readDrives()[key] ?? memoryDrives.get(key);
 }

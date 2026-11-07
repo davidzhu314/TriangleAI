@@ -271,6 +271,11 @@ h3 {
   transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
+/* The hidden attribute wins over the button display. */
+.btn[hidden] {
+  display: none;
+}
+
 .btn-primary {
   background: var(--color-primary);
   color: var(--color-primary-foreground);
@@ -598,6 +603,19 @@ a.case-row-title:hover {
   color: var(--color-text-muted);
 }
 
+/* ---------------------------------------------------------------- focus layout (Plan, Compare, Drive): no global sidebar */
+.app-focus {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-focus .topbar {
+  padding-inline: var(--space-4) var(--size-sheet-inset);
+}
+
+.app-focus .sheet {
+  margin-left: var(--size-sheet-inset);
+}
+
 /* ---------------------------------------------------------------- phone: the frame disappears */
 @media (max-width: 640px) {
   .app {
@@ -663,5 +681,13 @@ a.case-row-title:hover {
 
   .check {
     flex-wrap: wrap;
+  }
+
+  .app-focus .sheet {
+    margin-left: 0;
+  }
+
+  .app-focus .topbar {
+    padding-inline: var(--space-4);
   }
 }
