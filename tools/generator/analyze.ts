@@ -3,10 +3,11 @@
  * buildGraph + measureRoute (junction-aware 5 mm-window turning). Used for seed tuning and tests.
  */
 import { loadCase } from '../../client/src/case';
-import type { CaseLoadResult, CostVector, LoadedCase, RouteMeasures } from '../../client/src/contracts';
+import type { CaseLoadResult, FrontierRoute, LoadedCase, RouteMeasures } from '../../client/src/contracts';
 import { buildGraph } from '../../client/src/optimize/graph';
 import { measureRoute } from '../../client/src/optimize/measure-route';
-import { getPreset } from '../../client/src/optimize/presets';
+import { optimizeCase } from '../../client/src/optimize/optimizer';
+import { steerableAt, type Steerability } from '../../client/src/optimize/steerability';
 import { writeGlb } from '../lib/glb';
 import { stableStringify } from '../lib/stable-json';
 import type { GeneratedCase } from './arch';
@@ -17,10 +18,6 @@ export interface MeasuredRoute {
   edges: string[];
   measures: RouteMeasures;
 }
-
-/** The most permissive V3 preset (illustrative values): the seed search keeps routes it could take. */
-export const SOFT_ANGLED_MAX_TURN_DEG = getPreset('soft_angled').maxTurnDeg;
-export const MIN_VESSEL_DIAMETER_M = getPreset('soft_angled').minVesselDiameterM;
 
 export async function loadGenerated(g: GeneratedCase, withMesh = true): Promise<CaseLoadResult> {
   const enc = new TextEncoder();
@@ -72,30 +69,27 @@ export function measureAll(c: LoadedCase): MeasuredRoute[] {
   return out;
 }
 
-const LOWER_BETTER: (keyof CostVector)[] = ['lengthM', 'sharpestTurnDeg', 'totalTurningDeg', 'heavyCrossings', 'proximityPenalty', 'estFluoroS'];
-
-/** a dominates b: no worse on every measure and better on one (narrowest radius: higher is better). */
-export function dominates(a: CostVector, b: CostVector): boolean {
-  let better = false;
-  for (const k of LOWER_BETTER) {
-    const x = a[k] as number, y = b[k] as number;
-    if (x > y) return false;
-    if (x < y) better = true;
-  }
-  if (a.narrowestRadiusM < b.narrowestRadiusM) return false;
-  if (a.narrowestRadiusM > b.narrowestRadiusM) better = true;
-  return better;
+/** A V3 frontier route with its §5.3 steerability for its own preset. */
+export interface SteeredRoute {
+  route: FrontierRoute;
+  steer: Steerability;
+  /**
+   * Takeoff into each branch the tip has to be rolled into, degrees. Read from steerableAt with the
+   * stiff straight preset (0° tip), which reports every takeoff beyond 25° as a failure; branches
+   * the wire simply continues into are not listed.
+   */
+  takeoffs: { node: string; edge: string; deg: number }[];
 }
 
-/** Routes a soft angled wire could take with no heavy crossing (V3's "safe"), then the non-dominated ones. */
-export function safeFrontier(routes: MeasuredRoute[], target: string): MeasuredRoute[] {
-  const safe = routes.filter(
-    (r) =>
-      r.target === target &&
-      r.measures.cost.sharpestTurnDeg <= SOFT_ANGLED_MAX_TURN_DEG &&
-      2 * r.measures.cost.narrowestRadiusM >= MIN_VESSEL_DIAMETER_M &&
-      r.measures.cost.heavyCrossings === 0 &&
-      r.measures.violations.length === 0,
-  );
-  return safe.filter((r) => !safe.some((o) => o !== r && dominates(o.measures.cost, r.measures.cost)));
+/** V3's real frontier for one target, each route checked with steerableAt (spec §5.3). */
+export function frontierWithSteering(c: LoadedCase, targetId: string): SteeredRoute[] | null {
+  const graph = buildGraph(c);
+  const res = optimizeCase(graph, { caseId: c.id, targetId });
+  if (res.kind !== 'frontier') return null;
+  const startOf = (entryId: string) => c.entries.find((e) => e.id === entryId)!.node;
+  return res.routes.map((route) => ({
+    route,
+    steer: steerableAt(graph, route.edges, route.presetId, startOf(route.entryId)),
+    takeoffs: steerableAt(graph, route.edges, 'stiff_straight', startOf(route.entryId)).failures.map((f) => ({ node: f.node, edge: f.edge, deg: f.takeoffDeg })),
+  }));
 }

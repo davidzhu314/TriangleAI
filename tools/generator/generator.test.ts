@@ -15,7 +15,7 @@ import { AORTA_RADIUS_RANGE_MM, AORTA_VESSEL_ID, MESH_TRIANGLE_BUDGET } from '..
 import { buildGraph } from '../../client/src/optimize/graph';
 import { optimizeCase } from '../../client/src/optimize/optimizer';
 import { generateArch } from './arch';
-import { measureAll, safeFrontier, SOFT_ANGLED_MAX_TURN_DEG } from './analyze';
+import { frontierWithSteering, measureAll } from './analyze';
 import { buildGeneratedFiles, GENERATED_CASES } from './build';
 import { LOW_TORT, TYPE_III } from './cases';
 
@@ -148,47 +148,63 @@ describe.each(GENERATED_CASES.map((p) => [p.id, p] as const))('%s (semantic)', (
   });
 });
 
-describe('route tuning (V2 measureRoute, 5 mm window across junctions)', () => {
-  it('type-iii: the right femoral route to the right carotid has a turn of about 120° in the right iliac', async () => {
-    const routes = measureAll(await loadBundled('type-iii'));
-    const r = routes.find((x) => x.entry === 'fem_r' && x.target === 'rcca')!;
+/** Height of an origin below the top of the arch (the aorta's highest point), mm. */
+function originDropMm(c: LoadedCase, node: string): number {
+  const top = Math.max(...c.edges.filter((e) => e.vessel === AORTA_VESSEL_ID).flatMap((e) => e.points.map((q) => q[1])));
+  return (top - c.nodes.find((n) => n.id === node)!.pos[1]) * 1000;
+}
+
+describe('route tuning (V2 measureRoute, V3 optimizeCase, §5.3 steerableAt)', () => {
+  it('type-iii: the right femoral route to the right carotid has a turn of about 120° in the right iliac, flagged for every preset', async () => {
+    const c = await loadBundled('type-iii');
+    const r = measureAll(c).find((x) => x.entry === 'fem_r' && x.target === 'rcca')!;
     expect(r.measures.cost.sharpestTurnDeg).toBeGreaterThan(117);
     expect(r.measures.cost.sharpestTurnDeg).toBeLessThan(123);
     expect(r.measures.sharpestTurnEdge).toBe('e_r_iliac');
+    const res = optimizeCase(buildGraph(c), { caseId: 'type-iii', targetId: 'rcca' });
+    expect(res.kind).toBe('frontier');
+    if (res.kind !== 'frontier') return;
+    const femR = res.candidates.filter((x) => x.entryId === 'fem_r');
+    expect(new Set(femR.map((x) => x.presetId))).toEqual(new Set(['soft_angled', 'standard_j', 'stiff_straight']));
+    for (const x of femR) {
+      expect(x.feasible).toBe(false);
+      expect(x.violations).toContainEqual(expect.objectContaining({ kind: 'turn_too_sharp', edge: 'e_r_iliac' }));
+    }
   });
 
-  it('type-iii: at least three distinct safe routes to the right carotid, none dominated by another', async () => {
-    const frontier = safeFrontier(measureAll(await loadBundled('type-iii')), 'rcca');
-    expect(frontier.length).toBeGreaterThanOrEqual(3);
-    expect(new Set(frontier.map((f) => f.edges.join(','))).size).toBe(frontier.length);
-    expect(new Set(frontier.map((f) => JSON.stringify(f.measures.cost))).size).toBe(frontier.length);
-    expect(frontier.map((f) => f.entry).sort()).toEqual(['fem_l', 'rad_l', 'rad_r']);
-    for (const f of frontier) expect(f.measures.cost.sharpestTurnDeg).toBeLessThan(SOFT_ANGLED_MAX_TURN_DEG - 5);
+  it('type-iii: the V3 frontier to the right carotid keeps at least three geometrically distinct routes', async () => {
+    const f = frontierWithSteering(await loadBundled('type-iii'), 'rcca')!;
+    expect(f).not.toBeNull();
+    expect(new Set(f.map((x) => x.route.edges.join(','))).size).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each([
+    ['type-iii', 'rcca'],
+    ['type-iii', 'lcca'],
+    ['low-tort', 'rcca'],
+    ['low-tort', 'lcca'],
+  ])('%s → %s: every frontier route is steerable with its own preset (§5.3)', async (id, target) => {
+    const f = frontierWithSteering(await loadBundled(id), target)!;
+    expect(f).not.toBeNull();
+    expect(f.length).toBeGreaterThan(0);
+    for (const x of f) expect(x.steer.failures, `${x.route.entryId}·${x.route.presetId}`).toEqual([]);
+  });
+
+  it('low-tort: the soft angled route to the left carotid is on the frontier and steerable', async () => {
+    const f = frontierWithSteering(await loadBundled('low-tort'), 'lcca')!;
+    const soft = f.find((x) => x.route.presetId === 'soft_angled');
+    expect(soft?.steer.ok).toBe(true);
+  });
+
+  it('type-iii still sits its origins below the top of the arch, lower than low-tort', async () => {
+    const t3 = await loadBundled('type-iii');
+    const t1 = await loadBundled('low-tort');
+    expect(originDropMm(t3, 'n_bca_o')).toBeGreaterThan(8);
+    expect(originDropMm(t3, 'n_lcca_o')).toBeGreaterThan(2);
+    expect(originDropMm(t3, 'n_bca_o')).toBeGreaterThan(originDropMm(t1, 'n_bca_o') + 5);
   });
 
   it('low-tort: every route stays well under the sharp-turn flag', async () => {
     for (const r of measureAll(await loadBundled('low-tort'))) expect(r.measures.cost.sharpestTurnDeg, `${r.entry}->${r.target}`).toBeLessThan(90);
-  });
-
-  it('type-iii: the V3 optimizer frontier for the right carotid is those three routes; right femoral is flagged', async () => {
-    const res = optimizeCase(buildGraph(await loadBundled('type-iii')), { caseId: 'type-iii', targetId: 'rcca' });
-    expect(res.kind).toBe('frontier');
-    if (res.kind !== 'frontier') return;
-    expect(new Set(res.routes.map((r) => r.entryId))).toEqual(new Set(['fem_l', 'rad_r', 'rad_l']));
-    const femR = res.candidates.filter((r) => r.entryId === 'fem_r');
-    expect(femR.length).toBeGreaterThan(0);
-    for (const r of femR) {
-      expect(r.feasible).toBe(false);
-      expect(r.violations).toContainEqual(expect.objectContaining({ kind: 'turn_too_sharp', edge: 'e_r_iliac' }));
-    }
-  });
-
-  it('low-tort: the V3 optimizer finds a standard J route to each carotid', async () => {
-    const c = await loadBundled('low-tort');
-    for (const targetId of ['rcca', 'lcca']) {
-      const res = optimizeCase(buildGraph(c), { caseId: 'low-tort', targetId });
-      expect(res.kind).toBe('frontier');
-      if (res.kind === 'frontier') expect(res.routes.map((r) => r.presetId)).toContain('standard_j');
-    }
   });
 });

@@ -98,10 +98,19 @@ const TAKEOFF_LEG_MM = 6;
  * sits, as arc length from the apex (+ toward the root, − toward the descending aorta). Type III
  * rises higher and its origins slide down the limbs, so a femoral wire meets them at steeper angles.
  */
-const ARCH: Record<ArchType, { rise: number; lsca: number; lcca: number; bca: number }> = {
-  I: { rise: 28, lsca: -24, lcca: -10, bca: 10 },
-  II: { rise: 40, lsca: -22, lcca: -4, bca: 18 },
-  III: { rise: 55, lsca: -20, lcca: 2, bca: 20 },
+type TakeoffId = 'bca' | 'lcca' | 'l_arm';
+interface ArchShape {
+  rise: number;
+  lsca: number;
+  lcca: number;
+  bca: number;
+  /** Takeoff directions for this arch type (DECISIONS.md, "D6-min drivability retune"). */
+  dirs: Record<TakeoffId, Vec3>;
+}
+const ARCH: Record<ArchType, ArchShape> = {
+  I: { rise: 28, lsca: -24, lcca: -10, bca: 10, dirs: { bca: [0.62, 0.25, 0.75], lcca: [0.1, 0.05, 0.99], l_arm: [-0.85, -0.05, 0.52] } },
+  II: { rise: 40, lsca: -22, lcca: -4, bca: 18, dirs: { bca: [0.62, 0.25, 0.75], lcca: [-0.25, 0.05, 0.97], l_arm: [-0.85, -0.05, 0.52] } },
+  III: { rise: 55, lsca: -20, lcca: -12, bca: 20, dirs: { bca: [0.95, 0.2, 0.2], lcca: [-0.05, 0.05, 0.99], l_arm: [-0.95, -0.1, 0.15] } },
 };
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -121,14 +130,14 @@ interface BranchSpec {
 
 const mirror = (p: Vec3): Vec3 => [-p[0], p[1], p[2]];
 
-const ARM_PATH: Vec3[] = [[34, -2, -6], [62, 0, -24], [92, 8, -86], [118, 15, -170], [138, 24, -258]];
+const ARM_PATH: Vec3[] = [[30, -2, -16], [60, 0, -30], [92, 8, -86], [118, 15, -170], [138, 24, -258]];
 const ILIAC_PATH: Vec3[] = [[10, 2, -32], [20, 5, -64], [30, 8, -96], [40, 11, -128], [52, 14, -160], [66, 18, -192]];
 
 const BRANCHES = {
   bca: { vessel: 'bca', dir: [0.62, 0.25, 0.75], path: [[14, 6, 18], [24, 10, 30]] },
-  rcca: { vessel: 'rcca', dir: [0.1, 0.1, 1], path: [[8, 10, 50], [12, 12, 112]] },
+  rcca: { vessel: 'rcca', dir: [0.05, 0.1, 1], path: [[8, 10, 50], [12, 12, 112]] },
   lcca: { vessel: 'lcca', dir: [-0.25, 0.05, 0.97], path: [[-10, 4, 55], [-14, 6, 125]] },
-  r_arm: { vessel: 'r_subclavian', dir: [0.95, 0, -0.15], path: ARM_PATH, stub: 2 },
+  r_arm: { vessel: 'r_subclavian', dir: [0.85, 0, -0.5], path: ARM_PATH, stub: 2 },
   l_arm: { vessel: 'l_subclavian', dir: [-0.85, -0.05, 0.52], path: ARM_PATH.map(mirror), stub: 2 },
   r_iliac: { vessel: 'r_iliac', dir: [0.3, 0.05, -0.95], path: ILIAC_PATH, stub: 3 },
   l_iliac: { vessel: 'l_iliac', dir: [-0.3, 0.05, -0.95], path: ILIAC_PATH.map(mirror), stub: 3 },
@@ -228,11 +237,11 @@ export function generateArch(p: ArchParams): GeneratedCase {
 
   // Every branch draws from the generator in the same order whether or not it is a stub, so
   // adding an entry does not reshuffle the rest of the case.
-  branch(BRANCHES.bca, 'n_bca_o', 'n_bca_bif', 'branch', 'e_bca', true);
+  branch({ ...BRANCHES.bca, dir: arch.dirs.bca }, 'n_bca_o', 'n_bca_bif', 'branch', 'e_bca', true);
   branch(BRANCHES.rcca, 'n_bca_bif', 'n_rcca', p.targets.includes('rcca') ? 'target' : 'end', 'e_rcca', true);
   branch(BRANCHES.r_arm, 'n_bca_bif', has('rad_r') ? 'n_rad_r' : 'n_r_arm_end', has('rad_r') ? 'entry' : 'end', 'e_r_arm', has('rad_r'));
-  branch(BRANCHES.lcca, 'n_lcca_o', 'n_lcca', p.targets.includes('lcca') ? 'target' : 'end', 'e_lcca', true);
-  branch(BRANCHES.l_arm, 'n_lsca_o', has('rad_l') ? 'n_rad_l' : 'n_l_arm_end', has('rad_l') ? 'entry' : 'end', 'e_l_arm', has('rad_l'));
+  branch({ ...BRANCHES.lcca, dir: arch.dirs.lcca }, 'n_lcca_o', 'n_lcca', p.targets.includes('lcca') ? 'target' : 'end', 'e_lcca', true);
+  branch({ ...BRANCHES.l_arm, dir: arch.dirs.l_arm }, 'n_lsca_o', has('rad_l') ? 'n_rad_l' : 'n_l_arm_end', has('rad_l') ? 'entry' : 'end', 'e_l_arm', has('rad_l'));
   branch(BRANCHES.r_iliac, 'n_aortic_bif', has('fem_r') ? 'n_fem_r' : 'n_r_iliac_end', has('fem_r') ? 'entry' : 'end', 'e_r_iliac', has('fem_r'));
   branch(BRANCHES.l_iliac, 'n_aortic_bif', has('fem_l') ? 'n_fem_l' : 'n_l_iliac_end', has('fem_l') ? 'entry' : 'end', 'e_l_iliac', has('fem_l'));
 
