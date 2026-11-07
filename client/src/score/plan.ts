@@ -8,7 +8,7 @@
  * candidates − that min (DECISIONS.md, "Plan score as implemented").
  */
 
-import type { CostVector, Frontier, MeasureKey, OptimizeResult, PlanScore, Route, Weights } from '../contracts';
+import type { CostVector, Frontier, MeasureKey, NoSafeRoute, OptimizeResult, PlanScore, Route, Weights } from '../contracts';
 import { dominates, MEASURE_KEYS } from '../optimize/frontier';
 import { measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from '../optimize/rank';
 import { PLAN_CAPS } from './constants';
@@ -44,17 +44,28 @@ export function topContributor(
 }
 
 export function planScore(player: Route, optimized: OptimizeResult, weights: Weights): PlanScore {
-  if (optimized.kind === 'no_safe_route') {
-    return {
-      score: 0,
-      decidedBy: 'feasible',
-      cap: PLAN_CAPS.feasible,
-      violations: (player.violations.length > 0 ? player.violations : optimized.reasons).map((v) => ({ ...v })),
-      regret: 0,
-      regretMax: 0,
-    };
-  }
+  if (optimized.kind === 'no_safe_route') return noSafeRoutePlanScore(player, optimized);
   return frontierPlanScore(player, optimized, normaliseWeights(weights));
+}
+
+/**
+ * No frontier to compare against, so the §6.1 caps decide: an infeasible route scores 0; a feasible
+ * route over a heavy zone is capped at 40 (its regret part is 100, as there is nothing to regret
+ * against), with no safer route to name. A feasible route with no heavy crossing cannot occur here
+ * (it would be safe), so it falls back to 0 with the optimizer's reasons.
+ */
+function noSafeRoutePlanScore(player: Route, optimized: NoSafeRoute): PlanScore {
+  const base = { regret: 0, regretMax: 0 };
+  if (!player.feasible) {
+    return { ...base, score: 0, decidedBy: 'feasible', cap: PLAN_CAPS.feasible, violations: player.violations.map((v) => ({ ...v })) };
+  }
+  if (player.cost.heavyCrossings > 0) {
+    const p: PlanScore = { ...base, score: PLAN_CAPS.heavy_crossings, decidedBy: 'heavy_crossings', cap: PLAN_CAPS.heavy_crossings, violations: [] };
+    const zone = player.crossings.find((c) => c.tier === 'heavy');
+    if (zone) p.zoneCrossed = zone.zone;
+    return p;
+  }
+  return { ...base, score: 0, decidedBy: 'feasible', cap: PLAN_CAPS.feasible, violations: optimized.reasons.map((v) => ({ ...v })) };
 }
 
 function frontierPlanScore(player: Route, f: Frontier, w: Weights): PlanScore {

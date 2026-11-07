@@ -131,11 +131,23 @@ describe('plan score checks (§6.1)', () => {
     expect(planScore(A, F, { lengthM: 1 }).topContributor).toBeUndefined();
   });
 
-  it('no safe route: plan 0 with the route’s own violations, else the optimizer’s reasons', () => {
+  describe('no safe route (no frontier): the §6.1 caps still decide', () => {
     const none: NoSafeRoute = { kind: 'no_safe_route', caseId: 'x', targetId: 't', reasons: X.violations, crossings: [], suggestion: null };
-    expect(planScore(H, none, W)).toMatchObject({ score: 0, decidedBy: 'feasible', cap: 0, violations: X.violations, regret: 0, regretMax: 0 });
-    const own = mk('Y', {}, { feasible: false, violations: [{ kind: 'forbidden_zone', edge: 'Y', zone: 'z' }] });
-    expect(planScore(own, none, W).violations).toEqual(own.violations);
+
+    it('an infeasible route scores 0 with its own violations', () => {
+      const own = mk('Y', {}, { feasible: false, violations: [{ kind: 'forbidden_zone', edge: 'Y', zone: 'z' }] });
+      expect(planScore(own, none, W)).toMatchObject({ score: 0, decidedBy: 'feasible', cap: 0, violations: own.violations, regret: 0, regretMax: 0 });
+    });
+
+    it('a feasible route over a heavy zone is capped at 40, with no safer route to name', () => {
+      const p = planScore(H, none, W);
+      expect(p).toMatchObject({ score: 40, decidedBy: 'heavy_crossings', cap: 40, zoneCrossed: 'plaque', violations: [], regret: 0, regretMax: 0 });
+      expect(p.saferRouteId).toBeUndefined();
+    });
+
+    it('otherwise falls back to 0 with the optimizer’s reasons', () => {
+      expect(planScore(A, none, W)).toMatchObject({ score: 0, decidedBy: 'feasible', cap: 0, violations: X.violations });
+    });
   });
 });
 
@@ -237,6 +249,7 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'plan.no_safe_route': { target: 'Right branch' },
   'plan.heavy_crossing_shorter': { dl_cm: 2.4, zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
   'plan.heavy_crossing': { zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
+  'plan.heavy_crossing_no_alt': { zone: 'the plaque in the Right branch', target: 'Right branch' },
   'plan.dominated': { route: 'Soft angled wire through Aorta → Left branch' },
   'plan.top_contributor_turn': { turn_deg: 120, vessel: 'Left subclavian' },
   'plan.top_contributor': { measure: 'route length', value: 18.2, unit: 'cm' },
@@ -366,15 +379,19 @@ describe('scoreCase', () => {
     expect(r.drive.timeS).toBe(log.samples.at(-1)!.t);
   });
 
-  it('no safe route (fixture-y right branch crosses a heavy plaque): plan 0 and says so', () => {
+  it('no safe route (fixture-y right branch crosses a heavy plaque): a feasible route is capped at 40 and says so', () => {
     const optimized = optimizeFor('right_branch');
     expect(optimized.kind).toBe('no_safe_route');
     const log = driveLog('right_branch', 'soft_angled', ['e_aorta', 'e_right']);
     const r = scoreCase({ log, optimized, weights: W, case: c });
-    expect(r.plan).toMatchObject({ score: 0, decidedBy: 'feasible', cap: 0 });
+    expect(r.plan).toMatchObject({ score: 40, decidedBy: 'heavy_crossings', cap: 40, zoneCrossed: 'plaque_r' });
+    expect(r.plan.saferRouteId).toBeUndefined();
     expect(r.reachedTarget).toBe(true);
     expect(r.stars).toBe(1);
-    expect(r.feedback[0]!.template).toBe('plan.no_safe_route');
+    expect(r.feedback[0]).toMatchObject({
+      template: 'plan.heavy_crossing_no_alt',
+      text: 'Your route crossed the plaque in the Right branch. No route to the Right branch with these entries and wires avoids a heavy risk zone.',
+    });
     // reference: the player's own path, as there is no frontier
     expect(r.drive.gentleness.score).toBe(100);
   });

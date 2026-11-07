@@ -98,8 +98,9 @@ export function planLines(result: Pick<CaseResult, 'plan'>, player: Route, optim
     case 'heavy_crossings': {
       const safer = routeById(optimized, p.saferRouteId);
       const zone = p.zoneCrossed ? n.zone(p.zoneCrossed) : 'a heavy risk zone';
-      const route = safer ? n.route(safer) : '';
-      const dlCm = safer ? round((safer.cost.lengthM - player.cost.lengthM) * 100, 1) : 0;
+      if (!safer) return [feedbackLine('plan.heavy_crossing_no_alt', { zone, target: n.target(targetId) }, 'plan.heavy_cap')];
+      const route = n.route(safer);
+      const dlCm = round((safer.cost.lengthM - player.cost.lengthM) * 100, 1);
       return [
         dlCm > 0
           ? feedbackLine('plan.heavy_crossing_shorter', { dl_cm: dlCm, zone, route }, 'plan.heavy_cap')
