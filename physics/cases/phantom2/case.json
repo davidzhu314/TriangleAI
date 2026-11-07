@@ -1,0 +1,54 @@
+{
+  "axes": "RAS",
+  "entries": [
+    {
+      "id": "inlet",
+      "name": "Phantom inlet (descending aorta)",
+      "node": "n_inlet"
+    }
+  ],
+  "id": "phantom2",
+  "physics": {
+    "available": true,
+    "phantom": "phantom2"
+  },
+  "riskZones": [],
+  "scenario": "CathSim aortic arch phantom phantom2: drive the physics wire from the inlet to the brachiocephalic or left common carotid. Research and demo use only (CC BY-NC-SA 4.0).",
+  "schema": "threadsim.case/1",
+  "source": {
+    "dataset": "CathSim phantom phantom2 (airvlab/cathsim @ adfabb2)",
+    "kind": "cathsim",
+    "license": "CC BY-NC-SA 4.0"
+  },
+  "targets": [
+    {
+      "id": "bca",
+      "name": "Brachiocephalic artery",
+      "node": "n_bca"
+    },
+    {
+      "id": "lcca",
+      "name": "Left common carotid",
+      "node": "n_lcca"
+    }
+  ],
+  "title": "CathSim phantom phantom2",
+  "units": "mm",
+  "vessels": [
+    {
+      "id": "aorta",
+      "kind": "artery",
+      "name": "Aorta"
+    },
+    {
+      "id": "bca",
+      "kind": "artery",
+      "name": "Brachiocephalic artery"
+    },
+    {
+      "id": "lcca",
+      "kind": "artery",
+      "name": "Left common carotid"
+    }
+  ]
+}

@@ -56,6 +56,18 @@ def ras_mm_to_yup_m(p: Sequence[float]) -> List[float]:
     return [-x / 1000.0, z / 1000.0, y / 1000.0]
 
 
+def cathsim_m_to_ras_mm(p: Sequence[float]) -> List[float]:
+    """CathSim world metres -> case-package RAS millimetres: (x, y, z) -> (-x, z, y) * 1000 (D3a).
+
+    CathSim's phantoms are +y superior, +x patient left and +z anterior, so this is a proper rotation.
+    The phantom packages in physics/cases/ are written in this frame. D5 sends wire positions as
+    ras_mm_to_yup_m(cathsim_m_to_ras_mm(p)), which equals p: CathSim's world is already the client's
+    Y-up frame.
+    """
+    x, y, z = (float(c) for c in p)
+    return [-x * 1000.0, z * 1000.0, y * 1000.0]
+
+
 def make_state(
     t: float,
     wire: Sequence[Sequence[float]],
