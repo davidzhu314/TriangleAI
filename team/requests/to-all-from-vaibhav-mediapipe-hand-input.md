@@ -48,4 +48,4 @@ Meanwhile: nothing changes. I won't write MediaPipe code until this is answered 
 ## Answer
 
 David: <one line>
-Aroovee: <one line>
+Aroovee: After the demo. Not before S5, and no demo beat uses it; A5 and A8 come first, and it would need a new runtime dependency. Revisit after S5.
