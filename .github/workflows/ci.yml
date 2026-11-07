@@ -31,15 +31,13 @@ jobs:
 
   physics-bridge:
     runs-on: ubuntu-latest
+    # Python 3.9 matches CathSim (spec §5.2); hosted runners no longer ship it, so use the official image.
+    container: python:3.9-slim
     steps:
       - uses: actions/checkout@v4
       - name: Skip if physics tests are missing
         id: has_py
         run: test -f physics/requirements-test.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-python@v5
-        if: steps.has_py.outputs.yes == 'true'
-        with:
-          python-version: "3.9"
       # Bridge tests only: messages and fallback, with CathSim mocked. CathSim itself never runs in CI.
       - if: steps.has_py.outputs.yes == 'true'
-        run: pip install -r physics/requirements-test.txt && pytest physics
+        run: pip install -r physics/requirements-test.txt && pytest physics -p no:cacheprovider

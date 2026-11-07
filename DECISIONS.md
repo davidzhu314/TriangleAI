@@ -36,3 +36,4 @@ One line per decision: date · who · decision · why. Append only. A decision t
 - 2026-11-07 · David · **Physics `state` positions are metres in the served phantom package's Y-up frame**; the physics process converts before sending, so the client draws wire points without transforming (spec §5.2 gives no frame).
 - 2026-11-07 · David · **Event log units**: `s` and positions in metres, time in simulation seconds; `back_out` threshold is 0.02 m (spec's 20 mm). `force_spike` records its threshold, which scoring owns.
 - 2026-11-07 · David · **App entry** `client/index.html` and `client/src/main.ts` are a D0a shell showing the honesty line; Aroovee owns them from A1. `tests/e2e/smoke.spec.ts` is a D0a smoke test that A8 may replace.
+- 2026-11-07 · David · **CI runs pytest in the `python:3.9-slim` container**: GitHub's ubuntu-latest (26.04) has no Python 3.9, and CathSim needs 3.9.
