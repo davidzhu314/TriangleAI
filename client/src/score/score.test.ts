@@ -295,7 +295,7 @@ describe('feedback templates (§6.4)', () => {
   it('a line for each constraint kind, numbers in display units', () => {
     expect(violationLine({ kind: 'too_narrow', edge: 'e_left', diameterM: 0.0016, requiredM: 0.001889 }, 'standard_j', n)).toMatchObject({
       template: 'plan.too_narrow',
-      text: 'Route blocked: the Left branch narrows to 1.6 mm; the Standard J wire needs 1.89 mm.',
+      text: 'Route blocked: the Left branch narrows to 1.6 mm, and the Standard J wire needs 1.89 mm.',
       formulaRef: 'plan.feasible',
     });
     expect(violationLine({ kind: 'turn_too_sharp', edge: 'e_left', turnDeg: 119.6, maxTurnDeg: 80 }, 'standard_j', n).text).toBe(

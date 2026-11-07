@@ -28,7 +28,7 @@ export const MEASURE_DISPLAY: Readonly<Record<MeasureKey, { name: string; unit: 
   totalTurningDeg: { name: 'total turning', unit: 'degrees', scale: 1, decimals: 0 },
   narrowestRadiusM: { name: 'the narrowest radius', unit: 'mm', scale: 1000, decimals: 1 },
   heavyCrossings: { name: 'heavy risk zones crossed', unit: 'zones', scale: 1, decimals: 0 },
-  proximityPenalty: { name: 'closeness to risk zones', unit: 'penalty points', scale: 1, decimals: 2 },
+  proximityPenalty: { name: 'closeness to risk zones', unit: 'points', scale: 1, decimals: 2 },
   estFluoroS: { name: 'estimated fluoro time', unit: 's', scale: 1, decimals: 1 },
   simPeakForceN: { name: 'simulated peak force', unit: 'N', scale: 1, decimals: 2 },
   simSuccessRate: { name: 'simulated success rate', unit: '%', scale: 100, decimals: 0 },
