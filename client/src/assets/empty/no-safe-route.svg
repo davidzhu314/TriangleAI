@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="180" viewBox="0 0 240 180" fill="none" stroke="var(--color-heading, #2e2d2d)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+  <circle cx="120" cy="90" r="76" fill="var(--color-background, #f9f7f6)" stroke="none"/>
+  <path d="M120 144V96L76 46M120 96l44-50" stroke="var(--color-border-strong, #dad6d5)" stroke-width="22"/>
+  <path d="M120 150V96l16-18" stroke="var(--color-brand, #0b6a7d)" stroke-width="3"/>
+  <path d="M133 60l24 20" stroke-width="3"/>
+  <circle cx="164" cy="44" r="9" fill="var(--color-surface, #ffffff)"/>
+  <circle cx="164" cy="44" r="2.5" fill="var(--color-heading, #2e2d2d)"/>
+  <path d="M106 150h28" stroke-width="3"/>
+</svg>
