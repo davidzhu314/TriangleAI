@@ -12,7 +12,7 @@ import { describe, expect, it } from 'vitest';
 import type { CaseJson, CenterlinesJson, LoadedCase, LoadedEdge, Vec3 } from '../contracts';
 import { loadFixtureY } from './fixture-y.testutil';
 import { buildGraph } from './graph';
-import { buildMockLoadedCase } from './mock-case';
+import { buildTestLoadedCase } from './case-builder.testutil';
 import { measureRoute } from './measure-route';
 
 const REPO = join(import.meta.dirname, '../../..');
@@ -75,7 +75,7 @@ function time(fn: () => void, runs: number): { medianMs: number; p95Ms: number; 
 function junctionCase(): LoadedCase {
   const dir = join(REPO, 'tests/fixtures/synthetic/junction');
   const read = <T>(f: string): T => JSON.parse(readFileSync(join(dir, f), 'utf8')) as T;
-  return buildMockLoadedCase(read<CaseJson>('case.json'), read<CenterlinesJson>('centerlines.json'));
+  return buildTestLoadedCase(read<CaseJson>('case.json'), read<CenterlinesJson>('centerlines.json'));
 }
 
 describe('measureRoute timing', () => {

@@ -15,6 +15,7 @@ export { FEEDBACK_TEMPLATES, fillTemplate, type TemplateId } from './templates';
 export { applyFluoroBudget, starsFor } from './stars';
 export type { ForceReference } from './reference';
 export { LOW_TORTUOSITY_MAX } from './constants';
+export { ILLUSTRATIVE_CONSTANTS, type IllustrativeConstant } from './illustrative';
 export {
   adaptiveSuggestion,
   bestStars,
