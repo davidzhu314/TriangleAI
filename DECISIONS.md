@@ -130,3 +130,13 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Low-tort:** the left carotid takeoff is 58.2° (was 77°), so the soft angled wire can enter it.
   - **The 120° flag stays in the right iliac** (seed 251 unchanged, 120.1° on `e_r_iliac`, flagged for every preset). No anastomosis and no new preset.
   - **Seed search** (`tools/generator/tune.test.ts`) and the tests now require every V3 frontier route to pass `steerableAt` with its own preset, imported from `client/src/optimize/steerability.ts`.
+- 2026-11-07 · David · **D3a phantom frame (resolves "Phantom frame is provisional").** CathSim's world is +y superior, +x patient left and +z anterior. The phantom packages store RAS mm as `(x, y, z) → (−x, z, y) × 1000` (`cathsim_m_to_ras_mm` in `physics/wire_protocol.py`, tested). Combined with the client's RAS mm → Y-up m map, this is the identity, so D5 sends CathSim world positions as they are and they overlay the package mesh. D1's probe treated CathSim's frame as RAS; D5 must not.
+- 2026-11-07 · David · **D3a centerlines are computed from CathSim's mesh, not by VMTK** (the lane named VMTK; neither VMTK nor Slicer is installed, and CathSim ships no centerlines). `physics/cases/convert_phantoms.py`:
+  - **Lumen:** a voxel lumen at 0.6 mm, the voxels the wall shell encloses in at least 5 of the 6 axis directions, connected to CathSim's `bca` and `lcca` sites.
+  - **Path:** a minimal path weighted by step / r² from the most central lumen voxel within 6 mm of CathSim's insertion point (the world origin) to each site.
+  - **Graph:** the shared start is the aorta up to the LCCA origin. The BCA origin is where the radius on the BCA path falls below the midpoint of the arch and site radii.
+  - **Radii:** distance to the mesh. Centerlines are smoothed and resampled about 1 mm apart.
+  - **Check:** every point must be enclosed by the wall (14 rays; any that escape must leave through one opening).
+  - **Results:** opposite-wall centring ratio median 0.87–0.94; the worst samples are at branch origins.
+  - **Entry and vessels:** one entry, `inlet`, because the phantoms start at the descending aorta (no femoral). Vessels are `aorta`, `bca` and `lcca`. Other phantom branches (subclavian, aortic root) are in the mesh but have no centerlines.
+- 2026-11-07 · David · **D3a meshes**: `visual.stl` is simplified by vertex clustering to under 58,000 triangles. Vertices merge only when their normals share an octant, so the inner and outer walls of the thick-walled phantoms never fuse. `low_tort` (17,593) is kept whole. CathSim's own `simplified.stl` (664 and 6,724 triangles, two phantoms only) is too coarse. Faces are split into one GLB node per vessel by the nearest centerline point.
