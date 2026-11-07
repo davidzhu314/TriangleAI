@@ -259,7 +259,6 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 ## Known Gaps
 
 - The dark theme is checked on the specimen pages only until A2 puts it on real screens, and its scene values need the same look against real meshes in A3.
-- `theme.css` is not yet imported by the app. The A2 shell imports it; until then `palette.html` is the only page using the font.
 - Plan and Drive compositions are decided here but unbuilt. Scene colours need a look against real translucent meshes in A3, the first place a token could change.
 - The X-ray colours are tested only in the 2D specimen until A5.
 - Taste Skill is pinned at v2.1.5 (`DECISIONS.md`). The `npx skills add` line in the lane file installs 2.5.0, which has no `draw.mjs --app`, `lint.mjs` or `inspect.mjs`.
@@ -267,7 +266,7 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 ## Files
 
 - `client/src/styles/tokens.css`: every token. Imported by `client/src/main.ts`.
-- `client/src/styles/theme.css`: the font and element defaults, plain CSS. Import after tokens.
+- `client/src/styles/theme.css`: the font and element defaults, plain CSS. `client/src/main.ts` imports it after tokens, then `client/src/ui/ui.css` (the screens).
 - `client/src/styles/palette.html`: every token on one page. In dev, open `/src/styles/palette.html`.
 - `client/src/assets/fonts/`: Inter and its licence.
 - `client/src/assets/icons/`, `client/src/assets/empty/`: the icon set and empty-state art. `metrics/aroovee/A1-icon-set.png` shows them all.
