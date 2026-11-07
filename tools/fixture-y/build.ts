@@ -4,7 +4,7 @@
  *
  * Built from the contract types so the files cannot drift from them. Regenerate with `pnpm fixtures`.
  */
-import { CASE_SCHEMA_ID, type BundledCaseIndex, type CaseJson, type CenterlineEdge, type CenterlinesJson } from '../../client/src/contracts/case';
+import { CASE_SCHEMA_ID, type CaseJson, type CenterlineEdge, type CenterlinesJson } from '../../client/src/contracts/case';
 import type { Vec3 } from '../../client/src/contracts/events';
 import { writeGlb, type GlbMesh } from '../lib/glb';
 import { roundTo, stableStringify } from '../lib/stable-json';
@@ -83,14 +83,11 @@ export function buildFixtureY() {
     };
   });
 
-  const index: BundledCaseIndex = { cases: [{ id: 'fixture-y', path: 'fixture-y/' }] };
-
   return {
     files: {
       'fixture-y/case.json': stableStringify(caseJson),
       'fixture-y/centerlines.json': stableStringify(centerlines),
       'fixture-y/vessels.glb': writeGlb(meshes, { units: 'mm', axes: 'RAS' }),
-      'index.json': stableStringify(index),
     } as Record<string, string | Uint8Array>,
     caseJson,
     centerlines,
