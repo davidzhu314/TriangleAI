@@ -149,6 +149,8 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 | Brand tint | `--color-brand-tint` with `--color-brand-strong` | One selected state per screen | Decoration |
 | Status | `--color-positive`, `-negative`, `-warning`, and the pale `--color-pill-*` pairs | A result or a warning, always with words | A zero, an undefined change, or direction alone |
 
+**Dark theme.** Tokens switch with the system setting (`prefers-color-scheme`), at the end of `tokens.css`; there is no in-app toggle. The reference has no dark mode, so these values are ours, not measured: true neutral darks with no navy, elevation by lightness, an inverted primary button, and the same teal hue lifted to `#4fb4c8`. Every text, status, risk and route colour reaches 4.5:1 on all three surfaces in dark, so the well limits below apply to light only. X-ray colours do not switch (spec §5.5). The YAML front matter lists the light values only. Always use tokens by role and the theme follows.
+
 **Brand colour:** `#0b6a7d`, contrast-agent teal, hue 190. It sits 40 degrees from status green, and neither purple nor the cream-and-terracotta palette Taste bans.
 
 **Risk tiers** differ by mark as well as colour (spec §7.3): forbidden is a solid fill (`--color-risk-forbidden`), heavy is hatched (`--color-risk-heavy`), proximity is an outline (`--color-risk-proximity`). `--opacity-risk-zone` is for volumes in the 3D scene.
@@ -246,7 +248,7 @@ Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover 
 
 Variants reuse exact geometry: the two entries are one body figure with the access bead moved, and the three presets share one hub bar. Always pair entries and presets with their text label: at 16 px they are similar on purpose.
 
-**Empty states** live in `client/src/assets/empty/`. 240 x 180 frame, the same 1.75 stroke (3 for a wire or barrier, matching `--stroke-route-player`), token colours with hex fallbacks, one disc in `--color-background`, one object, `--color-brand` used once, no words in the art: the heading and action beside it say it. They only work on the white sheet, since the disc matches the frame. Vessel bands are context in `--color-border-strong`, below 3:1 on purpose; the wire, barrier and marks carry the meaning.
+**Empty states** live in `client/src/assets/empty/`. 240 x 180 frame, the same 1.75 stroke (3 for a wire or barrier, matching `--stroke-route-player`), token colours with hex fallbacks, one disc in `--color-background`, one object, `--color-brand` used once, no words in the art: the heading and action beside it say it. Inline them so they follow the theme: inside an `<img>` the tokens can't reach and the light hex fallbacks show. Place them on the sheet, since the disc matches the frame. Vessel bands are context in `--color-border-strong`, below 3:1 on purpose; the wire, barrier and marks carry the meaning.
 
 **Charts** use `--color-chart-1` then the neutrals, `--color-grid` gridlines, straight segments, and carry no decoration.
 
@@ -256,7 +258,7 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 
 ## Known Gaps
 
-- Light only. The reference has no dark theme to measure, and the spec asks for none (`DECISIONS.md`).
+- The dark theme is checked on the specimen pages only until A2 puts it on real screens, and its scene values need the same look against real meshes in A3.
 - `theme.css` is not yet imported by the app. The A2 shell imports it; until then `palette.html` is the only page using the font.
 - Plan and Drive compositions are decided here but unbuilt. Scene colours need a look against real translucent meshes in A3, the first place a token could change.
 - The X-ray colours are tested only in the 2D specimen until A5.

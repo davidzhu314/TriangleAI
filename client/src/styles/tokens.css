@@ -1,8 +1,8 @@
 /* ThreadSim design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
    "measured" = taken from the reference site in DECISIONS.md. "derived" = one tone step from a measured value.
-   "ours" = chosen for ThreadSim. "spec" = fixed by docs/ThreadSim_Build_Specification.md. Light only; see DECISIONS.md. */
+   "ours" = chosen for ThreadSim. "spec" = fixed by docs/ThreadSim_Build_Specification.md. The dark theme is at the end of this file. */
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
   /* Surfaces: frame → sheet → card, three levels at most. */
   --color-background: #f9f7f6;     /* measured: the tinted frame behind the sheet */
@@ -156,6 +156,76 @@
   --duration-base: 200ms;
   --duration-slow: 300ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark theme: follows the system setting. The reference has no dark mode to measure, so these are ours: true neutral
+   darks, lightness for elevation, every text tier at 4.5:1 on its surface. X-ray colours stay as they are (spec §5.5). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #111110;
+    --color-surface: #1a1919;
+    --color-surface-sunken: #0d0d0c;
+    --color-surface-active: #2a2928;
+    --color-surface-inverse: #eeebea;
+
+    --color-border: #2c2b2a;
+    --color-rule: #242322;
+    --color-border-strong: #4a4846;
+
+    --color-heading: #f4f2f1;
+    --color-text: #c9c6c4;
+    --color-text-muted: #a09d9b;
+    --color-text-inverse: #1f1e1e;
+
+    --color-primary: #f4f2f1;       /* inverted: light fill, dark label */
+    --color-primary-hover: #dad6d5;
+    --color-primary-foreground: #1f1e1e;
+    --color-link: #f4f2f1;
+
+    --color-brand: #4fb4c8;         /* the same hue, lifted */
+    --color-brand-strong: #a3dde8;
+    --color-brand-tint: #143239;
+    --color-focus: #4fb4c8;
+
+    --color-positive: #3fc07a;
+    --color-negative: #f26b6b;
+    --color-warning: #e0a84e;
+    --color-pill-positive-bg: #172a1d;
+    --color-pill-positive-ink: #6fd69c;
+    --color-pill-negative-bg: #2f1a1a;
+    --color-pill-negative-ink: #f7a09c;
+    --color-pill-warning-bg: #2a2110;
+    --color-pill-warning-ink: #e0a84e;
+    --color-pill-warning-border: #5c4a1c;
+    --color-pill-neutral-bg: #2a2928;
+    --color-pill-neutral-ink: #f4f2f1;
+
+    --color-risk-forbidden: #f26b6b;
+    --color-risk-heavy: #e89d3a;
+    --color-risk-proximity: #d4b84a;
+
+    --color-route-player: #4fb4c8;
+    --color-route-1: #f4f2f1;
+    --color-route-2: #e77fb0;
+    --color-route-3: #d4b84a;
+    --color-route-4: #a09d9b;
+
+    --color-chart-1: #4fb4c8;
+    --color-chart-2: #f4f2f1;
+    --color-chart-3: #a09d9b;
+    --color-grid: #2c2b2a;
+    --opacity-chart-span: 0.12;
+
+    --color-scene-ground: #0d0d0c;
+    --color-scene-vessel: #b5b1ae;
+    --opacity-scene-vessel: 0.4;
+    --color-scene-wire: #f4f2f1;
+    --color-scene-ghost: #4fb4c8;
+    --color-marker-entry: #f4f2f1;
+    --color-marker-target: #4fb4c8;
+
+    --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* Phone: titles step down and data stays readable. Width matches DESIGN.md's breakpoints. */
