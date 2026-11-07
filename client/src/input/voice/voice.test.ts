@@ -19,12 +19,13 @@ describe('matchCommand', () => {
   it('handles mis-hearings, extra words and punctuation', () => {
     expect(matchCommand(say('zoom inn')).action).toBe('zoom_in');
     expect(matchCommand(say('Zoom in, please!')).action).toBe('zoom_in');
-    expect(matchCommand(say('Hey Katherine, how am I doing?')).action).toBe('assist_review');
+    expect(matchCommand(say('Hey Cathy, how am I doing?')).action).toBe('assist_review');
+    expect(matchCommand(say('Hey Kathy zoom in')).action).toBe('zoom_in'); // the recogniser may spell it with a K
     expect(matchCommand(say("What's the best next artery")).action).toBe('assist_best_next');
   });
 
   it('"zoom out" never matches zoom_in', () => {
-    for (const t of ['zoom out', 'hey catherine zoom out', 'zoom out please']) expect(matchCommand(say(t)).action).toBe('zoom_out');
+    for (const t of ['zoom out', 'hey cathy zoom out', 'zoom out please']) expect(matchCommand(say(t)).action).toBe('zoom_out');
   });
 
   it('nonsense returns null, and reports what was heard', () => {
@@ -39,7 +40,8 @@ describe('matchCommand', () => {
 
   it('normalises digits and strips the wake phrase', () => {
     expect(normalize('Show 2 options!')).toEqual(['show', 'two', 'options']);
-    expect(stripWake(['hey', 'kathryn', 'zoom', 'in'])).toEqual(['zoom', 'in']);
+    expect(stripWake(['hey', 'cathy', 'zoom', 'in'])).toEqual(['zoom', 'in']);
+    expect(stripWake(['hey', 'catherine', 'zoom', 'in'])).toEqual(['hey', 'catherine', 'zoom', 'in']); // the old wake word is no longer stripped
     expect(stripWake(['hey', 'zoom', 'in'])).toEqual(['hey', 'zoom', 'in']);
   });
 });

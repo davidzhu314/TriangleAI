@@ -17,9 +17,12 @@ export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = 
 
 export const VOICE_ACTIONS = Object.keys(VOICE_COMMANDS) as VoiceAction[];
 
-/** Optional wake phrase ("Hey Catherine"), stripped from the start; push-to-talk already gates listening. */
+/**
+ * Optional wake phrase ("Hey Cathy"), stripped from the start; push-to-talk already gates listening.
+ * The names include how speech recognition commonly spells or mis-hears "Cathy". (The app is still named Catherine.)
+ */
 export const WAKE_LEADS = ['hey', 'a'] as const;
-export const WAKE_NAMES = ['catherine', 'katherine', 'kathryn', 'katharine', 'catharine', 'catheter'] as const;
+export const WAKE_NAMES = ['cathy', 'kathy', 'cathie', 'kathie', 'cathi', 'kathi', 'katie'] as const;
 
 /** A phrasing must score at least this to match (1 − normalised word edit distance, plus the substring bonus). */
 export const MATCH_MIN = 0.75;

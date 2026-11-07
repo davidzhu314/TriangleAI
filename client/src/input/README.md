@@ -40,7 +40,7 @@ const g = hands.step({ tMs: video.currentTime * 1000, hands: toHandObservations(
 
 ## Voice (`voice/`)
 
-The app listens only while the talk control is held. Saying "Hey Catherine" first is optional.
+The app listens only while the talk control is held. Saying the wake word "Hey Cathy" first is optional.
 
 | Action | Phrasings (see `voice/commands.ts`) | What the app does |
 | --- | --- | --- |

@@ -29,7 +29,7 @@ export function normalize(text: string): string[] {
     .filter(Boolean);
 }
 
-/** Drop a leading "hey Catherine" / "a Katherine" / "Catherine". */
+/** Drop a leading "hey Cathy" / "a Kathy" / "Cathy". */
 export function stripWake(words: string[]): string[] {
   let i = 0;
   if ((WAKE_LEADS as readonly string[]).includes(words[0] ?? '') && (WAKE_NAMES as readonly string[]).includes(words[1] ?? '')) i = 2;
