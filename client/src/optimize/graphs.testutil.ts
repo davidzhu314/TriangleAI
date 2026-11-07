@@ -6,14 +6,14 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CaseJson, CenterlinesJson, LoadedCase, LoadedEdge, LoadedRiskZone, RiskTier, Vec3 } from '../contracts';
-import { buildMockLoadedCase } from './mock-case';
+import { buildTestLoadedCase } from './case-builder.testutil';
 
 const REPO = join(import.meta.dirname, '../../..');
 
 export function loadSynthetic(name: string): LoadedCase {
   const dir = join(REPO, 'tests/fixtures/synthetic', name);
   const read = <T>(f: string): T => JSON.parse(readFileSync(join(dir, f), 'utf8')) as T;
-  return buildMockLoadedCase(read<CaseJson>('case.json'), read<CenterlinesJson>('centerlines.json'));
+  return buildTestLoadedCase(read<CaseJson>('case.json'), read<CenterlinesJson>('centerlines.json'));
 }
 
 /** Deterministic PRNG (mulberry32). */

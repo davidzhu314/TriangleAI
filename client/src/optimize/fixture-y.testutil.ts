@@ -1,9 +1,12 @@
-/** Test helper: fixture-y from disk as a LoadedCase (via the temporary mock builder). Tests only. */
+/**
+ * Test helper: fixture-y from client/public/cases/ through David's real loader, `loadCase` (D2).
+ * Loaded once per test file; each call returns a fresh deep copy. Tests only.
+ */
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { loadCase } from '../case';
 import type { CaseJson, CenterlinesJson, LoadedCase } from '../contracts';
-import { buildMockLoadedCase } from './mock-case';
 
 export const FIXTURE_Y_DIR = join(import.meta.dirname, '../../public/cases/fixture-y');
 
@@ -12,10 +15,15 @@ export function readFixtureY(): { caseJson: CaseJson; centerlines: CenterlinesJs
   return { caseJson: read<CaseJson>('case.json'), centerlines: read<CenterlinesJson>('centerlines.json') };
 }
 
+const bytes = (f: string) => new Uint8Array(readFileSync(join(FIXTURE_Y_DIR, f)));
+const result = await loadCase({
+  kind: 'files',
+  origin: 'bundled',
+  files: { 'case.json': bytes('case.json'), 'centerlines.json': bytes('centerlines.json'), 'vessels.glb': bytes('vessels.glb') },
+});
+if (!result.ok) throw new Error(`fixture-y did not load: ${JSON.stringify(result.results)}`);
+const FIXTURE_Y: LoadedCase = result.case;
+
 export function loadFixtureY(): LoadedCase {
-  const { caseJson, centerlines } = readFixtureY();
-  const glb = readFileSync(join(FIXTURE_Y_DIR, 'vessels.glb'));
-  return buildMockLoadedCase(caseJson, centerlines, {
-    glb: glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.byteLength),
-  });
+  return structuredClone(FIXTURE_Y);
 }

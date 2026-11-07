@@ -1,11 +1,10 @@
 /**
- * TEMPORARY stand-in for David's loader (D2, client/src/case/). It builds a `LoadedCase` from a
- * case folder's files so the V1 mocks and their tests can run before `loadCase` exists.
+ * Test helper: builds a `LoadedCase` from a case's JSON files for the synthetic fixtures in
+ * tests/fixtures/synthetic/, which have no vessels.glb and so cannot go through David's `loadCase`.
+ * Real case folders (fixture-y) load through `loadCase` (see fixture-y.testutil.ts). Tests only.
  *
- * Conversion only (D0b handoff): points and node positions go through `rasMmToYupM`, radii and
- * zone spans are divided by 1000, and edge lengths come from the converted points. It does no
- * validation: `validation` is empty, and `mesh.triangles` is 0 because the GLB is not parsed.
- * Delete this when D2 lands and switch callers to `loadCase`.
+ * Conversion only, matching loadCase: points and node positions go through `rasMmToYupM`, radii and
+ * zone spans are divided by 1000, and edge lengths come from the converted points. No validation.
  */
 
 import {
@@ -20,17 +19,17 @@ import {
 } from '../contracts';
 import { lengthMm } from './measures';
 
-export interface MockCaseOptions {
+export interface TestCaseOptions {
   /** vessels.glb bytes, as stored. Default: empty. */
   glb?: ArrayBuffer;
   /** Default: 'bundled'. */
   origin?: CaseOrigin;
 }
 
-export function buildMockLoadedCase(
+export function buildTestLoadedCase(
   caseJson: CaseJson,
   centerlines: CenterlinesJson,
-  options: MockCaseOptions = {},
+  options: TestCaseOptions = {},
 ): LoadedCase {
   const edges: LoadedEdge[] = centerlines.edges.map((e) => {
     const points = e.points.map((p) => rasMmToYupM(p));
@@ -79,19 +78,6 @@ export function buildMockLoadedCase(
   if (caseJson.fluoro_budget_s !== undefined) loaded.fluoroBudgetS = caseJson.fluoro_budget_s;
   if (caseJson.anatomy !== undefined) loaded.anatomy = { ...caseJson.anatomy };
   return loaded;
-}
-
-/** Fetch a bundled case folder (default fixture-y) and build it. For the app until D2. */
-export async function fetchMockLoadedCase(folderUrl = '/cases/fixture-y/'): Promise<LoadedCase> {
-  const get = async (name: string) => {
-    const res = await fetch(folderUrl + name);
-    if (!res.ok) throw new Error(`fetchMockLoadedCase: ${name} ${res.status}`);
-    return res;
-  };
-  const [caseRes, clRes, glbRes] = await Promise.all([get('case.json'), get('centerlines.json'), get('vessels.glb')]);
-  return buildMockLoadedCase((await caseRes.json()) as CaseJson, (await clRes.json()) as CenterlinesJson, {
-    glb: await glbRes.arrayBuffer(),
-  });
 }
 
 function reachableNodes(starts: string[], edges: ReadonlyArray<readonly [string, string]>): Set<string> {

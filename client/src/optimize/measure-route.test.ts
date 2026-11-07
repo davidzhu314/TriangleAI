@@ -13,7 +13,7 @@ import { loadFixtureY } from './fixture-y.testutil';
 import { buildGraph } from './graph';
 import { measureRoute, orientRoute, RouteError } from './measure-route';
 import { FLUORO_S_PER_CM, FLUORO_S_PER_TURN } from './constants';
-import { buildMockLoadedCase } from './mock-case';
+import { buildTestLoadedCase } from './case-builder.testutil';
 
 const REPO = join(import.meta.dirname, '../../..');
 const SYNTH = join(REPO, 'tests/fixtures/synthetic');
@@ -53,7 +53,7 @@ const FIXTURES = readdirSync(SYNTH)
   .sort();
 
 function synthCase(name: string): LoadedCase {
-  return buildMockLoadedCase(
+  return buildTestLoadedCase(
     readJson<CaseJson>(SYNTH, name, 'case.json'),
     readJson<CenterlinesJson>(SYNTH, name, 'centerlines.json'),
   );
