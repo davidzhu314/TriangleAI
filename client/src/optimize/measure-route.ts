@@ -76,6 +76,18 @@ export function orientRoute(graph: RouteGraph, edgeIds: readonly string[], optio
 }
 
 export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], options: MeasureRouteOptions = {}): RouteMeasures {
+  return measureRouteDetailed(graph, edgeIds, options).measures;
+}
+
+export interface DetailedRouteMeasures {
+  measures: RouteMeasures;
+  route: OrientedRoute;
+  /** Largest 5 mm-window turn attributed to each route edge, degrees (junctions count for the entered edge). */
+  edgeMaxTurnDeg: number[];
+}
+
+/** measureRoute plus what the optimizer's constraint checks need. */
+export function measureRouteDetailed(graph: RouteGraph, edgeIds: readonly string[], options: MeasureRouteOptions = {}): DetailedRouteMeasures {
   const route = orientRoute(graph, edgeIds, options);
   const { points, junctionS } = joinRoute(
     route.edges.map((e) => e.pointsMm as readonly Point3[]),
@@ -84,14 +96,25 @@ export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], opti
   const wt = windowedTurning(points, undefined, undefined, junctionS);
   const turning = summarizeTurning(wt);
 
-  // the edge holding the sharpest window: a sample at a junction counts for the edge being entered
-  let sharpestTurnEdge: string | null = null;
-  if (turning.thetaMaxDeg > 0) {
-    let k = 0;
-    for (let i = 1; i < wt.thetaRad.length; i++) if (wt.thetaRad[i]! > wt.thetaRad[k]!) k = i;
-    const s = wt.s[k]!;
-    sharpestTurnEdge = route.edges[junctionS.filter((j) => j <= s).length]!.id;
+  // Each window sample belongs to one edge. A junction's turn is felt by windows up to w before
+  // it, so samples within w of a junction belong to the edge being entered: a turn into a branch
+  // counts once, against that branch (DECISIONS.md, "Turn attribution").
+  const w = wt.windowUsed;
+  const edgeOf = (s: number) => {
+    let idx = 0;
+    while (idx < junctionS.length && junctionS[idx]! - w <= s) idx++;
+    return idx;
+  };
+  const edgeMaxTurnDeg = route.edges.map(() => 0);
+  let k = -1;
+  for (let i = 0; i < wt.thetaRad.length; i++) {
+    const idx = edgeOf(wt.s[i]!);
+    const deg = (wt.thetaRad[i]! * 180) / Math.PI;
+    if (deg > edgeMaxTurnDeg[idx]!) edgeMaxTurnDeg[idx] = deg;
+    if (k < 0 || wt.thetaRad[i]! > wt.thetaRad[k]!) k = i;
   }
+  let sharpestTurnEdge: string | null = null;
+  if (turning.thetaMaxDeg > 0 && k >= 0) sharpestTurnEdge = route.edges[edgeOf(wt.s[k]!)]!.id;
 
   const onRoute = new Set(route.edges.map((e) => e.id));
   const crossings: ZoneCrossing[] = [];
@@ -125,5 +148,5 @@ export function measureRoute(graph: RouteGraph, edgeIds: readonly string[], opti
     proximityPenalty,
     estFluoroS: lengthM * 100 * FLUORO_S_PER_CM + (turning.thetaSumDeg / DEG_PER_TURN) * FLUORO_S_PER_TURN,
   };
-  return { cost, violations, crossings, sharpestTurnEdge };
+  return { measures: { cost, violations, crossings, sharpestTurnEdge }, route, edgeMaxTurnDeg };
 }

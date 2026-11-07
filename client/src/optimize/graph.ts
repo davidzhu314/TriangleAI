@@ -58,6 +58,10 @@ export interface RouteGraph {
   zones: readonly GraphZone[];
   /** Entry node ids, for orienting a one-edge partial route. */
   entryNodes: ReadonlySet<string>;
+  /** Entry id → node id, in case order. */
+  entries: ReadonlyMap<string, string>;
+  /** Target id → node id, in case order. */
+  targets: ReadonlyMap<string, string>;
 }
 
 const toMm = (e: LoadedEdge): Point3[] => e.points.map((p) => [p[0] * 1000, p[1] * 1000, p[2] * 1000] as Point3);
@@ -113,5 +117,7 @@ export function buildGraph(c: LoadedCase): RouteGraph {
     edges,
     zones: c.riskZones.map((z) => ({ id: z.id, tier: z.tier, kind: z.kind, edge: z.edge })),
     entryNodes: new Set(c.entries.map((x) => x.node)),
+    entries: new Map(c.entries.map((x) => [x.id, x.node])),
+    targets: new Map(c.targets.map((x) => [x.id, x.node])),
   };
 }

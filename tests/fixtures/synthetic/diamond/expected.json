@@ -1,0 +1,164 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 40.0,
+   "notes": "Straight trunk edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 20.0,
+   "r_min_mm": 6.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e1": {
+   "L_mm": 40.0,
+   "notes": "Straight wide_out edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 19.318517,
+   "r_min_mm": 5.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e2": {
+   "L_mm": 40.0,
+   "notes": "Straight wide_back edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 32.235429,
+   "r_min_mm": 5.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e3": {
+   "L_mm": 32.659863,
+   "notes": "Straight narrow_out edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [
+    "prox_b"
+   ],
+   "proximity_clearance_mm": 0.0,
+   "r_min_mm": 1.2,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e4": {
+   "L_mm": 32.659863,
+   "notes": "Straight narrow_back edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 2.659863,
+   "r_min_mm": 1.2,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e5": {
+   "L_mm": 56.568542,
+   "notes": "Straight pinhole edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 10.0,
+   "r_min_mm": 0.8,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e6": {
+   "L_mm": 96.568542,
+   "notes": "Straight bypass edge; clearance to prox_b by exact segment distance.",
+   "overlapping_zones": [
+    "forbidden_d"
+   ],
+   "proximity_clearance_mm": 10.0,
+   "r_min_mm": 6.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  }
+ },
+ "routes": [
+  {
+   "L_mm": 120.0,
+   "edges": [
+    "e0",
+    "e1",
+    "e2"
+   ],
+   "heavy_crossings": 0,
+   "id": "A-wide",
+   "junction_deg": [
+    45.0,
+    90.0
+   ],
+   "notes": "Takeoff 45, corner 90: theta_max 90, theta_sum 135. Wide and clear of prox_b.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 5.0,
+   "reversed": [
+    false,
+    false,
+    false
+   ],
+   "theta_max_deg": 90.0,
+   "theta_sum_deg": 135.0
+  },
+  {
+   "L_mm": 105.319726,
+   "edges": [
+    "e0",
+    "e3",
+    "e4"
+   ],
+   "heavy_crossings": 0,
+   "id": "B-narrow",
+   "junction_deg": [
+    30.0,
+    60.0
+   ],
+   "notes": "Takeoff 30, corner 60: shorter and gentler than A, but narrow and through prox_b.",
+   "proximity_penalty": 1.0,
+   "r_min_mm": 1.2,
+   "reversed": [
+    false,
+    false,
+    false
+   ],
+   "theta_max_deg": 60.0,
+   "theta_sum_deg": 90.0
+  },
+  {
+   "L_mm": 96.568542,
+   "edges": [
+    "e0",
+    "e5"
+   ],
+   "heavy_crossings": 0,
+   "id": "C-pinhole",
+   "junction_deg": [
+    0.0
+   ],
+   "notes": "Straight but r 0.8 mm: 1.6 mm is under 0.89 + 1 mm, so too narrow for every preset.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 0.8,
+   "reversed": [
+    false,
+    false
+   ],
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  {
+   "L_mm": 96.568542,
+   "edges": [
+    "e6"
+   ],
+   "heavy_crossings": 0,
+   "id": "D-bypass",
+   "junction_deg": [],
+   "notes": "Straight and wide, but it crosses forbidden_d, so it is never routed.",
+   "proximity_penalty": 0.0,
+   "r_min_mm": 6.0,
+   "reversed": [
+    false
+   ],
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  }
+ ],
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}
