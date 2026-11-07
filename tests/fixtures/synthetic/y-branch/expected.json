@@ -1,0 +1,40 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 60.0,
+   "notes": "Trunk: nearest point to prox_e2 is the junction; zone starts 10 mm up e2, so clearance 10.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": 10.0,
+   "r_min_mm": 10.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e1": {
+   "L_mm": 40.0,
+   "notes": "Daughter at 30 deg; angle to e2 is 75 deg, clearance = 10 sin 75 deg; r tapers 6 -> 4.",
+   "overlapping_zones": [
+    "heavy_e1"
+   ],
+   "proximity_clearance_mm": 9.659258,
+   "r_min_mm": 4.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e2": {
+   "L_mm": 50.0,
+   "notes": "Daughter at 45 deg carrying the proximity zone: clearance 0; r tapers 7 -> 5.",
+   "overlapping_zones": [
+    "prox_e2"
+   ],
+   "proximity_clearance_mm": 0.0,
+   "r_min_mm": 5.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  }
+ },
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}

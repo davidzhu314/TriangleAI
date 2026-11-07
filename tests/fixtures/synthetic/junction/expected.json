@@ -1,0 +1,106 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 60.0,
+   "notes": "Straight parent along +S.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 8.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e1": {
+   "L_mm": 50.0,
+   "notes": "Straight child, 120 deg takeoff from +S toward +R.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 4.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  "e2": {
+   "L_mm": 40.0,
+   "notes": "Straight child, 45 deg takeoff from +S toward +A.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 5.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  }
+ },
+ "routes": [
+  {
+   "L_mm": 60.0,
+   "edges": [
+    "e0"
+   ],
+   "id": "parent-only",
+   "junction_deg": [],
+   "notes": "One straight edge: no turning.",
+   "reversed": [
+    false
+   ],
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  },
+  {
+   "L_mm": 110.0,
+   "edges": [
+    "e0",
+    "e1"
+   ],
+   "id": "parent-to-retro",
+   "junction_deg": [
+    120.0
+   ],
+   "notes": "Flagged turn: 120 deg takeoff; theta_max = theta_sum = 120.",
+   "reversed": [
+    false,
+    false
+   ],
+   "theta_max_deg": 120.0,
+   "theta_sum_deg": 120.0
+  },
+  {
+   "L_mm": 100.0,
+   "edges": [
+    "e0",
+    "e2"
+   ],
+   "id": "parent-to-side",
+   "junction_deg": [
+    45.0
+   ],
+   "notes": "45 deg takeoff, out of the R-S plane.",
+   "reversed": [
+    false,
+    false
+   ],
+   "theta_max_deg": 45.0,
+   "theta_sum_deg": 45.0
+  },
+  {
+   "L_mm": 90.0,
+   "edges": [
+    "e1",
+    "e2"
+   ],
+   "id": "retro-to-side",
+   "junction_deg": [
+    69.295189
+   ],
+   "notes": "e1 walked backwards into the branch point, then e2: delta = acos(-u1 . u2) = acos(cos(45) / 2).",
+   "reversed": [
+    true,
+    false
+   ],
+   "theta_max_deg": 69.295189,
+   "theta_sum_deg": 69.295189
+  }
+ ],
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}

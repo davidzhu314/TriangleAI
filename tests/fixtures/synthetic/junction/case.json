@@ -1,0 +1,52 @@
+{
+ "axes": "RAS",
+ "entries": [
+  {
+   "id": "in",
+   "name": "Entry",
+   "node": "n0"
+  }
+ ],
+ "id": "synthetic-junction",
+ "physics": {
+  "available": false
+ },
+ "riskZones": [],
+ "schema": "threadsim.case/1",
+ "source": {
+  "dataset": "threadsim-synthetic-test-fixture",
+  "kind": "parametric",
+  "license": "own work"
+ },
+ "targets": [
+  {
+   "id": "retro",
+   "name": "Retro child",
+   "node": "n2"
+  },
+  {
+   "id": "side",
+   "name": "Side child",
+   "node": "n3"
+  }
+ ],
+ "title": "Synthetic: junction with 120 and 45 degree takeoffs",
+ "units": "mm",
+ "vessels": [
+  {
+   "id": "parent",
+   "kind": "artery",
+   "name": "parent"
+  },
+  {
+   "id": "retro",
+   "kind": "artery",
+   "name": "retro"
+  },
+  {
+   "id": "side",
+   "kind": "artery",
+   "name": "side"
+  }
+ ]
+}

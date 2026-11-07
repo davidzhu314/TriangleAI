@@ -1,0 +1,18 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 31.415927,
+   "notes": "Arc radius R = 20: L = R*pi/2; chords over w = 5 mm meet at angle w/R everywhere, so theta_max = w/R rad; total turning = 90 deg; r = 5 + 1.5 cos(4 phi) has min 3.5.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 3.5,
+   "theta_max_deg": 14.323945,
+   "theta_sum_deg": 90.0
+  }
+ },
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}

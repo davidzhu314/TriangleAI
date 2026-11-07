@@ -1,0 +1,11 @@
+# Handoff — Vaibhav V0: synthetic fixtures and NumPy reference measures
+
+What landed: `tests/fixtures/synthetic/` has five fixtures (`straight`, `arc90`, `helix`, `y-branch`, plus an extra `bend`). Each has a `case.json`, a `centerlines.json` in the threadsim.case/1 format (mm, RAS, points about 1 mm apart) and an `expected.json` with closed-form answers. A deterministic `generate.py` writes them. `tests/crosscheck/numpy_measures.py` implements the spec §4.2 measures: L, the 5 mm-window turning angle, Θmax, ΘΣ, r_min, risk-zone overlap and proximity clearance. `tests/crosscheck/test_synthetic_measures.py` tests them. A margin summary is in `metrics/vaibhav/v0-synthetic-crosscheck.md`.
+How to use: `python -m pip install -r tests/crosscheck/requirements.txt && python -m pytest tests/crosscheck -q`. Use a venv; `tests/crosscheck/.venv/` is gitignored. The exact measure definitions are in `tests/crosscheck/README.md`.
+Who switches: nobody yet. V2 (Vaibhav) ports these definitions to TypeScript and must pass the same `expected.json` files. David: the fixtures are test-only and not app case packages (there is no `vessels.glb`), so they never go into `client/public/cases/`.
+Mock replaced: none
+Contracts version after this handoff: unchanged (unset)
+Tests: `python -m pytest tests/crosscheck -q` (57 green). They cover every measure on every fixture edge against the closed form within 0.1 mm / 0.5°, byte-for-byte fixture regeneration, reversal invariance, single-point noise suppression by the window, short-edge windows, degenerate edges, and exact polyline distance against dense sampling. The largest gaps are 0.048° and 0.032 mm.
+New dependencies: none in `package.json`. Test-only Python: numpy==2.3.4, pytest==8.4.2 in `tests/crosscheck/requirements.txt`.
+Decisions logged: one line in `DECISIONS.md` defining the 5 mm-window turning angle and ΘΣ, and why the helix closed form is (L/w)·θ_w rather than κL.
+Known gaps: junction angles between consecutive edges, and route-level aggregation (proximity penalty, fluoro estimate), are V2/V3. Proximity clearance is measured centerline to centerline, with no radius subtracted. Nothing has been cross-checked on real anatomy yet; that waits on `fixture-y` (D0b) and the generated cases (D6-min). CI does not run these tests yet: the request is `team/requests/to-david-from-vaibhav-ci-crosscheck.md`.

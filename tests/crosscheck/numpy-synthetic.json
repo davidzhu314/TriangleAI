@@ -1,0 +1,139 @@
+{
+ "arc90": {
+  "edges": {
+   "e0": {
+    "L_mm": 31.41277269,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 14.371859259,
+    "theta_sum_deg": 89.986269841
+   }
+  },
+  "routes": {}
+ },
+ "bend": {
+  "edges": {
+   "e0": {
+    "L_mm": 71.41277269,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 6.0,
+    "theta_max_deg": 14.371859259,
+    "theta_sum_deg": 90.000171728
+   }
+  },
+  "routes": {}
+ },
+ "helix": {
+  "edges": {
+   "e0": {
+    "L_mm": 204.742402546,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 4.0,
+    "theta_max_deg": 16.166036688,
+    "theta_sum_deg": 661.945491664
+   }
+  },
+  "routes": {}
+ },
+ "junction": {
+  "edges": {
+   "e0": {
+    "L_mm": 60.0,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 8.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e1": {
+    "L_mm": 49.999999836,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 4.0,
+    "theta_max_deg": 5.73e-06,
+    "theta_sum_deg": 2.292e-06
+   },
+   "e2": {
+    "L_mm": 39.99999965,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 5.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  },
+  "routes": {
+   "parent-only": {
+    "L_mm": 60.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "parent-to-retro": {
+    "L_mm": 109.999999836,
+    "theta_max_deg": 120.000000108,
+    "theta_sum_deg": 120.000002447
+   },
+   "parent-to-side": {
+    "L_mm": 99.99999965,
+    "theta_max_deg": 45.0,
+    "theta_sum_deg": 45.000000087
+   },
+   "retro-to-side": {
+    "L_mm": 89.999999486,
+    "theta_max_deg": 69.295188874,
+    "theta_sum_deg": 69.295191234
+   }
+  }
+ },
+ "straight": {
+  "edges": {
+   "e0": {
+    "L_mm": 100.0,
+    "overlapping_zones": [
+     "prox_self"
+    ],
+    "proximity_clearance_mm": 0.0,
+    "r_min_mm": 8.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  },
+  "routes": {}
+ },
+ "y-branch": {
+  "edges": {
+   "e0": {
+    "L_mm": 60.0,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 10.0,
+    "r_min_mm": 10.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   },
+   "e1": {
+    "L_mm": 39.999999869,
+    "overlapping_zones": [
+     "heavy_e1"
+    ],
+    "proximity_clearance_mm": 9.659258285,
+    "r_min_mm": 4.0,
+    "theta_max_deg": 5.73e-06,
+    "theta_sum_deg": 2.292e-06
+   },
+   "e2": {
+    "L_mm": 49.999999916,
+    "overlapping_zones": [
+     "prox_e2"
+    ],
+    "proximity_clearance_mm": 0.0,
+    "r_min_mm": 5.0,
+    "theta_max_deg": 0.0,
+    "theta_sum_deg": 0.0
+   }
+  },
+  "routes": {}
+ }
+}

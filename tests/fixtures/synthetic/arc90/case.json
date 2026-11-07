@@ -1,0 +1,37 @@
+{
+ "axes": "RAS",
+ "entries": [
+  {
+   "id": "in",
+   "name": "Entry",
+   "node": "n0"
+  }
+ ],
+ "id": "synthetic-arc90",
+ "physics": {
+  "available": false
+ },
+ "riskZones": [],
+ "schema": "threadsim.case/1",
+ "source": {
+  "dataset": "threadsim-synthetic-test-fixture",
+  "kind": "parametric",
+  "license": "own work"
+ },
+ "targets": [
+  {
+   "id": "out",
+   "name": "Target",
+   "node": "n1"
+  }
+ ],
+ "title": "Synthetic: 90 degree arc, R = 20 mm",
+ "units": "mm",
+ "vessels": [
+  {
+   "id": "arch",
+   "kind": "artery",
+   "name": "arch"
+  }
+ ]
+}
