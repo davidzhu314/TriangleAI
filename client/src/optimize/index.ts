@@ -21,6 +21,8 @@ export { DEG_PER_TURN, FLUORO_S_PER_CM, FLUORO_S_PER_TURN, PROXIMITY_SCALE_M } f
 export { getPreset, PRESET_IDS, WIRE_PRESETS } from './presets';
 export { isSafe, LARGE_GRAPH_EDGES, optimizeCase, RouteEnumerator, routeFor, routeId } from './optimizer';
 export { dominates, frontierLabels, LABEL_MEASURE, paretoFrontier } from './frontier';
+export { planAssist, type BranchOption, type PlanAssist, type PlanAssistInput } from './assist';
+export { steerableAt, type Steerability, type SteerFailure } from './steerability';
 export { createRanker, measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from './rank';
 export { DFS_PATH_CAP, simplePaths, YEN_K, yenKShortest, type GraphPath } from './paths';
 

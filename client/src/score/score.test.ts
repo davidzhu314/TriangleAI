@@ -271,6 +271,16 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'replay.back_out': { dist_mm: 21 },
   'replay.contrast_puff': {},
   'replay.target_reached': { target: 'Left branch' },
+  'assist.next_branch': { vessel: 'Left branch' },
+  'assist.pull_back': { wrong_vessel: 'Right branch', vessel: 'Left branch' },
+  'assist.at_target': { target: 'Left branch' },
+  'assist.best_route': { vessel: 'Left branch', label: 'shortest' },
+  'assist.best_route_plain': { vessel: 'Left branch' },
+  'assist.options': { n: 2, vessels: 'Left branch, Right branch' },
+  'assist.off_frontier': { vessels: 'Left branch' },
+  'assist.complete': { target: 'Left branch' },
+  'assist.no_continuation': { target: 'Left branch' },
+  'assist.no_safe_route': {},
 };
 
 describe('feedback templates (§6.4)', () => {

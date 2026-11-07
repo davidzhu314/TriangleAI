@@ -35,6 +35,16 @@ export const FEEDBACK_TEMPLATES = {
   'replay.back_out': 'Back-out: pulled back {dist_mm} mm.',
   'replay.contrast_puff': 'Contrast puff.',
   'replay.target_reached': 'Reached the {target}.',
+  'assist.next_branch': 'Next, head into the {vessel}.',
+  'assist.pull_back': "You're in the {wrong_vessel}. Pull back toward the {vessel}.",
+  'assist.at_target': "You're at the {target}.",
+  'assist.best_route': 'The best route from here goes through the {vessel} ({label}).',
+  'assist.best_route_plain': 'The best route from here goes through the {vessel}.',
+  'assist.options': '{n} good ways on from here: {vessels}.',
+  'assist.off_frontier': 'No frontier route continues from here; the safe ways on go through: {vessels}.',
+  'assist.complete': 'Your route already reaches the {target}.',
+  'assist.no_continuation': 'No route to the {target} continues from here; undo the last branch.',
+  'assist.no_safe_route': 'No safe way on from here with this wire.',
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;
