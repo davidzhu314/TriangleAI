@@ -13,6 +13,7 @@ export const FEEDBACK_TEMPLATES = {
   'plan.no_safe_route': 'No safe route to the {target} with this entry and wire; every route is blocked or crosses a heavy risk zone.',
   'plan.heavy_crossing_shorter': 'Your route was {dl_cm} cm shorter but crossed {zone}. The {route} avoids it.',
   'plan.heavy_crossing': 'Your route crossed {zone}. The {route} avoids it.',
+  'plan.heavy_crossing_no_alt': 'Your route crossed {zone}. No route to the {target} with these entries and wires avoids a heavy risk zone.',
   'plan.dominated': 'The {route} is at least as good as your route on every measure and better on some.',
   'plan.top_contributor_turn': 'Most of your penalty came from the {turn_deg}° turn into the {vessel}.',
   'plan.top_contributor': 'Most of your penalty came from {measure}: {value} {unit}.',
