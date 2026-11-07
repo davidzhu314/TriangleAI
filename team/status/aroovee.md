@@ -1,9 +1,9 @@
 # Status — Aroovee (Teammate 3)
 
-Contracts version: 1
-Now: A0 done; waiting for my human's palette check (mandatory stop)
-Done: A0 design system (2026-11-07)
-Blocked: nothing (A2 builds on V1 mocks once they land)
+Contracts version: 1 (checked on main, 2026-11-07), so A2 can start next; V1 mocks are on main
+Now: A1 done; stopped for my human to look at the PR
+Done: A0 design system (2026-11-07); A1 icons and empty states (2026-11-07)
+Blocked: nothing. A2 builds on fixture-y with Vaibhav's optimize/mock-case.ts until David's D2 loader lands
 Waiting to swap: optimize/mock.ts → real optimizer (when Vaibhav's V3 handoff lands)
-Next handoff: A1 → icons and empty states with /draw-svg, after the palette is approved
-Last session: 2026-11-07 — A0: measured the reference, set the brand colour, wrote tokens, theme and DESIGN.md, dealt Framed sheet. Taste Skill pinned at v2.1.5 because 2.5.0 removed the app tools. This machine had no Node or gh: used a portable Node 22 from a temp folder, so install Node 22 and gh before A1.
+Next handoff: A2 → app shell, Library and Case brief
+Last session: 2026-11-07 — A1: 15 icons and 3 empty states on one 24 grid and 1.75 stroke, 3 render rounds. A0 PR #5 merged. This machine still has no Node or gh.
