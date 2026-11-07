@@ -14,6 +14,7 @@ pnpm dev                     # dev server at http://localhost:5173
 pnpm build && pnpm preview   # production build, served at http://localhost:4173
 pnpm test                    # typecheck + unit tests (Vitest)
 pnpm test:e2e                # end-to-end tests (Playwright, against the production build)
+pnpm fixtures                # regenerate generated case files (client/public/cases); pnpm test fails if they are stale
                              # first time: pnpm exec playwright install chromium
 ```
 

@@ -1,6 +1,9 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import {
   BACK_OUT_THRESHOLD_M,
+  RAS_MM_TO_YUP_M,
+  rasMmToYupM,
+  type Vec3,
   CONTRACTS_VERSION,
   EVENT_LOG_SCHEMA,
   EVENT_SAMPLE_HZ,
@@ -12,6 +15,7 @@ import {
   isPhysicsStateMessage,
   type ControlInput,
   type EventLog,
+  type LoadedCase,
   type PhysicsClientMessage,
   type WireEvent,
   type WireFallback,
@@ -29,8 +33,8 @@ const stateFrame = (n = PHYSICS_WIRE_POINTS) => ({
 });
 
 describe('contracts index', () => {
-  it('keeps CONTRACTS_VERSION unset until D0b merges', () => {
-    expect(CONTRACTS_VERSION).toBe('unset');
+  it('is version 1', () => {
+    expect(CONTRACTS_VERSION).toBe(1);
   });
 });
 
@@ -128,12 +132,40 @@ describe('wire source (spec §5.1–5.3)', () => {
     const src: WireSource = new StubSource();
     const seen: number[] = [];
     src.onState((s) => seen.push(s.t));
-    await src.start({ case: {}, entryId: 'fem_r', targetId: 'rcca', presetId: 'standard_j', path: ['e1'] });
-    src.control({ push: 1, rotate: 0, fluoro: true });
+    await src.start({ case: {} as LoadedCase, entryId: 'fem_r', targetId: 'rcca', presetId: 'standard_j', path: ['e1'] });
+    src.control({ push: 1, rotate: 0, fluoro: true, contrastPuff: false });
     src.control({ push: 1, rotate: 0, fluoro: false, contrastPuff: true });
     const log = await src.stop();
     expect(seen).toHaveLength(2);
     expect(log.samples.map((s) => s.fluoro)).toEqual([true, false]);
     expect(log.events).toEqual([{ kind: 'contrast_puff', t: 2 / EVENT_SAMPLE_HZ }]);
+  });
+});
+
+describe('case units and axes (spec §3.2)', () => {
+  const apply = (m: readonly number[], p: Vec3): Vec3 => [
+    m[0]! * p[0] + m[4]! * p[1] + m[8]! * p[2] + m[12]!,
+    m[1]! * p[0] + m[5]! * p[1] + m[9]! * p[2] + m[13]!,
+    m[2]! * p[0] + m[6]! * p[1] + m[10]! * p[2] + m[14]!,
+  ];
+
+  it('maps RAS mm to Y-up metres: superior is +Y, patient left is +X, anterior is +Z', () => {
+    expect(rasMmToYupM([0, 0, 1000])).toEqual([-0, 1, 0]);
+    expect(rasMmToYupM([-1000, 0, 0])).toEqual([1, 0, 0]);
+    expect(rasMmToYupM([0, 1000, 0])).toEqual([-0, 0, 1]);
+  });
+
+  it('the matrix and the function agree, and the matrix is a rotation (no mirror)', () => {
+    for (const p of [[12, -40, 250], [0, 0, 0], [-3.5, 7, 0.25]] as Vec3[]) {
+      const a = apply(RAS_MM_TO_YUP_M, p);
+      const b = rasMmToYupM(p);
+      for (let i = 0; i < 3; i++) expect(a[i]).toBeCloseTo(b[i]!, 12);
+    }
+    const m = RAS_MM_TO_YUP_M.map((x) => x * 1000);
+    const det =
+      m[0]! * (m[5]! * m[10]! - m[9]! * m[6]!) -
+      m[4]! * (m[1]! * m[10]! - m[9]! * m[2]!) +
+      m[8]! * (m[1]! * m[6]! - m[5]! * m[2]!);
+    expect(det).toBeCloseTo(1, 12);
   });
 });

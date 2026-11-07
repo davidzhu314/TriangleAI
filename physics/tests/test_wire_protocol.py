@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from wire_protocol import WIRE_POINTS, ProtocolError, clamp_control, make_state, parse_client_message
+from wire_protocol import WIRE_POINTS, ProtocolError, clamp_control, make_state, parse_client_message, ras_mm_to_yup_m
 
 
 def test_spec_client_messages_round_trip():
@@ -45,3 +45,11 @@ def test_state_message_matches_spec_shape():
     assert len(state["wire"]) == WIRE_POINTS
     assert state["tip"] == wire[-1]
     json.dumps(state)
+
+
+def test_ras_to_yup_matches_the_client_contract():
+    # Same vectors as client/src/contracts/contracts.test.ts.
+    assert ras_mm_to_yup_m([0, 0, 1000]) == [0.0, 1.0, 0.0]
+    assert ras_mm_to_yup_m([-1000, 0, 0]) == [1.0, 0.0, 0.0]
+    assert ras_mm_to_yup_m([0, 1000, 0]) == [0.0, 0.0, 1.0]
+    assert ras_mm_to_yup_m([12, -40, 250]) == [-0.012, 0.25, -0.04]
