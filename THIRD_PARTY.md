@@ -23,3 +23,4 @@ Added in D1 (physics process only, `physics/requirements-sim.txt`; none of these
 | trimesh | 3.23.3 | MIT | https://github.com/mikedh/trimesh | physics process |
 | websockets | 13.1 | BSD-3-Clause | https://github.com/python-websockets/websockets | `physics/probe/probe_server.py` |
 | three.js (CDN, probe page only) | 0.160.0 | MIT | https://threejs.org | `physics/probe/index.html` |
+| Inter (variable, Latin subset, from `@fontsource-variable/inter`) | 5.3.0 | SIL OFL 1.1 | https://github.com/rsms/inter | `client/src/assets/fonts/`, licence alongside |

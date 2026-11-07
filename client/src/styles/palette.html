@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThreadSim palette and tokens</title>
+<link rel="stylesheet" href="./tokens.css">
+<link rel="stylesheet" href="./theme.css">
+<style>
+  /* Specimen only, not a screen. Every value is a token. */
+  body { min-height: 100vh; display: grid; grid-template-columns: var(--size-sidebar) minmax(0, 1fr); }
+  .rail { padding: var(--space-4); }
+  .mark { color: var(--color-heading); font-size: var(--font-size-lead); line-height: var(--line-height-lead); font-weight: var(--font-weight-medium); }
+  .rail a { display: block; height: var(--size-nav-row); line-height: var(--size-nav-row); padding-inline: var(--space-2); border-radius: var(--radius-control); text-decoration: none; color: var(--color-text); }
+  .rail a:first-of-type { margin-top: var(--space-4); background: var(--color-surface-active); color: var(--color-heading); }
+  .sheet { margin: var(--size-sheet-inset) var(--size-sheet-inset) var(--size-sheet-inset) 0; padding: var(--size-sheet-padding); background: var(--color-surface); border: var(--border-width) solid var(--color-border); border-radius: var(--radius-card); }
+  section { margin-top: var(--space-8); }
+  section > h2 { margin-bottom: var(--space-1); }
+  section > p { margin: 0 0 var(--space-4); color: var(--color-text-muted); }
+  .grid { display: grid; gap: var(--gap); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .swatch { border: var(--border-width) solid var(--color-border); border-radius: var(--radius-control); overflow: hidden; }
+  .chip { height: var(--space-16); border-bottom: var(--border-width) solid var(--color-border); }
+  .swatch div.meta { padding: var(--space-2) var(--space-3); font-size: var(--font-size-meta); line-height: var(--line-height-meta); color: var(--color-text-muted); }
+  .swatch b { display: block; color: var(--color-heading); font-weight: var(--font-weight-medium); }
+  .card { border: var(--border-width) solid var(--color-border); border-radius: var(--radius-card); padding: var(--space-5); }
+  .label { font-size: var(--font-size-meta); line-height: var(--line-height-meta); color: var(--color-text-muted); }
+  .t-figure { font-size: var(--font-size-figure); line-height: var(--line-height-figure); color: var(--color-heading); }
+  .t-figure-sm { font-size: var(--font-size-figure-sm); line-height: var(--line-height-figure-sm); color: var(--color-heading); }
+  .t-lead { font-size: var(--font-size-lead); line-height: var(--line-height-lead); color: var(--color-heading); font-weight: var(--font-weight-medium); }
+  .stack > * + * { margin-top: var(--space-3); }
+  button { font: inherit; letter-spacing: inherit; height: var(--size-control); padding-inline: var(--space-3); border-radius: var(--radius-control); cursor: pointer; }
+  .btn-primary { background: var(--color-primary); color: var(--color-primary-foreground); border: 0; font-weight: var(--font-weight-medium); }
+  .btn-outline { background: transparent; color: var(--color-primary); border: var(--border-width) solid var(--color-border-strong); font-weight: var(--font-weight-medium); }
+  input { width: 100%; font: inherit; letter-spacing: inherit; height: var(--size-field); box-sizing: border-box; padding-inline: var(--space-3); border: var(--border-width) solid var(--color-border-strong); border-radius: var(--radius-field); color: var(--color-heading); background: var(--color-surface); }
+  input::placeholder { color: var(--color-text-muted); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+  .pill { display: inline-block; padding-inline: var(--space-2); border-radius: var(--radius-full); font-size: var(--font-size-meta); line-height: var(--line-height-lead); font-weight: var(--font-weight-medium); }
+  .pos { background: var(--color-pill-positive-bg); color: var(--color-pill-positive-ink); }
+  .neg { background: var(--color-pill-negative-bg); color: var(--color-pill-negative-ink); }
+  .warn { background: var(--color-pill-warning-bg); color: var(--color-pill-warning-ink); border: var(--border-width) solid var(--color-pill-warning-border); }
+  .neu { background: var(--color-pill-neutral-bg); color: var(--color-pill-neutral-ink); }
+  .tab { display: inline-block; padding: var(--space-2) var(--space-1); border-bottom: var(--underline-width) solid var(--color-brand); color: var(--color-heading); }
+  .well { background: var(--color-scene-ground); border-radius: var(--radius-control); padding: var(--space-3); }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: var(--font-sans); font-size: var(--font-size-meta); fill: var(--color-heading); }
+  .route { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .r-p { stroke: var(--color-route-player); stroke-width: var(--stroke-route-player); stroke-dasharray: var(--dash-route-player); }
+  .r-1 { stroke: var(--color-route-1); stroke-width: var(--stroke-route); stroke-dasharray: var(--dash-route-1); }
+  .r-2 { stroke: var(--color-route-2); stroke-width: var(--stroke-route); stroke-dasharray: var(--dash-route-2); }
+  .r-3 { stroke: var(--color-route-3); stroke-width: var(--stroke-route); stroke-dasharray: var(--dash-route-3); }
+  .r-4 { stroke: var(--color-route-4); stroke-width: var(--stroke-route); stroke-dasharray: var(--dash-route-4); }
+  .vessel { fill: none; stroke: var(--color-scene-vessel); stroke-opacity: var(--opacity-scene-vessel); stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+  .risk { height: var(--space-16); border-radius: var(--radius-control); }
+  .xray { background: var(--color-xray-bg); border-radius: var(--radius-control); }
+  .xray .vessel-x { fill: none; stroke: var(--color-xray-ink); stroke-width: 22; stroke-linecap: round; stroke-linejoin: round; }
+  .xray .wire-x { fill: none; stroke: var(--color-xray-ink); stroke-width: 3; stroke-linecap: round; }
+  .xray-on .vessel-x { stroke-opacity: var(--opacity-xray-contrast); }
+  .xray-off .vessel-x { stroke-opacity: 0; }
+  @media (max-width: 640px) {
+    body { display: block; }
+    .rail { padding-block: var(--space-3); }
+    .rail a { display: none; }
+    .grid, .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+</head>
+<body>
+<nav class="rail" aria-label="Sections">
+  <div class="mark">ThreadSim</div>
+  <a href="#surfaces">Surfaces and text</a>
+  <a href="#brand">Brand and status</a>
+  <a href="#routes">Routes and risk</a>
+  <a href="#views">3D and X-ray</a>
+  <a href="#type">Type and controls</a>
+</nav>
+<main class="sheet">
+  <h1>Palette and tokens</h1>
+  <p class="label">A specimen of tokens.css for the palette check. Hex values and contrast ratios below are computed from the live tokens.</p>
+
+  <section id="surfaces">
+    <h2>Surfaces, lines and text</h2>
+    <p>The calm part, as measured. Contrast is against the sheet.</p>
+    <div class="grid" data-tokens="background surface surface-sunken surface-active border rule border-strong heading text text-muted primary"></div>
+  </section>
+
+  <section id="brand">
+    <h2>Brand and status</h2>
+    <p>Contrast-agent teal on the player's route, main data and the active tab. Status stays apart from it.</p>
+    <div class="grid" data-tokens="brand brand-strong brand-tint positive negative warning"></div>
+    <div class="row" style="margin-top: var(--space-4)">
+      <span class="tab">Active tab</span>
+      <span class="pill pos">Positive</span>
+      <span class="pill neg">Negative</span>
+      <span class="pill warn">Notice</span>
+      <span class="pill neu">Planning only</span>
+    </div>
+  </section>
+
+  <section id="routes">
+    <h2>Routes and risk</h2>
+    <p>Routes differ by colour, line pattern and label. Risk tiers differ by colour and mark. The shape is a drawing, not anatomy.</p>
+    <div class="grid three">
+      <div class="well" style="grid-column: span 2">
+        <svg viewBox="0 0 520 190" role="img" aria-label="Five sample route lines, each with its own colour, pattern and label">
+          <path class="route r-1" d="M20 28 C150 28 230 28 350 28"/><text x="362" y="32">Frontier route 1, solid</text>
+          <path class="route r-2" d="M20 62 C150 62 230 62 350 62"/><text x="362" y="66">Frontier route 2, long dash</text>
+          <path class="route r-3" d="M20 96 C150 96 230 96 350 96"/><text x="362" y="100">Frontier route 3, dot</text>
+          <path class="route r-4" d="M20 130 C150 130 230 130 350 130"/><text x="362" y="134">Frontier route 4, dash dot</text>
+          <path class="route r-p" d="M20 164 C150 164 230 164 350 164"/><text x="362" y="168">Your route, heavier</text>
+        </svg>
+      </div>
+      <div class="stack">
+        <div class="risk" style="background: var(--color-risk-forbidden)"></div>
+        <div class="label">Forbidden: solid fill</div>
+        <svg class="risk" width="100%" height="64" role="img" aria-label="Hatched mark"><defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" style="stroke: var(--color-risk-heavy); stroke-width: 4"/></pattern></defs><rect width="100%" height="100%" fill="url(#hatch)"/></svg>
+        <div class="label">Heavy: hatched</div>
+        <div class="risk" style="border: var(--underline-width) solid var(--color-risk-proximity); box-sizing: border-box"></div>
+        <div class="label">Proximity: outline</div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top: var(--gap)" data-tokens="route-1 route-2 route-3 route-4"></div>
+  </section>
+
+  <section id="views">
+    <h2>3D and X-ray views</h2>
+    <p>Spec §5.5: 3D has translucent vessels and an opaque wire with a ghost trail. X-ray has a dark wire, with vessels as a dark silhouette only during a contrast puff.</p>
+    <div class="grid three">
+      <figure style="margin: 0">
+        <div class="well"><svg viewBox="0 0 240 150" role="img" aria-label="3D view colours">
+          <path class="vessel" d="M120 140 L120 80 L55 20 M120 80 L185 20"/>
+          <path class="route" style="stroke: var(--color-scene-ghost); stroke-opacity: var(--opacity-scene-ghost); stroke-width: var(--stroke-route-player)" d="M120 80 L185 20"/>
+          <path class="route" style="stroke: var(--color-scene-wire); stroke-width: var(--stroke-route-player)" d="M120 140 L120 80"/>
+          <circle cx="185" cy="20" r="6" style="fill: var(--color-marker-target)"/>
+          <circle cx="120" cy="140" r="6" style="fill: var(--color-marker-entry)"/>
+        </svg></div>
+        <figcaption class="label">3D</figcaption>
+      </figure>
+      <figure style="margin: 0">
+        <div class="xray xray-off"><svg viewBox="0 0 240 150" role="img" aria-label="X-ray view without contrast">
+          <path class="vessel-x" d="M120 140 L120 80 L55 20 M120 80 L185 20"/>
+          <path class="wire-x" d="M120 140 L120 80 L150 52"/>
+        </svg></div>
+        <figcaption class="label">X-ray, no contrast</figcaption>
+      </figure>
+      <figure style="margin: 0">
+        <div class="xray xray-on"><svg viewBox="0 0 240 150" role="img" aria-label="X-ray view during a contrast puff">
+          <path class="vessel-x" d="M120 140 L120 80 L55 20 M120 80 L185 20"/>
+          <path class="wire-x" d="M120 140 L120 80 L150 52"/>
+        </svg></div>
+        <figcaption class="label">X-ray, contrast puff</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="type">
+    <h2>Type and controls</h2>
+    <p>Inter, loaded from the repo. Figures are specimens of digit width, not data.</p>
+    <div class="grid three">
+      <div class="card stack">
+        <div class="t-figure">Answer figure</div>
+        <div class="t-figure-sm">Sibling figure</div>
+        <div class="t-lead">Section heading</div>
+        <div>Body and table cells</div>
+        <div class="label">Labels, meta and axis ticks</div>
+      </div>
+      <div class="card stack">
+        <div class="num t-figure-sm" id="digits-a">0123456789</div>
+        <div class="num t-figure-sm" id="digits-b">1111111111</div>
+        <div class="label" id="tnum-result"></div>
+      </div>
+      <div class="card stack">
+        <div class="row"><button class="btn-primary">Start planning</button><button class="btn-outline">Keep my route</button></div>
+        <input aria-label="Sample field" placeholder="Search cases">
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  const css = getComputedStyle(document.documentElement);
+  const channels = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const lum = (hex) => { const [r, g, b] = channels(hex).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const sheet = css.getPropertyValue('--color-surface').trim();
+  for (const grid of document.querySelectorAll('[data-tokens]')) {
+    for (const name of grid.dataset.tokens.split(' ')) {
+      const hex = css.getPropertyValue(`--color-${name}`).trim();
+      const el = document.createElement('div');
+      el.className = 'swatch';
+      el.innerHTML = `<div class="chip" style="background: var(--color-${name})"></div><div class="meta"><b>${name}</b><span class="num">${hex} · ${ratio(hex, sheet).toFixed(2)}:1</span></div>`;
+      grid.append(el);
+    }
+  }
+  document.fonts.ready.then(() => {
+    const a = document.getElementById('digits-a'); const b = document.getElementById('digits-b');
+    a.style.display = b.style.display = 'inline-block';
+    const equal = Math.abs(a.getBoundingClientRect().width - b.getBoundingClientRect().width) < 0.01;
+    a.style.display = b.style.display = '';
+    document.getElementById('tnum-result').textContent = `${document.fonts.check('1em Inter') ? 'Inter loaded' : 'Inter not loaded'}; digits ${equal ? 'line up' : 'do not line up'}`;
+  });
+</script>
+</body>
+</html>

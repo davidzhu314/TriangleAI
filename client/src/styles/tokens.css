@@ -1,43 +1,171 @@
-/* Placeholder tokens. Aroovee replaces this file in A0. Neutral on purpose: no brand colour yet.
-   Use only these variables in UI code; never raw colours, sizes, radii or shadows. */
+/* ThreadSim design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
+   "measured" = taken from the reference site in DECISIONS.md. "derived" = one tone step from a measured value.
+   "ours" = chosen for ThreadSim. "spec" = fixed by docs/ThreadSim_Build_Specification.md. Light only; see DECISIONS.md. */
 :root {
-  --color-bg: #f6f6f4;
-  --color-surface: #ffffff;
-  --color-border: #dcdcd8;
-  --color-text: #1d1d1b;
-  --color-text-muted: #5f5f5a;
-  --color-accent: #3d5a6c;      /* placeholder slate, not the brand */
-  --color-danger: #b3261e;
-  --color-warning: #a15c00;
-  --color-ok: #2e6b3f;
-  --color-xray-bg: #8a8a8a;     /* spec §5.5: vessels as dark silhouette on grey */
+  color-scheme: light;
+
+  /* Surfaces: frame → sheet → card, three levels at most. */
+  --color-background: #f9f7f6;     /* measured: the tinted frame behind the sheet */
+  --color-surface: #ffffff;        /* measured: the sheet and cards */
+  --color-surface-sunken: #f2efee; /* derived: canvas wells and the 3D scene ground */
+  --color-surface-active: #eeebea; /* measured: active nav pill, selected list row */
+  --color-surface-inverse: #2e2d2d; /* measured: tooltips */
+
+  /* Lines */
+  --color-border: #eeebea;         /* measured: sheet and card edges */
+  --color-rule: #f4f2f1;           /* derived: row rules, one step lighter than an edge */
+  --color-border-strong: #dad6d5;  /* measured: control borders */
+
+  /* Text. Every tier passes 4.5:1 on surface and background. */
+  --color-heading: #2e2d2d;        /* measured: titles and figures */
+  --color-text: #585757;           /* measured: #2e2d2d at 80%, flattened so it is a plain hex */
+  --color-text-muted: #706e6d;     /* measured: labels, meta, placeholders. 4.43:1 on sunken: large text only there */
+  --color-text-inverse: #ffffff;   /* measured */
+
+  /* Actions */
+  --color-primary: #1f1e1e;        /* measured: the one filled button */
+  --color-primary-hover: #2e2d2d;  /* measured */
+  --color-primary-foreground: #ffffff; /* measured */
+  --color-link: #1f1e1e;           /* measured */
+
+  /* Brand: contrast-agent teal. On the player's route, main data and the active tab underline; never on chrome fills. */
+  --color-brand: #0b6a7d;          /* ours */
+  --color-brand-strong: #084f5d;   /* ours: text on brand tint */
+  --color-brand-tint: #e4f1f3;     /* ours: selected state, one per screen */
+  --color-focus: #0b6a7d;          /* ours: replaces the reference's blue ring */
+
+  /* Status: words and pale pairs. Colour says good or bad, never up or down. */
+  --color-positive: #247b50;
+  --color-negative: #c4242a;
+  --color-warning: #92400e;
+  --color-pill-positive-bg: #dcfae5;
+  --color-pill-positive-ink: #04250e;
+  --color-pill-negative-bg: #ffedea;
+  --color-pill-negative-ink: #831c1e;
+  --color-pill-warning-bg: #fffbeb;
+  --color-pill-warning-ink: #92400e;
+  --color-pill-warning-border: #fde68a;
+  --color-pill-neutral-bg: #eeebea;
+  --color-pill-neutral-ink: #2e2d2d;
+
+  /* Risk tiers (spec §4). Each also differs by mark, because colour is never the only signal (spec §7.3). */
+  --color-risk-forbidden: #c4242a; /* solid fill */
+  --color-risk-heavy: #b45309;     /* hatched */
+  --color-risk-proximity: #8a6a00; /* outline only */
+  --opacity-risk-zone: 0.35;       /* risk volumes in the 3D scene */
+
+  /* Routes. Each differs by colour, line pattern and label (spec §7.3). Dash values are in stroke widths' viewBox units. */
+  --color-route-player: #0b6a7d;   /* the brand: the same line on Plan, Compare and Results */
+  --color-route-1: #2e2d2d;
+  --color-route-2: #a8326e;
+  --color-route-3: #8a6a00;
+  --color-route-4: #706e6d;
+  --stroke-route-player: 3;
+  --stroke-route: 2;
+  --dash-route-player: none;
+  --dash-route-1: none;
+  --dash-route-2: 10 5;
+  --dash-route-3: 3 4;
+  --dash-route-4: 10 4 2 4;
+
+  /* Charts: one hue, then neutrals */
+  --color-chart-1: #0b6a7d;
+  --color-chart-2: #2e2d2d;
+  --color-chart-3: #706e6d;
+  --color-grid: #eeebea;
+  --opacity-chart-span: 0.06;
+
+  /* 3D scene. three.js materials read these with getComputedStyle; hex only, opacity kept apart. */
+  --color-scene-ground: #f2efee;
+  --color-scene-vessel: #8f8b89;
+  --opacity-scene-vessel: 0.35;
+  --color-scene-wire: #1f1e1e;
+  --color-scene-ghost: #0b6a7d;
+  --opacity-scene-ghost: 0.45;
+  --color-marker-entry: #2e2d2d;
+  --color-marker-target: #0b6a7d;
+
+  /* X-ray view (spec §5.5): dark wire, dark silhouette, grey ground. Neutral on purpose. */
+  --color-xray-bg: #8a8a8a;
   --color-xray-ink: #1a1a1a;
+  --opacity-xray-contrast: 0.7;     /* the silhouette at the peak of a puff */
+  --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-size-1: 12px;
-  --font-size-2: 14px;
-  --font-size-3: 16px;
-  --font-size-4: 20px;
-  --font-size-5: 28px;
+  /* Type: Inter, measured. Display sizes over 32px dropped: app titles stay at or under 32. */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-size-meta: 12px;       /* labels, meta, axis ticks, pills; nothing smaller */
+  --font-size-body: 14px;       /* body, nav, table cells, controls */
+  --font-size-lead: 16px;       /* card titles, section headings, phone data */
+  --font-size-figure-sm: 20px;  /* sibling figures */
+  --font-size-title: 24px;      /* the page's h1 */
+  --font-size-figure: 32px;     /* the one answer figure on a screen */
+  --line-height-meta: 16px;
+  --line-height-body: 20px;
+  --line-height-lead: 24px;
+  --line-height-figure-sm: 24px;
+  --line-height-title: 29px;
+  --line-height-figure: 35px;
+  --letter-spacing: -0.01em;    /* measured at every size */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-strong: 600;    /* one job per screen */
 
+  /* Space: 4px grid, measured. The name is the multiple of 4. */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-16: 64px;
+  --gap: 16px;                  /* one gutter, both directions, on every screen */
 
-  --radius-1: 4px;
-  --radius-2: 8px;
+  /* Radii, measured: control field, button, card and sheet, pill */
+  --radius-field: 4px;
+  --radius-control: 8px;
+  --radius-card: 16px;
+  --radius-full: 9999px;
+
+  /* Lines and elevation. Resting surfaces have an edge and no shadow. */
+  --border-width: 1px;
+  --underline-width: 2px;       /* the active tab */
+  --focus-width: 2px;
+  --shadow-float: 0 4px 8px rgba(24, 23, 23, 0.08); /* measured: menus, popovers, tooltips, dialogs only */
+
+  /* Layout, from the dealt framed-sheet style (see DESIGN.md) */
+  --size-sidebar: 228px;
+  --size-topbar: 48px;
+  --size-palette: 232px;        /* Plan's left panel */
+  --size-readout: 384px;        /* Plan's and Compare's right panel */
+  --size-sheet-inset: 8px;
+  --size-sheet-padding: 24px;
+  --size-page-max: 1312px;      /* measured */
+  --size-control: 36px;         /* measured */
+  --size-field: 38px;           /* measured */
+  --size-nav-row: 34px;
+  --size-row: 44px;
+  --size-touch: 44px;           /* minimum tap target on a phone */
+  --size-icon: 16px;
+  --size-icon-lg: 24px;
+  --stroke-icon: 1.75;          /* measured, at the 24px grid */
+
+  /* Motion: feedback only. Nothing performs an entrance. */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
+/* Phone: titles step down and data stays readable. Width matches DESIGN.md's breakpoints. */
+@media (max-width: 640px) {
   :root {
-    --color-bg: #141413;
-    --color-surface: #1d1d1b;
-    --color-border: #34342f;
-    --color-text: #ececea;
-    --color-text-muted: #a3a39d;
-    --color-accent: #8fb0c4;
+    --font-size-title: 20px;
+    --line-height-title: 24px;
+    --font-size-figure: 24px;
+    --line-height-figure: 29px;
+    --size-sheet-padding: 16px;
+    --size-sheet-inset: 0px;
   }
 }
