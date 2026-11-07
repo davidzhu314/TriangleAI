@@ -43,9 +43,23 @@ Inputs are one edge from `centerlines.json`: `points` (mm, RAS) and `radii_mm`, 
 
 A corner of deflection δ between two straight legs, each at least w long, reads Θmax = ΘΣ = δ. Θmax = δ because the peak sits at the corner; ΘΣ = δ because the window averages δ/2 on each side (see `junction()` in `generate.py`). For a route of one edge, the result equals the per-edge measures exactly.
 
+### Route costs (spec §4.6, preset-independent)
+
+| Measure | Definition |
+| --- | --- |
+| `r_min_mm` | Smallest r_min over the route's edges |
+| `heavy_crossings` | Number of distinct heavy-tier zones lying on a route edge |
+| `proximity_penalty` | Σ over proximity-tier zones of max(0, 1 − clearance / 10 mm), where clearance runs from the route to the zone. NumPy measures it from the joined polyline; the TypeScript takes the smallest per-edge clearance. The two are equal. |
+
+The `routes` in `expected.json` carry these closed forms. `y-branch` has a 30°, a 45° and a 105° takeoff, one heavy zone, and a proximity penalty of 1 − sin 75° on the trunk→right route.
+
+## Bundled cases
+
+`numpy-cases.json` holds NumPy's measures of the bundled cases. Today that is fixture-y's three edges and its routes: the trunk alone, entry → left and entry → right. `client/src/optimize/measure-route.test.ts` checks the TypeScript against it within 0.1 mm / 0.5° (spec §4.9). Add the generated cases to `CASES` in `dump_numpy.py` when D6-min lands.
+
 ## TypeScript port
 
-`client/src/optimize/measures/` follows this file and is tested by `measures.test.ts` in two ways. It must match the closed forms within 0.1 mm / 0.5°, and it must match NumPy's own outputs within 1e-6. NumPy's outputs are in `numpy-synthetic.json`, which `dump_numpy.py` writes; a pytest fails if that file is stale. After changing either implementation or a fixture, run:
+`client/src/optimize/measures/` (and `graph.ts` / `measure-route.ts` on top of it) follows this file and is tested by `measures.test.ts` in two ways. It must match the closed forms within 0.1 mm / 0.5°, and it must match NumPy's own outputs within 1e-6. NumPy's outputs are in `numpy-synthetic.json`, which `dump_numpy.py` writes; a pytest fails if that file is stale. After changing either implementation or a fixture, run:
 
 ```bash
 tests/crosscheck/.venv/Scripts/python tests/fixtures/synthetic/generate.py

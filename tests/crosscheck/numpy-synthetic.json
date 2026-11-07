@@ -68,21 +68,63 @@
   "routes": {
    "parent-only": {
     "L_mm": 60.0,
+    "edges": [
+     "e0"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 8.0,
+    "reversed": [
+     false
+    ],
     "theta_max_deg": 0.0,
     "theta_sum_deg": 0.0
    },
    "parent-to-retro": {
     "L_mm": 109.999999836,
+    "edges": [
+     "e0",
+     "e1"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 4.0,
+    "reversed": [
+     false,
+     false
+    ],
     "theta_max_deg": 120.000000108,
     "theta_sum_deg": 120.000002447
    },
    "parent-to-side": {
     "L_mm": 99.99999965,
+    "edges": [
+     "e0",
+     "e2"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 5.0,
+    "reversed": [
+     false,
+     false
+    ],
     "theta_max_deg": 45.0,
     "theta_sum_deg": 45.000000087
    },
    "retro-to-side": {
     "L_mm": 89.999999486,
+    "edges": [
+     "e1",
+     "e2"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 4.0,
+    "reversed": [
+     true,
+     false
+    ],
     "theta_max_deg": 69.295188874,
     "theta_sum_deg": 69.295191234
    }
@@ -134,6 +176,55 @@
     "theta_sum_deg": 0.0
    }
   },
-  "routes": {}
+  "routes": {
+   "right-to-left": {
+    "L_mm": 89.999999785,
+    "edges": [
+     "e1",
+     "e2"
+    ],
+    "heavy_crossings": 1,
+    "proximity_penalty": 1.0,
+    "r_min_mm": 4.0,
+    "reversed": [
+     true,
+     false
+    ],
+    "theta_max_deg": 104.999999892,
+    "theta_sum_deg": 105.000002204
+   },
+   "trunk-to-left": {
+    "L_mm": 109.999999916,
+    "edges": [
+     "e0",
+     "e2"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 1.0,
+    "r_min_mm": 5.0,
+    "reversed": [
+     false,
+     false
+    ],
+    "theta_max_deg": 45.0,
+    "theta_sum_deg": 45.000000019
+   },
+   "trunk-to-right": {
+    "L_mm": 99.999999869,
+    "edges": [
+     "e0",
+     "e1"
+    ],
+    "heavy_crossings": 1,
+    "proximity_penalty": 0.034074171,
+    "r_min_mm": 4.0,
+    "reversed": [
+     false,
+     false
+    ],
+    "theta_max_deg": 30.000000108,
+    "theta_sum_deg": 30.000002423
+   }
+  }
  }
 }

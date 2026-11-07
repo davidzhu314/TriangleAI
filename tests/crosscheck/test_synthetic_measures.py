@@ -203,6 +203,20 @@ def test_route_measures(name, rid):
     assert tsum == pytest.approx(r["theta_sum_deg"], abs=DEG)
 
 
+@pytest.mark.parametrize("name,rid", list(route_cases()))
+def test_route_costs(name, rid):
+    case, cl, exp = load(name)
+    r = next(x for x in exp["routes"] if x["id"] == rid)
+    c = nm.route_costs(cl, case, r["edges"], r["reversed"])
+    assert c.L_mm == pytest.approx(r["L_mm"], abs=MM)
+    assert c.theta_max_deg == pytest.approx(r["theta_max_deg"], abs=DEG)
+    assert c.theta_sum_deg == pytest.approx(r["theta_sum_deg"], abs=DEG)
+    assert c.r_min_mm == pytest.approx(r["r_min_mm"], abs=MM)
+    assert c.heavy_crossings == r["heavy_crossings"]
+    # penalty = 1 - clearance/10 mm, so 0.01 of penalty is 0.1 mm of clearance
+    assert c.proximity_penalty == pytest.approx(r["proximity_penalty"], abs=MM / nm.PROXIMITY_SCALE_MM)
+
+
 @pytest.mark.parametrize("step", [0.25, 0.3, 0.37, 0.5])
 def test_route_corner_peak_is_grid_independent(step):
     """With the junction sampled, the 120 deg corner reads 120 deg for any grid step."""
@@ -232,3 +246,4 @@ def test_numpy_dump_is_current():
     import dump_numpy
 
     assert dump_numpy.OUT.read_text(encoding="utf-8") == dump_numpy.render(), "run python tests/crosscheck/dump_numpy.py"
+    assert dump_numpy.OUT_CASES.read_text(encoding="utf-8") == dump_numpy.render_cases(), "run python tests/crosscheck/dump_numpy.py"
