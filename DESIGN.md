@@ -157,6 +157,8 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 
 **Routes** differ by colour, line pattern and label (spec §7.3). The player: `--color-route-player`, the heavier stroke, solid. Frontier routes: `--color-route-1` to `-4` with `--dash-route-1` to `-4`. Every route carries a text label on screen, and labels come from the optimizer's contract fields. Heavy and proximity risk, and frontier routes 3 and 4, fall to about 4.4:1 on a well, so label them in ink rather than in their own colour there.
 
+**Plan view and narrowest point.** The narrowest point shows as a **radius** (`narrowestRadiusM`, mm), as on Results; its tooltip says a wire preset compares the diameter. Until three.js lands, the Plan view is a flat front view in SVG (`client/src/render/plan-view.ts`): vessel bands use `--color-scene-vessel` at `--opacity-scene-vessel` on `--color-scene-ground`, risk zones use their tier's mark, and the route trace is `--color-route-player` at `--stroke-route-player`.
+
 **3D and X-ray.** three.js materials read `--color-scene-*`, `--color-marker-*` and the `--opacity-scene-*` values with `getComputedStyle`; never write a colour into a material. X-ray uses only `--color-xray-bg`, `--color-xray-ink` and `--opacity-xray-contrast`, and neutral grey is required by spec §5.5, not a style choice. The contrast fade is `--duration-contrast-fade`.
 
 ## Typography
@@ -180,7 +182,7 @@ The dealt style is **Framed sheet** (Taste Skill app route, kind `builder`, seed
 
 - Sidebar `--size-sidebar`, content padding `--size-sheet-padding`, one gutter `--gap` both ways on every screen. Grid sums close: write the sum in a comment.
 - Every screen has one h1, and one left and one right edge from its title to its last row.
-- Plan and Drive drop the global sidebar to give the view the width, keeping a 48 px top bar with the exit, the case name and the screen's actions.
+- Plan and Drive drop the global sidebar to give the view the width, keeping the same 48 px top bar (`--size-topbar`) as every screen, with the breadcrumb as the exit and the screen's one primary on the right. (The Taste sheet's builder pattern said 44 px; one top bar height across the app wins.)
 
 ### Screen inventory
 
@@ -190,7 +192,7 @@ Each screen answers one question, and its largest block answers it. On Plan and 
 | --- | --- | --- | --- | --- |
 | Library | Which case do I do next? | The next unlocked case: difficulty, Physics or Planning-only badge, stars earned | Sidebar and sheet. The next case leads at full width, the other cases follow as a list of peer rows, and import is one drop zone. Composed from the list rules | Works fully. Nav folds to the top bar; rows go two-line |
 | Case brief | What am I about to face? | Scenario, target, arch type, fluoro budget | Tabbed object detail, without tabs: breadcrumb h1, then one scenario card with the facts as label-over-value, and "Start planning" as the one primary | Works fully. Facts become label and value rows |
-| Plan | Is my route feasible, and what does it cost? | The live cost panel and the first warning | Builder canvas: 44 px top bar, `--size-palette` panel (entry, preset), the view as a well, `--size-readout` cost panel. Costs as key-value rows with right-aligned figures | Usable. View on top, cost panel below; a bottom sheet for presets |
+| Plan | Is my route feasible, and what does it cost? | The live cost panel and the first warning | Builder canvas: the 48 px top bar holds the one primary, "Compare routes". Below it: a `--size-palette` panel (entry, target, wire, and the keyboard list of next branch points), the view as a well, and a `--size-readout` cost panel. Costs are key-value rows with right-aligned figures and a formula tooltip each; the first warning sits on top | Usable. View on top, then a "Route setup" button that opens the palette as a bottom sheet, then the cost panel |
 | Compare | Is my route on the frontier? | Frontier routes overlaid, and the route that dominates mine | Insights with share tables: the overlay leads, then weight sliders beside one table of routes. No KPI strip; route labels are the row names | Usable. Overlay full width, then sliders, then the table as two-line rows |
 | Drive | Where is my tip, and am I pushing on the wall? | The view, force meter, fluoro budget, distance to target | Builder canvas with no side panels: the view fills the sheet and one HUD strip holds the three readouts. No honesty line here | Usable. View on top, HUD as a divided row, large hold controls |
 | Results | What one thing should I change? | The top feedback line, plan and drive scores, stars | Generated report: the feedback line is the first and largest text, scores sit beside it, then the remaining lines, then the replay timeline with the route trace | Works fully. One column, in the same order |
@@ -259,7 +261,8 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 ## Known Gaps
 
 - The dark theme is checked on the specimen pages only until A2 puts it on real screens, and its scene values need the same look against real meshes in A3.
-- Plan and Drive compositions are decided here but unbuilt. Scene colours need a look against real translucent meshes in A3, the first place a token could change.
+- **The 3D scene waits on three.js** (requested from David). Scene tokens hold in the 2D front view in both themes, but haven't been seen on a real translucent mesh yet. That's the first place a scene token could still change.
+- Drive's composition is decided here but unbuilt.
 - The X-ray colours are tested only in the 2D specimen until A5.
 - Taste Skill is pinned at v2.1.5 (`DECISIONS.md`). The `npx skills add` line in the lane file installs 2.5.0, which has no `draw.mjs --app`, `lint.mjs` or `inspect.mjs`.
 

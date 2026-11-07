@@ -301,6 +301,14 @@ h3 {
   color: var(--color-text-muted);
 }
 
+/* A disabled primary stays readable: neutral surface, body text (DESIGN.md: text tiers at 4.5:1). */
+.btn-primary[disabled] {
+  cursor: not-allowed;
+  background: var(--color-surface-active);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

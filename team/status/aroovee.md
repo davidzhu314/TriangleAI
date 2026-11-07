@@ -1,9 +1,9 @@
 # Status — Aroovee (Teammate 3)
 
 Contracts version: 1 (checked on main, 2026-11-07)
-Now: A2 done; stopped for my human to look at the PR
-Done: A0 design system; A1 icons and empty states; dark theme; A2 app shell, Library and Case brief (all 2026-11-07)
-Blocked: nothing. Request open: physics case index URL (to David); A2 runs without it
-Waiting to swap: phantom slot → physics case index (David, D3a/D5)
-Next handoff: A3 → 3D scene and Plan screen on measureRoute (real since V2)
-Last session: 2026-11-07 — A2 on D2's real loader: shell, Library, import with every §3.5 check, Case brief; 11 Playwright tests; Taste inspector 0 FAIL in light and dark. Toolchain now installed: Node 26, pnpm 9.15.9, gh.
+Now: A3 done except the 3D scene, which waits on three.js; stopped for my human to look at the PR (A2 and A3 together in #17)
+Done: A0 design system; A1 icons and empty states; dark theme; A2 app shell, Library and Case brief; A3 Plan screen with a 2D view (all 2026-11-07)
+Blocked: the 3D scene waits on three.js (team/requests/to-david-from-aroovee-threejs.md). Also open: physics case index URL (to David)
+Waiting to swap: 2D Plan view → three.js scene behind PlanView (David's three.js answer); phantom slot → physics case index (David, D3a/D5)
+Next handoff: A4 → Compare screen on optimize() and createRanker
+Last session: 2026-11-07 — A3: route building on routeFor, keyboard path, cost panel with formula tooltips, warnings, Plan inspector 0 FAIL in light and dark. Answered Vaibhav's voice review. three.js requested, not added.

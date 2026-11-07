@@ -1,0 +1,325 @@
+/* Plan screen. Every value is a token; the only raw numbers are the tablet and phone widths
+   (DESIGN.md: Responsive Behavior). */
+
+/* ---------------------------------------------------------------- focus layout: no global sidebar */
+.app-focus {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-focus .topbar {
+  padding-inline: var(--space-4) var(--size-sheet-inset);
+}
+
+.app-focus .sheet {
+  margin-left: var(--size-sheet-inset);
+}
+
+/* ---------------------------------------------------------------- palette | view well | cost panel */
+.plan-layout {
+  display: grid;
+  grid-template-columns: var(--size-palette) minmax(0, 1fr) var(--size-readout);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.plan-palette,
+.plan-readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.plan-readout {
+  padding: var(--space-5);
+}
+
+.palette-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan .palette-done,
+.plan .palette-toggle {
+  display: none;
+}
+
+.plan-well {
+  position: sticky;
+  top: var(--space-4);
+  height: calc(100dvh - var(--size-topbar) - var(--size-sheet-inset) - var(--size-sheet-padding) * 2);
+  min-height: var(--size-readout);
+  background: var(--color-scene-ground);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice legend {
+  margin-bottom: var(--space-1);
+  padding: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.choice-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: var(--size-nav-row);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--color-heading);
+  cursor: pointer;
+}
+
+.choice-option:has(input:checked) {
+  background: var(--color-surface-active);
+}
+
+.choice-option input {
+  margin: var(--space-1) 0 0;
+  accent-color: var(--color-brand);
+}
+
+.choice-disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.choice-note {
+  color: var(--color-text);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-rule);
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step-button {
+  align-self: stretch;
+  justify-content: flex-start;
+  height: auto;
+  min-height: var(--size-control);
+  padding-block: var(--space-2);
+  white-space: normal;
+  text-align: left;
+}
+
+.warning-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plan-warning {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+}
+
+.warning-blocked {
+  background: var(--color-pill-negative-bg);
+  color: var(--color-pill-negative-ink);
+}
+
+.warning-risk {
+  background: var(--color-pill-warning-bg);
+  color: var(--color-pill-warning-ink);
+  border: var(--border-width) solid var(--color-pill-warning-border);
+}
+
+.plan-warning .icon {
+  color: inherit;
+}
+
+.plan-warning .with-icon {
+  align-items: flex-start;
+}
+
+.verdict {
+  margin: 0;
+  color: var(--color-text);
+}
+
+.verdict-ok {
+  color: var(--color-positive);
+  font-weight: var(--font-weight-medium);
+}
+
+.verdict-blocked {
+  color: var(--color-negative);
+  font-weight: var(--font-weight-medium);
+}
+
+.cost-table {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.cost-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: var(--size-row);
+  padding-block: var(--space-2);
+  border-top: var(--border-width) solid var(--color-rule);
+}
+
+.cost-row dt {
+  color: var(--color-text);
+}
+
+.cost-row dd {
+  margin: 0;
+  text-align: right;
+}
+
+.cost-row .figure {
+  color: var(--color-heading);
+  font-size: var(--font-size-figure-sm);
+  line-height: var(--line-height-figure-sm);
+}
+
+.illustrative {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
+/* Number tooltips (DESIGN.md: Components): the formula, on hover and on keyboard focus. */
+.tip {
+  position: relative;
+  cursor: help;
+}
+
+.tip:hover::after,
+.tip:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 6;
+  width: var(--size-palette);
+  margin-top: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float); /* taste-skill-ignore: a tooltip floats over the panel */
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  font-weight: var(--font-weight-regular);
+  text-align: left;
+  white-space: normal;
+}
+
+/* Tablet: route setup above, the view and the cost panel side by side. */
+@media (max-width: 1100px) {
+  .plan-layout {
+    grid-template-columns: minmax(0, 1fr) var(--size-readout);
+  }
+
+  .plan-palette {
+    grid-column: 1 / -1;
+  }
+
+  .plan-well {
+    position: relative;
+    top: auto;
+    height: var(--size-readout);
+  }
+}
+
+/* Phone: view on top, cost panel below, route setup in a bottom sheet. */
+@media (max-width: 640px) {
+  .app-focus .sheet {
+    margin-left: 0;
+  }
+
+  .plan-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .app-focus .topbar {
+    padding-inline: var(--space-4);
+  }
+
+  .plan-well {
+    order: 1;
+    height: var(--size-readout);
+  }
+
+  .plan-readout {
+    order: 3;
+    padding: var(--space-4);
+  }
+
+  .plan-palette {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 8;
+    max-height: 85dvh;
+    overflow-y: auto;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-float); /* taste-skill-ignore: the bottom sheet floats over the screen */
+    transform: translateY(100%);
+    visibility: hidden;
+  }
+
+  .plan-palette.palette-open {
+    transform: none;
+    visibility: visible;
+  }
+
+  .plan .palette-done {
+    display: inline-flex;
+  }
+
+  .plan .palette-toggle {
+    display: inline-flex;
+    order: 2;
+    width: 100%;
+  }
+
+  .choice-option,
+  .step-button {
+    min-height: var(--size-touch);
+  }
+}

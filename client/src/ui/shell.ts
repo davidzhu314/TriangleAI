@@ -17,12 +17,16 @@ export interface ScreenFrame {
   crumbs: Crumb[];
   /** The one action carried into the phone top bar, if the screen has one. */
   action?: { label: string; href: string };
+  /** Builder screens (Plan, later Drive): no global sidebar, the view gets the width (DESIGN.md: Layout). */
+  layout?: 'focus';
+  /** The screen's one primary control, kept in the top bar at every width. */
+  primary?: HTMLElement;
   body: Node;
 }
 
 let menuOpen = false;
 
-export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library'): void {
+export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library' | null): void {
   const nav = h(
     'nav',
     { class: 'nav', 'aria-label': 'Main' },
@@ -55,7 +59,7 @@ export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'libr
       : null;
   const phoneAction = frame.action ? h('a', { class: 'btn btn-secondary phone-action', href: frame.action.href }, frame.action.label) : null;
 
-  const topbar = h('header', { class: 'topbar' }, menuButton, crumbs, h('div', { class: 'topbar-end' }, badge, phoneAction));
+  const topbar = h('header', { class: 'topbar' }, menuButton, crumbs, h('div', { class: 'topbar-end' }, badge, phoneAction, frame.primary ?? null));
 
   const menuSheet = h(
     'div',
@@ -81,7 +85,7 @@ export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'libr
   });
 
   const sheet = h('main', { class: 'sheet', id: 'main' }, frame.body);
-  replace(root, h('a', { class: 'skip-link', href: '#main' }, 'Skip to content'), h('div', { class: 'app' }, sidebar, topbar, sheet), menuSheet);
+  replace(root, h('a', { class: 'skip-link', href: '#main' }, 'Skip to content'), frame.layout === 'focus' ? h('div', { class: 'app app-focus' }, topbar, sheet) : h('div', { class: 'app' }, sidebar, topbar, sheet), menuSheet);
   document.title = current && current.label !== 'Library' ? `${current.label} · ThreadSim` : 'ThreadSim';
 }
 

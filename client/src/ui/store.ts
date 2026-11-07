@@ -8,7 +8,7 @@
  *   package that happens to share its id (every broken test package is "fixture-y").
  */
 import { listBundledCases, loadCase, type CaseSource } from '../case';
-import type { CaseLoadResult, LoadedCase, Stars, ValidationFix } from '../contracts';
+import type { CaseLoadResult, LoadedCase, Stars, ValidationFix, WirePresetId } from '../contracts';
 import { bestStars, nextCase as nextOpenCase, type ProgressRecord } from '../score';
 
 export type CatalogOrigin = 'bundled' | 'imported' | 'physics';
@@ -183,4 +183,23 @@ export async function addPhysicsCase(id: string, baseUrl: string): Promise<Catal
 
 export function loadedCase(e: CatalogEntry | undefined): LoadedCase | undefined {
   return e?.result.ok ? e.result.case : undefined;
+}
+
+// ---------------------------------------------------------------- the plan handed from Plan to Compare
+export interface SavedPlan {
+  entryId: string;
+  targetId: string;
+  presetId: WirePresetId;
+  edges: string[];
+}
+
+const plans = new Map<string, SavedPlan>();
+
+/** Keep the player's plan for this session (Compare reads it in A4). */
+export function savePlan(key: string, plan: SavedPlan): void {
+  plans.set(key, { ...plan, edges: [...plan.edges] });
+}
+
+export function savedPlan(key: string): SavedPlan | undefined {
+  return plans.get(key);
 }

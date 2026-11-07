@@ -8,6 +8,9 @@ import contrastPuff from '../assets/icons/contrast-puff.svg?raw';
 import entryFemoral from '../assets/icons/entry-femoral.svg?raw';
 import entryRadial from '../assets/icons/entry-radial.svg?raw';
 import fluoro from '../assets/icons/fluoro.svg?raw';
+import presetSoftAngled from '../assets/icons/preset-soft-angled.svg?raw';
+import presetStandardJ from '../assets/icons/preset-standard-j.svg?raw';
+import presetStiffStraight from '../assets/icons/preset-stiff-straight.svg?raw';
 import riskForbidden from '../assets/icons/risk-forbidden.svg?raw';
 import riskHeavy from '../assets/icons/risk-heavy.svg?raw';
 import riskProximity from '../assets/icons/risk-proximity.svg?raw';
@@ -23,6 +26,9 @@ const ICONS = {
   'entry-femoral': entryFemoral,
   'entry-radial': entryRadial,
   fluoro,
+  'preset-soft-angled': presetSoftAngled,
+  'preset-standard-j': presetStandardJ,
+  'preset-stiff-straight': presetStiffStraight,
   'risk-forbidden': riskForbidden,
   'risk-heavy': riskHeavy,
   'risk-proximity': riskProximity,
