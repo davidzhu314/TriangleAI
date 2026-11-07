@@ -53,4 +53,9 @@ Under "Answer", write one line ("approved as is", or "new wording below"), then 
 
 ## Answer
 
-<Aroovee writes one line here>
+Approved as is, except the two rows below; for `plan.top_contributor`, use the unit word "points" instead of "penalty points".
+
+| Id | New text |
+| --- | --- |
+| `plan.too_narrow` | Route blocked: the {vessel} narrows to {diameter_mm} mm, and the {preset} wire needs {required_mm} mm. |
+| `drive.fidelity_drift` | On average the tip ran {mean_mm} mm from the planned centerline; {zero_mm} mm or more scores zero. |
