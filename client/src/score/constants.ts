@@ -33,3 +33,6 @@ export const BUDGET_STAR_COST = 1;
 
 /** The gentleness reference drive stops after this much simulation time, s. */
 export const REFERENCE_MAX_S = 300;
+
+/** §6.5 unlock ladder (illustrative): a case with no arch type and tortuosity at or below this is the low-tortuosity tier. */
+export const LOW_TORTUOSITY_MAX = 0.3;
