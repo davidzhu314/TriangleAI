@@ -11,13 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Skip until D0a adds package.json
+      - name: Skip if package.json is missing
         id: has_pkg
         run: test -f package.json && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      # pnpm version comes from packageManager in package.json (9.15.9).
       - uses: pnpm/action-setup@v4
         if: steps.has_pkg.outputs.yes == 'true'
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         if: steps.has_pkg.outputs.yes == 'true'
         with:
@@ -27,12 +26,14 @@ jobs:
         run: pnpm install --frozen-lockfile
       - if: steps.has_pkg.outputs.yes == 'true'
         run: pnpm test
+      - if: steps.has_pkg.outputs.yes == 'true'
+        run: pnpm build
 
   physics-bridge:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Skip until D1 adds physics tests
+      - name: Skip if physics tests are missing
         id: has_py
         run: test -f physics/requirements-test.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-python@v5
