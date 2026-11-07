@@ -19,7 +19,7 @@ export { measureRoute, orientRoute, RouteError, type MeasureRouteOptions, type O
 export { createMeasureWorker, type MeasurePort, type MeasureWorkerClient } from './measure-client';
 export { DEG_PER_TURN, FLUORO_S_PER_CM, FLUORO_S_PER_TURN, PROXIMITY_SCALE_M } from './constants';
 export { getPreset, PRESET_IDS, WIRE_PRESETS } from './presets';
-export { isSafe, LARGE_GRAPH_EDGES, optimizeCase, RouteEnumerator, routeId } from './optimizer';
+export { isSafe, LARGE_GRAPH_EDGES, optimizeCase, RouteEnumerator, routeFor, routeId } from './optimizer';
 export { dominates, frontierLabels, LABEL_MEASURE, paretoFrontier } from './frontier';
 export { createRanker, measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from './rank';
 export { DFS_PATH_CAP, simplePaths, YEN_K, yenKShortest, type GraphPath } from './paths';
