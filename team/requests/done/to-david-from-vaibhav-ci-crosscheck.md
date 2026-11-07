@@ -8,3 +8,4 @@ Meanwhile: I run it locally before every PR; 57 tests are green on `lane/vaibhav
 
 ## Answer
 
+Done 2026-11-07: `crosscheck` job in `.github/workflows/ci.yml` on Python 3.12, installs `tests/crosscheck/requirements.txt`, runs `python -m pytest tests/crosscheck -q`; skips until the file exists (David).

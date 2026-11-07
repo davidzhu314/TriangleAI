@@ -5,7 +5,7 @@ How to use: `import { turningMeasures, routeTurningMeasures, lengthMm } from '..
 Who switches: David — for D6-min, see "Route-level turning for the Type III seed" below. Aroovee — nothing yet; measures reach the Plan screen in V2 through `measureRoute`.
 Mock replaced: none
 Contracts version after this handoff: unchanged (1, from D0b). V2-prep uses no contract types.
-Tests: `pnpm test`, where `measures.test.ts` has 51 green tests: closed form within 0.1 mm / 0.5°, NumPy agreement within 1e-6 on every edge and route, reversal invariance, the corner peak stays exact at grid steps 0.25/0.3/0.37/0.5, a one-edge route equals the per-edge result, gaps, noise, short and degenerate edges, and segment distance against dense sampling. `python -m pytest tests/crosscheck -q` gives 90 green. Locally on Windows, `tools/fixture-y/fixture-y.test.ts` fails because of CRLF line endings; that's David's file, see the request.
+Tests: `pnpm test`, where `measures.test.ts` has 51 green tests: closed form within 0.1 mm / 0.5°, NumPy agreement within 1e-6 on every edge and route, reversal invariance, the corner peak stays exact at grid steps 0.25/0.3/0.37/0.5, a one-edge route equals the per-edge result, gaps, noise, short and degenerate edges, and segment distance against dense sampling. `python -m pytest tests/crosscheck -q` gives 90 green.
 New dependencies: none
 Decisions logged: "Route-level turning" in `DECISIONS.md`.
 Known gaps: the measures don't read `LoadedCase` yet, and there is no Worker or `measureRoute` (V2 proper). There's no TS-vs-NumPy cross-check on fixture-y yet; that's next, in V2. Preset maximum-turn values aren't set; they come in V3.
