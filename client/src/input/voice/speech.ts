@@ -23,7 +23,7 @@ interface WebSpeechRecognition {
 }
 type Ctor = new () => WebSpeechRecognition;
 
-const unsupported = (): Recognizer => ({ isSupported: false, start() {}, stop() {}, onResult: null, onEnd: null });
+const unsupported = (): Recognizer => ({ isSupported: false, start() {}, stop() {}, onResult: null, onEnd: null, onError: null });
 
 export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
   const w = (globalThis as { window?: { SpeechRecognition?: Ctor; webkitSpeechRecognition?: Ctor } }).window;
@@ -57,6 +57,7 @@ export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
     },
     onResult: null,
     onEnd: null,
+    onError: null,
   };
   rec.onresult = (e) => {
     const last = e.results[e.results.length - 1];
@@ -66,6 +67,6 @@ export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
     r.onResult?.(alts);
   };
   rec.onend = () => r.onEnd?.();
-  rec.onerror = () => undefined; // onend follows an error
+  rec.onerror = (e) => r.onError?.(String((e as { error?: unknown } | null)?.error ?? 'unknown')); // onend follows an error
   return r;
 }

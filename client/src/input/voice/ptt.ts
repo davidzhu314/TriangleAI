@@ -18,6 +18,8 @@ export interface Recognizer {
   onResult: ((alternatives: SpeechAlternative[]) => void) | null;
   /** The session ended (after stop(), silence, or an error). */
   onEnd: (() => void) | null;
+  /** A recognition error, by Web Speech error code ('not-allowed', 'no-speech', …). An onEnd follows. */
+  onError?: ((code: string) => void) | null;
 }
 
 export type PttState = 'idle' | 'listening' | 'stopping';

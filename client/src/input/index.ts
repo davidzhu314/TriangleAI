@@ -15,3 +15,4 @@ export { VOICE_ACTIONS, VOICE_COMMANDS, type VoiceAction } from './voice/command
 export { matchCommand, type SpeechAlternative, type VoiceMatch } from './voice/match';
 export { createPushToTalk, type PttState, type PushToTalk, type Recognizer } from './voice/ptt';
 export { createBrowserRecognizer } from './voice/speech';
+export { createWakeListener, FATAL_SPEECH_ERRORS, startsWithWake, type WakeListener, type WakeState } from './voice/wake';

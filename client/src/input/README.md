@@ -40,7 +40,19 @@ const g = hands.step({ tMs: video.currentTime * 1000, hands: toHandObservations(
 
 ## Voice (`voice/`)
 
-The app listens only while the talk control is held. Saying the wake word "Hey Cathy" first is optional.
+There are two ways to talk:
+
+- **Push-to-talk (default).** The app listens only while the talk control is held. Saying "Hey Cathy" first is optional.
+- **Always listen (opt-in, pending the team's approval).** The player switches it on and the microphone stays live. Only speech that starts with "Hey Cathy" runs a command; everything else is ignored. "Hey Cathy, zoom in" works in one go, and "Hey Cathy" alone arms it for the next phrase. It restarts after each phrase until switched off, and stops for good if the microphone is blocked. While it's on, the UI must say the microphone is live and that audio streams to Google (Chrome).
+
+```ts
+import { createBrowserRecognizer, createWakeListener } from '../input';
+
+const wake = createWakeListener(createBrowserRecognizer(), onMatch, (state) => showMicState(state)); // 'listening' | 'armed' | 'off' | 'error'
+alwaysListenToggle.onchange = () => (alwaysListenToggle.checked ? wake.start() : wake.stop());
+```
+
+Use one recogniser per mode, or stop one mode before starting the other.
 
 | Action | Phrasings (see `voice/commands.ts`) | What the app does |
 | --- | --- | --- |

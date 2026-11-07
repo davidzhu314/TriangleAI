@@ -157,5 +157,9 @@ describe('createBrowserRecognizer', () => {
     r.onResult = (a) => got.push(a);
     (made[0]!['onresult'] as (e: unknown) => void)({ results: [[{ transcript: 'zoom in', confidence: 0.8 }, { transcript: 'zoom inn', confidence: 0.1 }]] });
     expect(got).toEqual([[{ transcript: 'zoom in', confidence: 0.8 }, { transcript: 'zoom inn', confidence: 0.1 }]]);
+    const errors: string[] = [];
+    r.onError = (code) => errors.push(code);
+    (made[0]!['onerror'] as (e: unknown) => void)({ error: 'not-allowed' });
+    expect(errors).toEqual(['not-allowed']);
   });
 });
