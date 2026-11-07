@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip until D0a adds package.json
+        id: has_pkg
+        run: test -f package.json && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      - uses: pnpm/action-setup@v4
+        if: steps.has_pkg.outputs.yes == 'true'
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        if: steps.has_pkg.outputs.yes == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: steps.has_pkg.outputs.yes == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.has_pkg.outputs.yes == 'true'
+        run: pnpm test
+
+  physics-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip until D1 adds physics tests
+        id: has_py
+        run: test -f physics/requirements-test.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.has_py.outputs.yes == 'true'
+        with:
+          python-version: "3.9"
+      # Bridge tests only: messages and fallback, with CathSim mocked. CathSim itself never runs in CI.
+      - if: steps.has_py.outputs.yes == 'true'
+        run: pip install -r physics/requirements-test.txt && pytest physics

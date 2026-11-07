@@ -1,0 +1,36 @@
+# Template. Replace @david-gh, @vaibhav-gh and @aroovee-gh with real GitHub usernames, then uncomment.
+# Generated from the ownership table in CLAUDE.md; David maintains it.
+
+# /client/src/contracts/        @david-gh
+# /client/src/case/             @david-gh
+# /client/src/wire/physics*     @david-gh
+# /client/src/wire/replay*      @david-gh
+# /client/src/wire/select.ts    @david-gh
+# /client/public/cases/         @david-gh
+# /physics/                     @david-gh
+# /tools/                       @david-gh
+# /slicer/                      @david-gh
+# /tests/fixtures/broken/       @david-gh
+# /package.json                 @david-gh
+# /pnpm-lock.yaml               @david-gh
+# /vite.config.ts               @david-gh
+# /.github/                     @david-gh
+# /metrics/david/               @david-gh
+
+# /client/src/optimize/         @vaibhav-gh
+# /client/src/score/            @vaibhav-gh
+# /client/src/wire/rail*        @vaibhav-gh
+# /client/src/wire/mock-source.ts @vaibhav-gh
+# /tests/crosscheck/            @vaibhav-gh
+# /tests/fixtures/synthetic/    @vaibhav-gh
+# /tests/fixtures/logs/         @vaibhav-gh
+# /metrics/vaibhav/             @vaibhav-gh
+
+# /DESIGN.md                    @aroovee-gh
+# /client/src/styles/           @aroovee-gh
+# /client/src/render/           @aroovee-gh
+# /client/src/ui/               @aroovee-gh
+# /client/src/assets/           @aroovee-gh
+# /tests/e2e/                   @aroovee-gh
+# /team/DEMO.md                 @aroovee-gh
+# /metrics/aroovee/             @aroovee-gh

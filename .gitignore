@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+physics/.env*
+# Physics checkpoints and large runs
+physics/checkpoints/
+physics/runs/raw/
+# Metrics: commit summaries only
+metrics/**/raw/
+metrics/**/*.log
+# Taste Skill working files
+.taste-skill/
+# Secrets and OS files
+.env
+.env.*
+.DS_Store
+Thumbs.db

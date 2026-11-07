@@ -1,0 +1,43 @@
+/* Placeholder tokens. Aroovee replaces this file in A0. Neutral on purpose: no brand colour yet.
+   Use only these variables in UI code; never raw colours, sizes, radii or shadows. */
+:root {
+  --color-bg: #f6f6f4;
+  --color-surface: #ffffff;
+  --color-border: #dcdcd8;
+  --color-text: #1d1d1b;
+  --color-text-muted: #5f5f5a;
+  --color-accent: #3d5a6c;      /* placeholder slate, not the brand */
+  --color-danger: #b3261e;
+  --color-warning: #a15c00;
+  --color-ok: #2e6b3f;
+  --color-xray-bg: #8a8a8a;     /* spec §5.5: vessels as dark silhouette on grey */
+  --color-xray-ink: #1a1a1a;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-size-1: 12px;
+  --font-size-2: 14px;
+  --font-size-3: 16px;
+  --font-size-4: 20px;
+  --font-size-5: 28px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-1: 4px;
+  --radius-2: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #141413;
+    --color-surface: #1d1d1b;
+    --color-border: #34342f;
+    --color-text: #ececea;
+    --color-text-muted: #a3a39d;
+    --color-accent: #8fb0c4;
+  }
+}
