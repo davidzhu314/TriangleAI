@@ -7,7 +7,7 @@ What I need: your go-ahead, and the pieces each of you owns, for three optional 
   - gun pose twisted → rotate;
   - point at the model and pinch → select the hovered branch.
 - **Push-to-talk voice commands:** zoom in, zoom out, and three assistant questions.
-  - A spoken wake word, "Hey Kathy", is optional while push-to-talk is held. (The app is still named Catherine.)
+  - A spoken wake word, "Hey Cathy", is optional while push-to-talk is held. (The app is still named Catherine.)
   - Outside push-to-talk, the app never listens.
 - **Assistant answers, from the engine only:** no AI model computes anything (CLAUDE.md, spec §11).
   - "Best next artery": the next branch on the best-ranked frontier route.
