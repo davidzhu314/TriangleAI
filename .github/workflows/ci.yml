@@ -41,3 +41,20 @@ jobs:
       # Bridge tests only: messages and fallback, with CathSim mocked. CathSim itself never runs in CI.
       - if: steps.has_py.outputs.yes == 'true'
         run: pip install -r physics/requirements-test.txt && pytest physics -p no:cacheprovider
+
+  crosscheck:
+    runs-on: ubuntu-latest
+    # NumPy reference measures (Vaibhav). Separate from physics-bridge: numpy 2.3 needs Python >= 3.11.
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip if cross-checks are missing
+        id: has_xc
+        run: test -f tests/crosscheck/requirements.txt && echo "yes=true" >> "$GITHUB_OUTPUT" || echo "yes=false" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.has_xc.outputs.yes == 'true'
+        with:
+          python-version: "3.12"
+      - if: steps.has_xc.outputs.yes == 'true'
+        run: python -m pip install -r tests/crosscheck/requirements.txt
+      - if: steps.has_xc.outputs.yes == 'true'
+        run: python -m pytest tests/crosscheck -q -p no:cacheprovider
