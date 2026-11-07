@@ -3,7 +3,7 @@
  * Planning-only badge, and stars earned. Other cases follow as peer rows; import sits below.
  */
 import type { CatalogEntry } from './store';
-import { catalog, entry, loadBundled, nextCase, resultFor, addPhysicsCase } from './store';
+import { addPhysicsCase, catalog, entry, loadBundled, nextCase, starsFor } from './store';
 import { difficultyPill, modeBadge, stars } from './badges';
 import { h, replace } from './dom';
 import { art } from './icons';
@@ -22,7 +22,7 @@ function nextBlock(e: CatalogEntry): HTMLElement | null {
     { class: 'next-case', 'aria-labelledby': 'next-heading', 'data-testid': 'next-case' },
     h('p', { class: 'label' }, 'Next case'),
     h('h2', { id: 'next-heading', class: 'next-title' }, c.title),
-    h('div', { class: 'meta-row' }, difficultyPill(c), modeBadge(c), stars(resultFor(e.key))),
+    h('div', { class: 'meta-row' }, difficultyPill(c), modeBadge(c), stars(starsFor(e.key))),
     c.scenario ? h('p', { class: 'next-scenario' }, c.scenario) : null,
     h('a', { class: 'btn btn-primary', href: href.brief(e.key) }, 'Open case'),
   );
@@ -48,7 +48,7 @@ function row(e: CatalogEntry): HTMLLIElement {
       h('a', { class: 'case-row-title', href: href.brief(e.key) }, c.title),
       h('div', { class: 'meta-row' }, difficultyPill(c), modeBadge(c), e.origin === 'imported' ? h('span', { class: 'pill pill-neutral' }, 'Imported this session') : null),
     ),
-    stars(resultFor(e.key)),
+    stars(starsFor(e.key)),
   );
 }
 

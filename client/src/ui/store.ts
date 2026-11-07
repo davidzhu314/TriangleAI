@@ -8,7 +8,8 @@
  *   package that happens to share its id (every broken test package is "fixture-y").
  */
 import { listBundledCases, loadCase, type CaseSource } from '../case';
-import type { CaseLoadResult, CaseResult, LoadedCase, ValidationFix } from '../contracts';
+import type { CaseLoadResult, LoadedCase, Stars, ValidationFix } from '../contracts';
+import { bestStars, nextCase as nextOpenCase, type ProgressRecord } from '../score';
 
 export type CatalogOrigin = 'bundled' | 'imported' | 'physics';
 
@@ -92,14 +93,44 @@ export function entry(key: string): CatalogEntry | undefined {
   return entries.get(key);
 }
 
-/** A scored attempt for this case. No progression source exists yet (V6), so there is never one: no stars. */
-export function resultFor(_key: string): CaseResult | undefined {
-  return undefined;
+// ---------------------------------------------------------------- progress (V6 rules, client/src/score)
+const HISTORY_KEY = 'threadsim.progress.v1';
+/** Open mode: every case playable on a fresh browser (V6 handoff: the demo build uses 'open'). */
+const LADDER_MODE = 'open';
+
+/** Saved attempts. Nothing writes them until the Results screen (A6), so today this is empty. */
+export function progressHistory(): ProgressRecord[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]');
+    return Array.isArray(parsed) ? (parsed as ProgressRecord[]) : [];
+  } catch {
+    return [];
+  }
 }
 
-/** The next case: the first loadable case, in catalogue order, without a result. Every case counts as unlocked. */
+/** Loaded cases with each case id once, catalogue order first (V6 throws on a repeated id; imports can share one). */
+function uniqueCases(list: CatalogEntry[]): LoadedCase[] {
+  const seen = new Set<string>();
+  return list.flatMap((e) => {
+    const c = loadedCase(e);
+    if (!c || seen.has(c.id)) return [];
+    seen.add(c.id);
+    return [c];
+  });
+}
+
+/** Best stars for a case, or undefined if it was never attempted: then the UI says so instead of showing 0. */
+export function starsFor(key: string): Stars | undefined {
+  const c = loadedCase(entries.get(key));
+  const history = progressHistory();
+  if (!c || !history.some((r) => r.caseId === c.id)) return undefined;
+  return bestStars(c.id, history);
+}
+
+/** The Library's next case: V6's nextCase, mapped back to its catalogue entry. */
 export function nextCase(list: CatalogEntry[]): CatalogEntry | undefined {
-  return list.find((e) => e.result.ok && !resultFor(e.key));
+  const id = nextOpenCase(uniqueCases(list), progressHistory(), LADDER_MODE);
+  return id === null ? undefined : list.find((e) => loadedCase(e)?.id === id);
 }
 
 async function sha256(bytes: ArrayBuffer): Promise<string> {

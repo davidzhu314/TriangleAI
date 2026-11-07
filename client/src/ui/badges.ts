@@ -1,5 +1,5 @@
 /** Case badges shared by the Library and the Case brief. Every badge carries its words, never colour alone. */
-import type { CaseDifficulty, CaseResult, LoadedCase } from '../contracts';
+import type { CaseDifficulty, LoadedCase, Stars } from '../contracts';
 import { h } from './dom';
 import { labelled } from './icons';
 
@@ -18,8 +18,8 @@ export function modeBadge(c: LoadedCase): HTMLSpanElement {
     : labelled('badge-physics', 'Physics', 'badge');
 }
 
-/** Stars come only from a real CaseResult. With none, say so in words: never fake stars. */
-export function stars(result: CaseResult | undefined): HTMLSpanElement {
-  if (!result) return h('span', { class: 'muted' }, 'No stars yet');
-  return h('span', { title: 'Stars earned on your best attempt (CaseResult.stars)' }, h('span', { class: 'num' }, String(result.stars)), ' of 3 stars');
+/** Best stars from saved attempts (V6 bestStars). Never attempted: say so in words, never fake stars. */
+export function stars(best: Stars | undefined): HTMLSpanElement {
+  if (best === undefined) return h('span', { class: 'muted' }, 'No stars yet');
+  return h('span', { title: 'Best stars over your attempts' }, h('span', { class: 'num' }, String(best)), ' of 3 stars');
 }

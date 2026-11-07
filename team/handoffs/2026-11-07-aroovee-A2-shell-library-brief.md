@@ -6,7 +6,7 @@ What landed:
   - Hash routes `#/library`, `#/case/<key>` and `#/case/<key>/plan`; anything else goes to the Library.
   - At 640 px and below the frame disappears: a top bar with Menu, the title and one outlined action, and a full-screen menu sheet.
   - The "Mock data" badge shows in the top bar when `engineMode === 'mock'`.
-- **Library** (`ui/library.ts`): cases come from D2's `listBundledCases()` and `loadCase()`.
+- **Library** (`ui/library.ts`): cases come from D2's `listBundledCases()` and `loadCase()`. The next case and stars come from V6 (`nextCase` in `'open'` mode, `bestStars`).
   - The next case leads at full width: title, difficulty, the Physics or Planning-only badge, stars.
   - Other cases follow as peer rows. The empty state uses `no-cases.svg` with its heading and action.
   - A phantom slot sits behind `ui/physics-probe.ts`, which fails closed.
@@ -24,26 +24,26 @@ What landed:
 How to use: `pnpm dev`, then open `/#/library`. With `VITE_ENGINE=mock` the top bar shows "Mock data". Screens import the engine only from `client/src/optimize` and `client/src/score`, cases only from `client/src/case`, and the wire only through `select.ts` (nothing in A2 uses the wire).
 
 Who switches:
-- Vaibhav — answer `team/requests/to-vaibhav-from-aroovee-progression-api.md` (V6 signatures for stars and unlocks).
+- Vaibhav — nothing to answer: V6 landed while A2 was being built, so the Library uses it directly. No progress history is saved until Results (A6) calls `recordFromResult`.
 - David — answer `team/requests/to-david-from-aroovee-physics-index.md` (physics case list URL and shape). When D6-min merges, its cases appear in the Library with no UI change, as long as `cases/index.json` lists them.
 
 Mock replaced: the D0a placeholder entry in `client/src/main.ts`. A2 uses D2's real loader, not `optimize/mock-case.ts`.
 Contracts version after this handoff: unchanged (1)
 
 Tests:
-- `pnpm test`: 329 green, including `optimize/mock-guard.test.ts`. `pnpm build` is green, and the real build has no "Mock data" string.
+- `pnpm test`: 417 green after merging V5 and V6, including `optimize/mock-guard.test.ts`. `pnpm build` is green, and the real build has no "Mock data" string.
 - `pnpm exec playwright test`: 11 green, with the D0a smoke test unchanged. The new test covers:
   - the Library showing fixture-y, and the brief's fields and route to Plan;
   - dropping all eight broken packages, each with its README message;
   - accepting the units fix clearing the warning.
-- Taste v2.1.5 `lint.mjs client/src`: 0 FAIL, 1 WARN (`default-font`: Inter is the measured face chosen in A0).
+- Taste v2.1.5 `lint.mjs` on my folders (`ui`, `styles`, `assets`, `render`, `main.ts`): 0 FAIL, 1 WARN (`default-font`: Inter is the measured face chosen in A0). On all of `client/src` it reports 5 FAIL, every one a ★ in a test name in Vaibhav's `client/src/score/progress.test.ts` (V6, merged during A2). Not UI and not my folder, so left as is.
 - `inspect.mjs --app` on a `VITE_ENGINE=mock` production build, Library and Case brief at 1440, 768 and 390: **0 FAIL in light and in dark**.
 - Token check: no raw hex, lengths, radii or shadows in `client/src/ui` or `main.ts`; the 640 px breakpoint is the only raw width.
 
 New dependencies: none.
 
 Decisions logged:
-- Library before V6: no stars, and every case unlocked.
+- Library on V6 in open mode.
 - Fixes saved per case and per file.
 - Phantom cards behind a probe that fails closed.
 
@@ -55,3 +55,4 @@ Known gaps:
 - **Imported cases** last for the session only; the zip is never stored.
 - **Physics-offline art:** `physics-offline.svg` isn't used yet. Nothing in A2 needs it, since no physics case is known. It belongs with the Drive fallback notice (A5).
 - **Tablet:** at 768 the sidebar still shows. `DESIGN.md` folds it only at 640 and below.
+- **V6 not fully used yet:** the Library doesn't show `ladderTier` or grey out closed cases in `'ladder'` mode. fixture-y has no `anatomy`, so it sits outside the ladder anyway. Ladder mode and `adaptiveSuggestion` come with Results (A6).
