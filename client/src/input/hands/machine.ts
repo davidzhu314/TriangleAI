@@ -2,19 +2,22 @@
  * The gesture state machine: `createGestureMachine(config).step(frame) → GestureOutput`. Same frames
  * in, same outputs out: time comes only from `frame.tMs`.
  *
- * - Engaging a pose (gun or point) needs it held for DEBOUNCE_MS; so does switching to the other one.
- * - Safety: with no dominant hand, a score below MIN_SCORE, or the gun pose broken (thumb down,
- *   fingers apart), `control` is null on that same frame, with no smoothing or debounce. When the
- *   hand returns it re-engages and captures a fresh twist neutral.
+ * - Engaging a pose (gun or point) needs it held at the strict ENTER level for DEBOUNCE_MS; so does
+ *   switching to the other one.
+ * - Once engaged, the pose is kept at the looser STAY level, and a STAY failure must last
+ *   RELEASE_GRACE_MS before the pose drops, so tracking noise and twisting don't release it.
+ * - Safety: with no dominant hand, a score below MIN_SCORE, or the thumb dropped out of the gun,
+ *   `control` is null on that same frame, with no smoothing, debounce or grace. When the hand
+ *   returns it re-engages and captures a fresh twist neutral.
  * - Gun: push from curl (One-Euro smoothed), rotate from twist about the neutral captured over the
  *   first NEUTRAL_CAPTURE_MS after engaging (rotate is 0 meanwhile).
  * - Point: the pointer is the index tip (smoothed, user's view). A pinch (with hysteresis) fires
  *   `select` once on entering it, and freezes the pointer where it was PINCH_FREEZE_BACK_MS before.
  */
 
-import { DEBOUNCE_MS, MIN_SCORE, NEUTRAL_CAPTURE_MS, ONE_EURO, PINCH_ENTER, PINCH_EXIT, PINCH_FREEZE_BACK_MS } from './constants';
+import { DEBOUNCE_MS, MIN_SCORE, NEUTRAL_CAPTURE_MS, ONE_EURO, PINCH_ENTER, PINCH_EXIT, PINCH_FREEZE_BACK_MS, RELEASE_GRACE_MS } from './constants';
 import { OneEuro } from './filter';
-import { curlOf, isGun, isPoint, knuckleLine, pinchRatio, pushFromCurl, rotateFromTwist, toUserView, twistDeg, type Vec } from './pose';
+import { curlOf, isGun, isPoint, knuckleLine, pinchRatio, pushFromCurl, rotateFromTwist, thumbStillUp, toUserView, twistDeg, type Vec } from './pose';
 import { LM, type GestureConfig, type GestureOutput, type HandFrame, type HandObservation, type HandStatus } from './types';
 
 type Pose = 'gun' | 'point';
@@ -31,6 +34,8 @@ const unit = (a: Vec): Vec => {
 export function createGestureMachine(config: GestureConfig): GestureMachine {
   let status: HandStatus = 'none';
   let candidate: { pose: Pose; sinceMs: number } | null = null;
+  /** When the engaged pose first failed its STAY checks (null while it holds). */
+  let brokenSinceMs: number | null = null;
   // gun
   let engagedMs = 0;
   let neutralSum: Vec = [0, 0, 0];
@@ -84,6 +89,7 @@ export function createGestureMachine(config: GestureConfig): GestureMachine {
     if (!hand || hand.score < MIN_SCORE || hand.world.length < 21) {
       status = status === 'gun' || status === 'point' || status === 'lost' ? 'lost' : 'none';
       candidate = null;
+      brokenSinceMs = null;
       pinched = false;
       resetGun();
       resetPoint();
@@ -91,7 +97,6 @@ export function createGestureMachine(config: GestureConfig): GestureMachine {
     }
 
     const w = hand.world;
-    const pose: Pose | null = isGun(w) ? 'gun' : isPoint(w) ? 'point' : null;
     const pinch = pinchRatio(w);
     let enteredPinch = false;
     if (!pinched && pinch < PINCH_ENTER) {
@@ -102,13 +107,21 @@ export function createGestureMachine(config: GestureConfig): GestureMachine {
       frozen = null;
     }
 
-    // an active pose that breaks disengages at once
-    if ((status === 'gun' || status === 'point') && pose !== status) {
-      if (status === 'gun') resetGun();
-      else resetPoint();
-      status = 'none';
+    // keep an engaged pose at the STAY level, with a grace period; a dropped thumb releases at once
+    if (status === 'gun' || status === 'point') {
+      const holds = status === 'gun' ? isGun(w, 'stay') : isPoint(w, 'stay');
+      if (holds) brokenSinceMs = null;
+      else brokenSinceMs ??= t;
+      const thumbDropped = status === 'gun' && !thumbStillUp(w);
+      if (thumbDropped || (brokenSinceMs !== null && t - brokenSinceMs >= RELEASE_GRACE_MS)) {
+        if (status === 'gun') resetGun();
+        else resetPoint();
+        status = 'none';
+        brokenSinceMs = null;
+      }
     }
     if (status !== 'gun' && status !== 'point') {
+      const pose: Pose | null = isGun(w, 'enter') ? 'gun' : isPoint(w, 'enter') ? 'point' : null;
       status = 'none';
       if (!pose) candidate = null;
       else if (!candidate || candidate.pose !== pose) candidate = { pose, sinceMs: t };

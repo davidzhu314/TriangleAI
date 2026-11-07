@@ -6,17 +6,7 @@
  * from the camera (toward the user).
  */
 
-import {
-  CURLED_MIN,
-  EXTENDED_MAX,
-  FULL_CURL_DEG,
-  PULL_ABOVE,
-  PUSH_BELOW,
-  THUMB_OUT_MIN,
-  TOGETHER_MAX_DEG,
-  TWIST_DEAD_DEG,
-  TWIST_FULL_DEG,
-} from './constants';
+import { FULL_CURL_DEG, GUN, POINT, PULL_ABOVE, PULL_FULL_AT, PUSH_BELOW, PUSH_FULL_AT, TWIST_DEAD_DEG, TWIST_FULL_DEG } from './constants';
 import { FINGER_MCP, LM, type Finger, type GestureConfig, type HandObservation, type Landmark } from './types';
 
 type V = [number, number, number];
@@ -74,36 +64,71 @@ export function flexion(w: readonly Landmark[], finger: Finger): number {
   return clamp((bends[0]! + bends[1]! + bends[2]!) / 3 / FULL_CURL_DEG, 0, 1);
 }
 
-export function thumbOut(w: readonly Landmark[]): boolean {
-  return norm(sub(v(w[LM.THUMB_TIP]!), v(w[LM.INDEX_MCP]!))) > THUMB_OUT_MIN * palmSize(w);
+/** Thumb tip to index MCP, ÷ palm size: high when the thumb is up on top of the "gun". */
+export function thumbUp(w: readonly Landmark[]): number {
+  return norm(sub(v(w[LM.THUMB_TIP]!), v(w[LM.INDEX_MCP]!))) / palmSize(w);
 }
 
-/** Index and middle proximal phalanges side by side. */
-export function indexMiddleTogether(w: readonly Landmark[]): boolean {
-  const idx = sub(v(w[6]!), v(w[5]!));
-  const mid = sub(v(w[10]!), v(w[9]!));
-  return angleDeg(idx, mid) <= TOGETHER_MAX_DEG;
+/** Angle between the index and middle proximal phalanges, degrees: small when they form one barrel. */
+export function barrelGapDeg(w: readonly Landmark[]): number {
+  return angleDeg(sub(v(w[6]!), v(w[5]!)), sub(v(w[10]!), v(w[9]!)));
 }
 
-/** Gun pose: ring and pinky curled, thumb up, index and middle together. Index/middle curl is free. */
-export function isGun(w: readonly Landmark[]): boolean {
-  return flexion(w, 'ring') > CURLED_MIN && flexion(w, 'pinky') > CURLED_MIN && thumbOut(w) && indexMiddleTogether(w);
+/** One named pose check, as the tests and the lab's diagnostic panel show it. */
+export interface PoseCheck {
+  name: 'ring curl' | 'pinky curl' | 'thumb up' | 'barrel gap' | 'index straight' | 'middle curl';
+  value: number;
+  /** `value` must be above `min`, or at most `max`. */
+  min?: number;
+  max?: number;
+  ok: boolean;
 }
 
-/** Point pose: index extended; middle, ring and pinky curled. The thumb may be anywhere (it pinches). */
-export function isPoint(w: readonly Landmark[]): boolean {
-  return flexion(w, 'index') < EXTENDED_MAX && flexion(w, 'middle') > CURLED_MIN && flexion(w, 'ring') > CURLED_MIN && flexion(w, 'pinky') > CURLED_MIN;
+export type PoseLevel = 'enter' | 'stay';
+
+const above = (name: PoseCheck['name'], value: number, min: number): PoseCheck => ({ name, value, min, ok: value > min });
+const atMost = (name: PoseCheck['name'], value: number, max: number): PoseCheck => ({ name, value, max, ok: value <= max });
+
+/**
+ * The gun pose, check by check: ring and pinky curled (the grip), thumb up on top, index and middle
+ * together (the barrel). How curled the barrel is does not matter, so pulling never breaks the pose.
+ */
+export function gunChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): PoseCheck[] {
+  const lim = GUN[level];
+  return [
+    above('ring curl', flexion(w, 'ring'), lim.gripCurlMin),
+    above('pinky curl', flexion(w, 'pinky'), lim.gripCurlMin),
+    above('thumb up', thumbUp(w), lim.thumbUpMin),
+    atMost('barrel gap', barrelGapDeg(w), lim.barrelGapMaxDeg),
+  ];
 }
+
+/** The point pose, check by check: index extended; middle, ring and pinky curled. The thumb is free (it pinches). */
+export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): PoseCheck[] {
+  const lim = POINT[level];
+  return [
+    atMost('index straight', flexion(w, 'index'), lim.indexCurlMax),
+    above('middle curl', flexion(w, 'middle'), lim.othersCurlMin),
+    above('ring curl', flexion(w, 'ring'), lim.othersCurlMin),
+    above('pinky curl', flexion(w, 'pinky'), lim.othersCurlMin),
+  ];
+}
+
+export const allOk = (checks: readonly PoseCheck[]): boolean => checks.every((c) => c.ok);
+export const isGun = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(gunChecks(w, level));
+export const isPoint = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(pointChecks(w, level));
+/** The thumb is still up enough to keep the gun (failing this releases at once). */
+export const thumbStillUp = (w: readonly Landmark[]): boolean => thumbUp(w) > GUN.stay.thumbUpMin;
 
 /** Curl for push/pull: mean flexion of index and middle. */
 export function curlOf(w: readonly Landmark[]): number {
   return (flexion(w, 'index') + flexion(w, 'middle')) / 2;
 }
 
-/** Push from curl: straight pushes, curled pulls, half-curled holds. −1..1. */
+/** Push from curl: straight pushes, half-curled holds, curled pulls. −1..1 (zones in constants.ts). */
 export function pushFromCurl(curl: number): number {
-  if (curl < PUSH_BELOW) return clamp((PUSH_BELOW - curl) / PUSH_BELOW, -1, 1);
-  if (curl > PULL_ABOVE) return clamp(-(curl - PULL_ABOVE) / (1 - PULL_ABOVE), -1, 1);
+  if (curl < PUSH_BELOW) return clamp((PUSH_BELOW - curl) / (PUSH_BELOW - PUSH_FULL_AT), 0, 1);
+  if (curl > PULL_ABOVE) return -clamp((curl - PULL_ABOVE) / (PULL_FULL_AT - PULL_ABOVE), 0, 1);
   return 0;
 }
 

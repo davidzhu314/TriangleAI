@@ -21,7 +21,7 @@ Status: draft, waiting on `team/requests/to-all-from-vaibhav-hands-voice-assist.
 | **Point pose:** index out; middle, ring and pinky curled | Moves the pointer |
 | Pinch (thumb to index tip) while pointing | Selects the hovered branch, once per pinch |
 
-Losing the hand, a low tracking score, or dropping the thumb releases control on that same frame. All thresholds are in `hands/constants.ts` and are illustrative.
+A pose starts only when its strict **start** checks pass for 150 ms. Once engaged it is kept by looser **keep** checks, and a wobble must last 150 ms before the pose drops, so twisting and aiming around don't release it. Losing the hand, a low tracking score, or dropping the thumb releases control on that same frame. Each pose is a named list of checks (`gunChecks`, `pointChecks` in `hands/pose.ts`, each with its value, limit and OK); show them in a debug view to see why a pose isn't registering. All thresholds are in `hands/constants.ts` and are illustrative.
 
 ### Hookup (Aroovee)
 

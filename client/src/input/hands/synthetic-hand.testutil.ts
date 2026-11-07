@@ -22,6 +22,11 @@ export interface HandSpec {
   thumb?: 'out' | 'folded' | { pinch: number };
   /** Twist, clockwise as the user sees it, degrees. */
   rollDeg?: number;
+  /** Where the hand points: yaw to the user's right (+) or left (−), pitch up (+) or down (−), degrees. 0, 0 = at the camera. */
+  yawDeg?: number;
+  pitchDeg?: number;
+  /** Tracking jitter, mm (seeded, so tests stay deterministic). Depth is usually the noisiest. */
+  noise?: { xyMm: number; zMm: number; seed: number };
   /** Index spread away from the middle finger, degrees. */
   spreadDeg?: number;
   /** Wrist position in the image, 0..1. */
@@ -79,7 +84,23 @@ export function syntheticHand(spec: HandSpec = {}): HandObservation {
   const c = Math.cos((spec.rollDeg ?? 0) * RAD);
   const s = Math.sin((spec.rollDeg ?? 0) * RAD);
   // clockwise on screen in a y-down frame
-  const world: Landmark[] = pts.map(([x, y, z]) => ({ x: x * c - y * s, y: x * s + y * c, z }));
+  const rolled: V[] = pts.map(([x, y, z]) => [x * c - y * s, x * s + y * c, z]);
+  // then point the hand: pitch about x (up is −y), yaw about y (right is +x), fingers start at −z
+  const cp = Math.cos((spec.pitchDeg ?? 0) * RAD);
+  const sp = Math.sin((spec.pitchDeg ?? 0) * RAD);
+  const cy = Math.cos((spec.yawDeg ?? 0) * RAD);
+  const sy = Math.sin((spec.yawDeg ?? 0) * RAD);
+  const aimed: V[] = rolled.map(([x, y, z]) => {
+    const y1 = y * cp + z * sp;
+    const z1 = -y * sp + z * cp;
+    return [x * cy - z1 * sy, y1, x * sy + z1 * cy];
+  });
+  const jitter = spec.noise ? seeded(spec.noise.seed) : null;
+  const world: Landmark[] = aimed.map(([x, y, z]) => {
+    if (!jitter || !spec.noise) return { x, y, z };
+    const j = () => (jitter() * 2 - 1) / 1000;
+    return { x: x + j() * spec.noise.xyMm, y: y + j() * spec.noise.xyMm, z: z + j() * spec.noise.zMm };
+  });
   const pos = spec.pos ?? { x: 0.5, y: 0.6 };
   const k = spec.imageScale ?? 2.5;
   const image: Landmark[] = world.map((p) => ({ x: pos.x + p.x * k, y: pos.y + p.y * k, z: p.z * k }));
@@ -90,6 +111,18 @@ export function syntheticHand(spec: HandSpec = {}): HandObservation {
     score: obs.score,
     image: image.map((p) => ({ x: 1 - p.x, y: p.y, z: p.z })),
     world: world.map((p) => ({ x: -p.x, y: p.y, z: p.z })),
+  };
+}
+
+/** Deterministic PRNG (mulberry32) for jitter. */
+function seeded(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let x = a;
+    x = Math.imul(x ^ (x >>> 15), x | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
   };
 }
 

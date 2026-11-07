@@ -1,24 +1,51 @@
 /**
- * Gesture thresholds. ILLUSTRATIVE: first values, tuned on synthetic hands and to be re-tuned on real
- * hands in the local webcam lab (DECISIONS.md, "Hand gesture constants"). Flexion is 0 (straight) … 1
- * (fully curled); distances are relative to palm size (wrist → middle MCP).
+ * Gesture thresholds. ILLUSTRATIVE: first values, tuned on synthetic hands and on a real webcam in
+ * the local lab (DECISIONS.md, "Hand gesture constants", "Hand gesture robustness"). Flexion is 0
+ * (straight) … 1 (fully curled); distances are relative to palm size (wrist → middle MCP).
+ *
+ * Each pose has two levels: ENTER (strict, to start the pose) and STAY (loose, to keep it once
+ * engaged), so tracking noise and twisting the hand don't drop the pose.
  */
 
 /** Mean bend over a finger's MCP, PIP and DIP joints that counts as fully curled, degrees. */
 export const FULL_CURL_DEG = 90;
 
-/** Ring and pinky flexion above this count as curled (gun pose, point pose). */
-export const CURLED_MIN = 0.6;
-/** Index flexion below this counts as extended (point pose). */
-export const EXTENDED_MAX = 0.3;
-/** Gun pose: thumb tip to index MCP above this × palm size means the thumb is up. */
-export const THUMB_OUT_MIN = 0.5;
-/** Gun pose: index and middle proximal phalanges within this angle count as together, degrees. */
-export const TOGETHER_MAX_DEG = 15;
+export interface GunLimits {
+  /** Ring and pinky flexion must be above this (they hold the "grip"). */
+  gripCurlMin: number;
+  /** Thumb tip to index MCP, ÷ palm size, must be above this (thumb up, on top). */
+  thumbUpMin: number;
+  /** Index and middle proximal phalanges must be within this angle (one "barrel"), degrees. */
+  barrelGapMaxDeg: number;
+}
 
-/** Curl (mean of index and middle flexion): below PUSH_BELOW pushes, above PULL_ABOVE pulls, between holds. */
-export const PUSH_BELOW = 0.3;
+export const GUN: Readonly<{ enter: GunLimits; stay: GunLimits }> = {
+  enter: { gripCurlMin: 0.5, thumbUpMin: 0.45, barrelGapMaxDeg: 25 },
+  stay: { gripCurlMin: 0.35, thumbUpMin: 0.3, barrelGapMaxDeg: 40 },
+};
+
+export interface PointLimits {
+  /** Index flexion must be below this (extended). */
+  indexCurlMax: number;
+  /** Middle, ring and pinky flexion must be above this (curled). */
+  othersCurlMin: number;
+}
+
+export const POINT: Readonly<{ enter: PointLimits; stay: PointLimits }> = {
+  enter: { indexCurlMax: 0.3, othersCurlMin: 0.5 },
+  stay: { indexCurlMax: 0.45, othersCurlMin: 0.35 },
+};
+
+/**
+ * Push and pull from curl (mean of index and middle flexion). Relaxed "straight" fingers read about
+ * 0.2 on a real webcam, so full push starts just above that:
+ *   curl ≤ PUSH_FULL_AT → push 1;  … PUSH_BELOW → 0 (linear);  PUSH_BELOW … PULL_ABOVE → hold (0);
+ *   PULL_ABOVE … PULL_FULL_AT → 0 … −1 (linear);  ≥ PULL_FULL_AT → −1.
+ */
+export const PUSH_FULL_AT = 0.25;
+export const PUSH_BELOW = 0.35;
 export const PULL_ABOVE = 0.55;
+export const PULL_FULL_AT = 0.85;
 
 /** Twist: dead zone and saturation, degrees from the neutral captured after engaging. */
 export const TWIST_DEAD_DEG = 10;
@@ -32,8 +59,14 @@ export const PINCH_EXIT = 0.35;
 /** On a pinch, the pointer freezes where it was this long before, ms (pinching drags the fingertip). */
 export const PINCH_FREEZE_BACK_MS = 100;
 
-/** A pose must hold this long before its status becomes active, ms. */
+/** A pose must hold this long (at ENTER level) before its status becomes active, ms. */
 export const DEBOUNCE_MS = 150;
+/**
+ * An engaged pose that fails a STAY check other than the thumb stays engaged this long before it
+ * drops, ms (one noisy frame is not a release). Lost tracking, a low score or a dropped thumb
+ * release at once.
+ */
+export const RELEASE_GRACE_MS = 150;
 /** Hands scored below this are treated as lost. */
 export const MIN_SCORE = 0.6;
 
