@@ -10,12 +10,13 @@ import type { CaseResult } from '../contracts';
 import { scoreCase, type ScoreInput } from './score';
 
 export { engineMode, type EngineMode } from '../optimize/engine-mode';
-export { scoreCase, referenceFor, type ScoreInput } from './score';
+export { bestFrontierRoute, scoreCase, referenceFor, type ScoreInput } from './score';
 export { FEEDBACK_TEMPLATES, fillTemplate, type TemplateId } from './templates';
 export { applyFluoroBudget, starsFor } from './stars';
 export type { ForceReference } from './reference';
 export { LOW_TORTUOSITY_MAX } from './constants';
 export { ILLUSTRATIVE_CONSTANTS, type IllustrativeConstant } from './illustrative';
+export { replayTimeline, type ReplayMarker, type ReplayTimeline } from './replay';
 export {
   adaptiveSuggestion,
   bestStars,
