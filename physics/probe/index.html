@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>D1 physics probe</title>
+<!-- Blank three.js page for the D1 spike (spec Phase 0). Served by probe_server.py on localhost only. -->
+</head>
+<body style="margin:0">
+<pre id="out">connecting…</pre>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const out = document.getElementById('out');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(640, 480);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 640 / 480, 0.001, 10);
+camera.position.set(0.05, 0.08, 0.35);
+camera.lookAt(0.02, 0.08, 0);
+const geom = new THREE.BufferGeometry();
+geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(80 * 3), 3));
+scene.add(new THREE.Line(geom, new THREE.LineBasicMaterial({ color: 0x000000 })));
+scene.background = new THREE.Color(0xdddddd);
+
+const stats = { frames: 0, intervals: [], reactions: [], lastT: null, lastSim: null, wirePoints: 0, simT: 0, forceMax: 0 };
+window.__stats = stats;
+let tip = null;
+let probe = null; // { sentAt, from }
+
+const ws = new WebSocket(`ws://${location.host}/wire`);
+const send = (m) => ws.send(JSON.stringify(m));
+ws.onopen = () => { send({ type: 'start', phantom: new URLSearchParams(location.search).get('phantom') || 'phantom3', target: 'bca', preset: 'standard_j' }); };
+ws.onmessage = (ev) => {
+  const now = performance.now();
+  const m = JSON.parse(ev.data);
+  if (m.type !== 'state') return;
+  if (stats.lastT !== null) stats.intervals.push(now - stats.lastT);
+  stats.lastT = now;
+  stats.frames++;
+  stats.wirePoints = m.wire.length;
+  stats.simT = m.t;
+  stats.forceMax = Math.max(stats.forceMax, m.contact_force_n);
+  tip = m.tip;
+  const a = geom.attributes.position;
+  m.wire.forEach((p, i) => a.setXYZ(i, p[0], p[1], p[2]));
+  a.needsUpdate = true;
+  if (probe) {
+    const d = Math.hypot(tip[0] - probe.from[0], tip[1] - probe.from[1], tip[2] - probe.from[2]);
+    if (d >= 0.0003) { stats.reactions.push(now - probe.sentAt); probe = null; }
+  }
+};
+
+// Scripted input, as a player would: hold still, then push (or pull) and time until the tip visibly moves.
+let dir = 1;
+async function cycle() {
+  send({ type: 'control', push: 0, rotate: 0 });
+  await new Promise((r) => setTimeout(r, 700));
+  if (tip) { probe = { sentAt: performance.now(), from: tip.slice() }; send({ type: 'control', push: dir, rotate: 0 }); }
+  await new Promise((r) => setTimeout(r, 500));
+  dir = -dir;
+}
+(async () => { await new Promise((r) => setTimeout(r, 1500)); for (;;) await cycle(); })();
+
+function frame() {
+  renderer.render(scene, camera);
+  out.textContent = `frames ${stats.frames}  wire points ${stats.wirePoints}  sim t ${stats.simT.toFixed(2)} s`;
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>
