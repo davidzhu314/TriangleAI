@@ -13,7 +13,7 @@
    "L_mm": 40.0,
    "notes": "Straight wide_out edge; clearance to prox_b by exact segment distance.",
    "overlapping_zones": [],
-   "proximity_clearance_mm": 19.318517,
+   "proximity_clearance_mm": 19.850923,
    "r_min_mm": 5.0,
    "theta_max_deg": 0.0,
    "theta_sum_deg": 0.0
@@ -22,13 +22,13 @@
    "L_mm": 40.0,
    "notes": "Straight wide_back edge; clearance to prox_b by exact segment distance.",
    "overlapping_zones": [],
-   "proximity_clearance_mm": 32.235429,
+   "proximity_clearance_mm": 36.34392,
    "r_min_mm": 5.0,
    "theta_max_deg": 0.0,
    "theta_sum_deg": 0.0
   },
   "e3": {
-   "L_mm": 32.659863,
+   "L_mm": 35.893255,
    "notes": "Straight narrow_out edge; clearance to prox_b by exact segment distance.",
    "overlapping_zones": [
     "prox_b"
@@ -39,10 +39,10 @@
    "theta_sum_deg": 0.0
   },
   "e4": {
-   "L_mm": 32.659863,
+   "L_mm": 35.893255,
    "notes": "Straight narrow_back edge; clearance to prox_b by exact segment distance.",
    "overlapping_zones": [],
-   "proximity_clearance_mm": 2.659863,
+   "proximity_clearance_mm": 5.893255,
    "r_min_mm": 1.2,
    "theta_max_deg": 0.0,
    "theta_sum_deg": 0.0
@@ -51,7 +51,7 @@
    "L_mm": 56.568542,
    "notes": "Straight pinhole edge; clearance to prox_b by exact segment distance.",
    "overlapping_zones": [],
-   "proximity_clearance_mm": 10.0,
+   "proximity_clearance_mm": 12.31323,
    "r_min_mm": 0.8,
    "theta_max_deg": 0.0,
    "theta_sum_deg": 0.0
@@ -62,7 +62,7 @@
    "overlapping_zones": [
     "forbidden_d"
    ],
-   "proximity_clearance_mm": 10.0,
+   "proximity_clearance_mm": 12.31323,
    "r_min_mm": 6.0,
    "theta_max_deg": 0.0,
    "theta_sum_deg": 0.0
@@ -94,7 +94,7 @@
    "theta_sum_deg": 135.0
   },
   {
-   "L_mm": 105.319726,
+   "L_mm": 111.786511,
    "edges": [
     "e0",
     "e3",
@@ -103,10 +103,10 @@
    "heavy_crossings": 0,
    "id": "B-narrow",
    "junction_deg": [
-    30.0,
-    60.0
+    38.0,
+    76.0
    ],
-   "notes": "Takeoff 30, corner 60: shorter and gentler than A, but narrow and through prox_b.",
+   "notes": "Takeoff 38, corner 76: shorter and gentler than A, but narrow and through prox_b.",
    "proximity_penalty": 1.0,
    "r_min_mm": 1.2,
    "reversed": [
@@ -114,8 +114,8 @@
     false,
     false
    ],
-   "theta_max_deg": 60.0,
-   "theta_sum_deg": 90.0
+   "theta_max_deg": 76.0,
+   "theta_sum_deg": 114.0
   },
   {
    "L_mm": 96.568542,
