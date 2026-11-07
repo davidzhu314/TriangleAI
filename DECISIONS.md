@@ -32,4 +32,10 @@ One line per decision: date · who · decision · why. Append only. A decision t
 
 ## Log
 
+- 2026-11-07 · David · **D0a toolchain pinned**: pnpm 9.15.9 (`packageManager`), Node 22 (`.nvmrc`), TypeScript 7.0.2, Vite 8.3.6, Vitest 5.1.0, Playwright 1.65.0, pytest 8.4.2 (Python 3.9). One package at the repo root; Vite root is `client/`, build output `dist/`.
+- 2026-11-07 · David · **`ControlInput` carries `fluoro` and `contrastPuff`** besides push and rotate, because the wire source writes fluoro on/off into each sample and the `contrast_puff` event (spec §5.6). `WireSource` keeps exactly start, control, stop, onState, onFallback; `stop()` resolves with the drive's `EventLog`.
+- 2026-11-07 · David · **Physics `state` positions are metres in the served phantom package's Y-up frame**; the physics process converts before sending, so the client draws wire points without transforming (spec §5.2 gives no frame).
+- 2026-11-07 · David · **Event log units**: `s` and positions in metres, time in simulation seconds; `back_out` threshold is 0.02 m (spec's 20 mm). `force_spike` records its threshold, which scoring owns.
+- 2026-11-07 · David · **App entry** `client/index.html` and `client/src/main.ts` are a D0a shell showing the honesty line; Aroovee owns them from A1. `tests/e2e/smoke.spec.ts` is a D0a smoke test that A8 may replace.
+- 2026-11-07 · David · **CI runs pytest in the `python:3.9-slim` container**: GitHub's ubuntu-latest (26.04) has no Python 3.9, and CathSim needs 3.9.
 - 2026-11-07 · Vaibhav · **5 mm-window turning, defined.** θ_w(s) is the angle between the chords p(s)−p(s−5 mm) and p(s+5 mm)−p(s). Θmax = max θ_w. ΘΣ = (1/w)∫θ_w ds + both end windows, which is the §4.2 sum of 5 mm-window angles. The full algorithm is in `tests/crosscheck/README.md`; the TypeScript in V2 follows it. Why: it is exact on arcs (θmax = w/R, ΘΣ = L/R) and conserves turning across straight-to-curve transitions. On a helix it differs from κL by the window's own smoothing (0.8° over two turns), so the helix fixture's closed form is (L/w)·θ_w.

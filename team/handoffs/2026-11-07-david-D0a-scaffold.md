@@ -1,0 +1,11 @@
+# Handoff — David D0a: scaffold
+
+What landed: repo layout from spec §2 (Plan screen at `client/src/ui/plan/`); `package.json` (pnpm 9.15.9 pinned, Node 22), `pnpm-lock.yaml`, `tsconfig.json`, `vite.config.ts` (root `client/`), `vitest.config.ts`, `playwright.config.ts`; contracts `physics-protocol.ts`, `events.ts`, `wire.ts` written in full; `case.ts`, `validation.ts`, `recorded-runs.ts`, `optimizer.ts`, `score.ts` export their PLAN.md names with empty bodies; `index.ts` re-exports all with `CONTRACTS_VERSION = 'unset'`; app shell `client/index.html` + `client/src/main.ts` (honesty line only); pytest stub `physics/wire_protocol.py` + `physics/tests/`; README "Run it"; CI now runs typecheck, unit tests, build and pytest.
+How to use: `import type { WireSource, WireState, ControlInput, EventLog } from '../contracts';` · `pnpm install && pnpm test`
+Who switches: Vaibhav — V0 can start (NumPy references need no contracts); write `EventLog` and `WireSource` against `contracts/events.ts` and `contracts/wire.ts`, which are final shapes for D0b. Aroovee — A0 can start; from A1 you own `client/index.html` and `client/src/main.ts`, and `tests/e2e/smoke.spec.ts` is yours to replace in A8.
+Mock replaced: none
+Contracts version after this handoff: unchanged (unset). D0b sets it to 1.
+Tests: `pnpm test` (all green) — typecheck plus 9 Vitest tests on the physics message guard, control clamping, event log, and a throwaway `WireSource` implementation; `pnpm test:e2e` (green) — the production build serves the app shell; `pytest physics` (green) — 7 tests on §5.2 message shapes.
+New dependencies: dev only — typescript 7.0.2, vite 8.3.6, vitest 5.1.0, @playwright/test 1.65.0, @types/node 22.20.5; pytest 8.4.2 in `physics/requirements-test.txt`. No runtime dependencies yet (three.js comes by request when Aroovee needs it).
+Decisions logged: toolchain pins; `ControlInput` carries `fluoro` and `contrastPuff`; physics state frame is metres Y-up in the served package; event log units (metres, sim seconds, 0.02 m back-out); app entry ownership.
+Known gaps: the five placeholder contracts and `case.schema.json`, plus `fixture-y`, are D0b. `CODEOWNERS` is still commented out until GitHub usernames for Vaibhav and Aroovee are known. `physics/README.md` is D1.
