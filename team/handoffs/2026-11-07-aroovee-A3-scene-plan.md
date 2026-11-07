@@ -23,7 +23,7 @@ What landed:
   - Everything is styled by tokens, and it's disposed on every redraw and on leaving the route.
 - **Shell:** a `layout: 'focus'` option (no sidebar) and a `primary` slot in the top bar.
 - **Disabled primary button:** a neutral surface with body text, so it stays readable.
-- **Requests:** Vaibhav's voice review answered and moved to `done/`. three.js requested from David.
+- **Requests:** Vaibhav's voice review answered and moved to `done/`. three.js requested from David. Vaibhav's `cannot_steer` contract request approved (Aroovee line). Plan's warnings already show any violation kind they don't know yet as a "Blocked" line.
 
 How to use: open `/#/case/<key>/plan` from the Case brief. Screens reach the view only through `createPlanView(case, onPick)`.
 
@@ -35,7 +35,7 @@ Mock replaced: the A2 Plan placeholder.
 Contracts version after this handoff: unchanged (1)
 
 Tests:
-- `pnpm test`: 511 green, including the mock guard. New unit tests:
+- `pnpm test`: 531 green after merging PR #19, including the mock guard. New unit tests:
   - `ui/plan/route-state.test.ts`: adjacency only, no revisits, completes at the target, undo and clear, entry change clears, and evaluation equals `routeFor`, including when the preset changes. It runs on fixture-y through `loadCase`.
   - `ui/plan/cost-rows.test.ts`: units, decimals, dash versus zero (negative zero included), and a tooltip on every row.
 - `pnpm build` green; the real build has no "Mock data" string.

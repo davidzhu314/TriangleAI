@@ -46,6 +46,11 @@ export function warningsFor(c: LoadedCase, route: Route | null, preset: WirePres
       case 'arch_never_reached':
         out.push({ level: 'blocked', tier: null, text: `Blocked: the ${preset.name} wire never reached this target in the recorded runs.` });
         break;
+      default: {
+        // A violation kind added to the contract after this screen was written: still shown, never dropped.
+        const edge = (v as { edge?: unknown }).edge;
+        out.push({ level: 'blocked', tier: null, text: typeof edge === 'string' ? `Blocked: the ${preset.name} wire can't take the route into the ${vesselOfEdge(c, edge)}.` : `Blocked: the ${preset.name} wire can't take this route.` });
+      }
     }
   }
   for (const x of route.crossings) {
