@@ -34,3 +34,11 @@ Added in D1 (physics process only, `physics/requirements-sim.txt`; none of these
 | fast-uri | 3.1.9 | BSD-3-Clause | https://github.com/fastify/fast-uri | via Ajv |
 | json-schema-traverse | 1.0.0 | MIT | https://github.com/epoberezkin/json-schema-traverse | via Ajv |
 | require-from-string | 2.0.2 | MIT | https://github.com/floatdrop/require-from-string | via Ajv |
+
+### Phantom case packages (D3a)
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| CathSim phantoms `low_tort`, `phantom2`, `phantom3`, `phantom4` (`visual.stl` meshes and `bca`/`lcca` target sites), converted by ThreadSim | commit adfabb2 (2024-11-13) | CC BY-NC-SA 4.0 (research and demo only; adaptations shared alike) | https://github.com/airvlab/cathsim | `physics/cases/<phantom>/` only. They are served to the browser at runtime by the physics process (D5) and never copied into `client/`. ThreadSim's changes: the frame was converted to RAS mm, the meshes simplified and split per vessel, and centerlines computed from the mesh. Each package carries `LICENSE.md` with this attribution. |
+| NumPy | 1.25.2 | BSD-3-Clause | https://numpy.org | `physics/cases/convert_phantoms.py` (offline converter, physics environment only) |
+| SciPy | 1.11.2 | BSD-3-Clause | https://scipy.org | `physics/cases/convert_phantoms.py` (distance transform, connected components, Dijkstra) |
