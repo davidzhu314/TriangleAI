@@ -48,15 +48,19 @@ describe('matchCommand', () => {
 
 /** A fake recogniser: the test decides when results and the session end arrive. */
 function fakeRecognizer(supported = true) {
-  const r: Recognizer & { started: number; stopped: number } = {
+  const r: Recognizer & { started: number; stopped: number; aborted: number } = {
     isSupported: supported,
     started: 0,
     stopped: 0,
+    aborted: 0,
     start() {
       this.started++;
     },
     stop() {
       this.stopped++;
+    },
+    abort() {
+      this.aborted++;
     },
     onResult: null,
     onEnd: null,
@@ -65,6 +69,44 @@ function fakeRecognizer(supported = true) {
 }
 
 describe('push-to-talk', () => {
+  /** A manual clock for the release tail: run() fires every pending callback. */
+  const manual = () => {
+    const pending: (() => void)[] = [];
+    return { schedule: (fn: () => void) => (pending.push(fn), () => pending.splice(pending.indexOf(fn), 1)), run: () => pending.splice(0).forEach((f) => f()) };
+  };
+
+  it('after release, a result counts only within the short tail; then the mic is cut off and later speech is ignored', () => {
+    const rec = fakeRecognizer();
+    const clock = manual();
+    const heard: VoiceMatch[] = [];
+    const states: string[] = [];
+    const ptt = createPushToTalk(rec, (m) => heard.push(m), { schedule: clock.schedule, onStateChange: (s) => states.push(s) });
+    ptt.press();
+    ptt.release();
+    rec.onResult?.(say('zoom in')); // the final result of what was said while V was held
+    clock.run(); // the tail ends
+    expect([ptt.state, rec.aborted]).toEqual(['idle', 1]);
+    rec.onResult?.(say('zoom out')); // spoken after release: ignored
+    expect(heard.map((m) => m.action)).toEqual(['zoom_in']);
+    expect(states).toEqual(['listening', 'stopping', 'idle']);
+  });
+
+  it('the tail is cancelled when the session ends first, and by a new press', () => {
+    const rec = fakeRecognizer();
+    const clock = manual();
+    const ptt = createPushToTalk(rec, () => undefined, { schedule: clock.schedule });
+    ptt.press();
+    ptt.release();
+    rec.onEnd?.();
+    clock.run();
+    expect([ptt.state, rec.aborted]).toEqual(['idle', 0]);
+    ptt.press();
+    ptt.release();
+    ptt.press(); // pressed again inside the tail: the old tail must not abort the new session
+    clock.run();
+    expect([ptt.state, rec.aborted]).toEqual(['listening', 0]);
+  });
+
   it('listens only between press and the end of that session', () => {
     const rec = fakeRecognizer();
     const heard: VoiceMatch[] = [];
@@ -147,6 +189,7 @@ describe('createBrowserRecognizer', () => {
         throw new Error('already started');
       }
       stop() {}
+      abort() {}
     }
     g.window = { webkitSpeechRecognition: FakeSR };
     const r = createBrowserRecognizer();

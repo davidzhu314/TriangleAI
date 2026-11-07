@@ -17,13 +17,14 @@ interface WebSpeechRecognition {
   lang: string;
   start(): void;
   stop(): void;
+  abort(): void;
   onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string; confidence: number }> & { isFinal?: boolean }> }) => void) | null;
   onend: (() => void) | null;
   onerror: ((e: unknown) => void) | null;
 }
 type Ctor = new () => WebSpeechRecognition;
 
-const unsupported = (): Recognizer => ({ isSupported: false, start() {}, stop() {}, onResult: null, onEnd: null, onError: null });
+const unsupported = (): Recognizer => ({ isSupported: false, start() {}, stop() {}, abort() {}, onResult: null, onEnd: null, onError: null });
 
 export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
   const w = (globalThis as { window?: { SpeechRecognition?: Ctor; webkitSpeechRecognition?: Ctor } }).window;
@@ -51,6 +52,13 @@ export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
     stop() {
       try {
         rec.stop();
+      } catch {
+        // not started: ignore
+      }
+    },
+    abort() {
+      try {
+        rec.abort();
       } catch {
         // not started: ignore
       }
