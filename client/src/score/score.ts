@@ -4,7 +4,7 @@
  * id tie-breaks, so the same inputs give the same CaseResult down to its JSON bytes.
  */
 
-import type { CaseResult, EventLog, LoadedCase, OptimizeResult, Weights } from '../contracts';
+import type { CaseResult, EventLog, FrontierRoute, LoadedCase, OptimizeResult, Weights } from '../contracts';
 import { normaliseWeights, measureRanges, rankRoutes } from '../optimize/rank';
 import { driveScore } from './drive';
 import { buildFeedback } from './feedback';
@@ -24,14 +24,18 @@ export interface ScoreInput {
   case: LoadedCase;
 }
 
+/** The best-ranked frontier route at the player's weights; null with no safe route. Replay uses the same choice. */
+export function bestFrontierRoute(optimized: OptimizeResult, weights: Weights): FrontierRoute | null {
+  if (optimized.kind !== 'frontier' || optimized.routes.length === 0) return null;
+  const order = rankRoutes(optimized.routes, measureRanges(optimized.candidates), normaliseWeights(weights)).order;
+  return optimized.routes.find((r) => r.id === order[0]!.routeId)!;
+}
+
 /** The gentleness reference: the best-ranked frontier route at the player's weights, else the player's own path. */
 export function referenceFor(input: ScoreInput): ForceReference {
   const { log, optimized } = input;
-  if (optimized.kind === 'frontier' && optimized.routes.length > 0) {
-    const order = rankRoutes(optimized.routes, measureRanges(optimized.candidates), normaliseWeights(input.weights)).order;
-    const best = optimized.routes.find((r) => r.id === order[0]!.routeId)!;
-    return forceReference(input.case, best, log.sampleHz);
-  }
+  const best = bestFrontierRoute(optimized, input.weights);
+  if (best) return forceReference(input.case, best, log.sampleHz);
   return forceReference(
     input.case,
     { id: `${log.entryId}|${log.presetId}|${log.path.join(',')}`, entryId: log.entryId, targetId: log.targetId, presetId: log.presetId, edges: log.path },

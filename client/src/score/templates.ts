@@ -6,7 +6,7 @@
 import type { FeedbackLine, FormulaRef } from '../contracts';
 
 export const FEEDBACK_TEMPLATES = {
-  'plan.too_narrow': 'Route blocked: the {vessel} narrows to {diameter_mm} mm; the {preset} wire needs {required_mm} mm.',
+  'plan.too_narrow': 'Route blocked: the {vessel} narrows to {diameter_mm} mm, and the {preset} wire needs {required_mm} mm.',
   'plan.turn_too_sharp': 'Route blocked: the {turn_deg}° turn into the {vessel} is sharper than the {preset} wire can take ({max_turn_deg}°).',
   'plan.forbidden_zone': 'Route blocked: it passes through {zone}, a no-go zone.',
   'plan.arch_never_reached': 'Route blocked: the {preset} wire never reached the arch in the recorded runs.',
@@ -19,7 +19,7 @@ export const FEEDBACK_TEMPLATES = {
   'plan.top_contributor': 'Most of your penalty came from {measure}: {value} {unit}.',
   'plan.best': 'Your route is the best available at your own weights.',
   'drive.not_reached': 'The wire did not reach the {target}.',
-  'drive.fidelity_drift': 'The tip ran {mean_mm} mm from the planned centerline on average; {zero_mm} mm or more scores zero.',
+  'drive.fidelity_drift': 'On average the tip ran {mean_mm} mm from the planned centerline; {zero_mm} mm or more scores zero.',
   'drive.gentleness': 'Peak force was {peak_n} N against {ref_peak_n} N on the reference drive, and total force {cum_ns} N·s against {ref_cum_ns} N·s.',
   'drive.force_spike': 'Force spikes above {threshold_n} N: {n}. Ease off the push at sharp turns.',
   'drive.radiation_within': 'Fluoro ran {fluoro_s} s, within the {est_fluoro_s} s estimate for this route.',
@@ -29,6 +29,12 @@ export const FEEDBACK_TEMPLATES = {
   'drive.back_out': 'Back-outs: {n}, at {penalty} points each. Aim the tip before you push.',
   'result.over_budget': "Fluoro went {over_s} s over this case's {budget_s} s allowance, which cost a star.",
   'result.over_budget_kept': "Fluoro went {over_s} s over this case's {budget_s} s allowance.",
+  'replay.wrong_branch': 'Wrong branch: into the {vessel}; the plan goes into the {expected_vessel}.',
+  'replay.prolapse': 'Prolapse in the {vessel}.',
+  'replay.force_spike': 'Force spike: {force_n} N, above {threshold_n} N.',
+  'replay.back_out': 'Back-out: pulled back {dist_mm} mm.',
+  'replay.contrast_puff': 'Contrast puff.',
+  'replay.target_reached': 'Reached the {target}.',
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;
