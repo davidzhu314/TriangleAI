@@ -7,6 +7,7 @@
  */
 import type { LoadedCase } from './case';
 import type { EventLog, Vec3, WireMode } from './events';
+import type { WirePresetId } from './optimizer';
 
 export type { WireMode } from './events';
 
@@ -28,8 +29,8 @@ export interface ControlInput {
   rotate: number;
   /** Fluoro is held on. Hold-to-activate. */
   fluoro: boolean;
-  /** True on the one frame the player triggers a contrast puff. */
-  contrastPuff?: boolean;
+  /** True on the one frame the player triggers a contrast puff, false otherwise. */
+  contrastPuff: boolean;
 }
 
 /** What to drive. Built by the Drive screen from the case and the chosen route. */
@@ -38,7 +39,7 @@ export interface WireStartRequest {
   entryId: string;
   targetId: string;
   /** Wire preset id (spec §4.3). */
-  presetId: string;
+  presetId: WirePresetId;
   /** Planned path, entry to target, as centerline edge ids. */
   path: string[];
 }

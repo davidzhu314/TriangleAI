@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:threadsim:case:1",
+  "title": "threadsim.case/1 — case.json",
+  "description": "Spec §3.2. Millimetres, RAS. centerlines.json is validated by #/$defs/centerlines. Unknown top-level fields are allowed here and removed by the privacy check (§3.5). Types: client/src/contracts/case.ts.",
+  "type": "object",
+  "required": ["schema", "id", "title", "units", "axes", "source", "physics", "vessels", "entries", "targets", "riskZones"],
+  "properties": {
+    "schema": { "const": "threadsim.case/1" },
+    "id": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "minLength": 1 },
+    "units": { "const": "mm" },
+    "axes": { "const": "RAS" },
+    "source": {
+      "type": "object",
+      "required": ["kind", "license"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["ct", "parametric", "cathsim"] },
+        "dataset": { "type": "string" },
+        "license": { "type": "string", "minLength": 1 },
+        "seed": { "type": "integer" }
+      }
+    },
+    "physics": {
+      "type": "object",
+      "required": ["available"],
+      "additionalProperties": false,
+      "properties": {
+        "available": { "type": "boolean" },
+        "phantom": { "enum": ["low_tort", "phantom2", "phantom3", "phantom4"] }
+      },
+      "if": { "properties": { "available": { "const": true } } },
+      "then": { "properties": { "phantom": true }, "required": ["phantom"] }
+    },
+    "vessels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "kind"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "name": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["artery", "vein"] }
+        }
+      }
+    },
+    "entries": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/namedNode" } },
+    "targets": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/namedNode" } },
+    "riskZones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "tier", "edge", "from_mm", "to_mm"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "kind": { "enum": ["plaque", "aneurysm", "dissection", "critical_branch"] },
+          "tier": { "enum": ["forbidden", "heavy", "proximity"] },
+          "edge": { "$ref": "#/$defs/id" },
+          "from_mm": { "type": "number", "minimum": 0 },
+          "to_mm": { "type": "number", "minimum": 0 }
+        }
+      }
+    },
+    "scenario": { "type": "string" },
+    "difficulty": { "enum": ["beginner", "intermediate", "expert"] },
+    "fluoro_budget_s": { "type": "number", "exclusiveMinimum": 0 },
+    "anatomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arch_type": { "enum": ["I", "II", "III"] },
+        "bovine": { "type": "boolean" },
+        "tortuosity": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+    "vec3": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number" } },
+    "namedNode": {
+      "type": "object",
+      "required": ["id", "name", "node"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "node": { "$ref": "#/$defs/id" }
+      }
+    },
+    "centerlines": {
+      "title": "centerlines.json",
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["id", "pos", "kind"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "pos": { "$ref": "#/$defs/vec3" },
+              "kind": { "enum": ["entry", "branch", "target", "end"] }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "from", "to", "vessel", "points", "radii_mm"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "from": { "$ref": "#/$defs/id" },
+              "to": { "$ref": "#/$defs/id" },
+              "vessel": { "$ref": "#/$defs/id" },
+              "points": { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/vec3" } },
+              "radii_mm": { "type": "array", "minItems": 2, "items": { "type": "number" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

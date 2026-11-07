@@ -47,6 +47,15 @@ def parse_client_message(msg: Dict[str, Any]) -> Dict[str, Any]:
     raise ProtocolError("unknown message type")
 
 
+def ras_mm_to_yup_m(p: Sequence[float]) -> List[float]:
+    """Same map as rasMmToYupM in client/src/contracts/case.ts: (x, y, z)_RAS mm -> (-x, z, y) / 1000.
+
+    The server applies it to every position before sending, so the wire overlays the loaded mesh.
+    """
+    x, y, z = (float(c) for c in p)
+    return [-x / 1000.0, z / 1000.0, y / 1000.0]
+
+
 def make_state(
     t: float,
     wire: Sequence[Sequence[float]],
