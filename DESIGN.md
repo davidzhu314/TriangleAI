@@ -242,7 +242,13 @@ Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover 
 
 ## Iconography & Graphics
 
-For `/draw-svg` in A1. Outline icons on a 24 px grid, stroke `--stroke-icon` (1.75), round caps and joins, no fills except a target's centre dot, drawn in `currentColor`. Shown at `--size-icon` in rows and nav, `--size-icon-lg` for controls; one plain icon beside a label, grey, never in a container. Empty-state art uses the same stroke and has no words. Charts use `--color-chart-1` then the neutrals, `--color-grid` gridlines, straight segments, and carry no decoration.
+**Icons** live in `client/src/assets/icons/`, one file each, drawn with `/draw-svg`. The family: 24 canvas, 2 units of padding, stroke 1.75 (`--stroke-icon`, measured), round caps and joins, outline only, a coordinate step of 0.5 where the geometry allows, and paint on the root in `currentColor`. A solid dot is a stroked circle of `r=".75"`, so it needs no fill. No `transform`, no `<use>`, no text inside. Inline them, because `currentColor` can't reach inside an `<img>`. Show them at `--size-icon` beside a label or `--size-icon-lg` on controls, grey, never in a container. The caller sets colour: risk icons take `--color-risk-*`, and everything else takes the text colour around it.
+
+Variants reuse exact geometry: the two entries are one body figure with the access bead moved, and the three presets share one hub bar. Always pair entries and presets with their text label: at 16 px they are similar on purpose.
+
+**Empty states** live in `client/src/assets/empty/`. 240 x 180 frame, the same 1.75 stroke (3 for a wire or barrier, matching `--stroke-route-player`), token colours with hex fallbacks, one disc in `--color-background`, one object, `--color-brand` used once, no words in the art: the heading and action beside it say it. They only work on the white sheet, since the disc matches the frame. Vessel bands are context in `--color-border-strong`, below 3:1 on purpose; the wire, barrier and marks carry the meaning.
+
+**Charts** use `--color-chart-1` then the neutrals, `--color-grid` gridlines, straight segments, and carry no decoration.
 
 ## Responsive Behavior
 
@@ -262,4 +268,5 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 - `client/src/styles/theme.css`: the font and element defaults, plain CSS. Import after tokens.
 - `client/src/styles/palette.html`: every token on one page. In dev, open `/src/styles/palette.html`.
 - `client/src/assets/fonts/`: Inter and its licence.
+- `client/src/assets/icons/`, `client/src/assets/empty/`: the icon set and empty-state art. `metrics/aroovee/A1-icon-set.png` shows them all.
 - `metrics/aroovee/A0-reference-measurement.md`: what was measured from the reference.
