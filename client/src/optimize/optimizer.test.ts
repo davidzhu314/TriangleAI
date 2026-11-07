@@ -33,7 +33,7 @@ describe('wire presets (spec §4.3)', () => {
 describe('diamond: closed-form frontier', () => {
   // From the fixture's closed forms (tests/fixtures/synthetic/diamond) and the preset limits:
   //   A-wide: turns 45 then 90, r 5      → soft (110) ok; J (80) and stiff (40) too sharp
-  //   B-narrow: turns 30 then 60, r 1.2  → soft and J ok; stiff too sharp
+  //   B-narrow: turns 38 then 76, r 1.2  → soft and J ok; stiff too sharp (76 > 40)
   //   C-pinhole: r 0.8 (1.6 < 1.889 mm)  → too narrow for every preset
   //   D-bypass: crosses forbidden_d      → never routed
   // B is shorter, gentler and needs less fluoro than A; A is wider and clear of prox_b; so the

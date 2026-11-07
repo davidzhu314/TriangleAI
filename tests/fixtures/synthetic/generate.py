@@ -410,7 +410,9 @@ def diamond():
     +S toward +R. Junction n1 is the origin, and the target is nT = (0, 0, 2 * 40 * cos 45).
       trunk  e0: n0 (0, 0, -40) -> n1, 40 mm, r 6
       A      e1: n1 -> nA = 40 u(45), e2: nA -> nT (direction u(-45)); r 5 (wide)
-      B      e3: n1 -> nB = b u(-30), e4: nB -> nT (direction u(30)), b = nT_z / (2 cos 30); r 1.2 (narrow)
+      B      e3: n1 -> nB = b u(-38), e4: nB -> nT (direction u(38)), b = nT_z / (2 cos 38); r 1.2 (narrow)
+             (38 deg, not 30: within 25 deg of both the 45 and 60 deg tips, so the rail wire's
+             branch-entry rule (spec 5.3) can steer soft angled and standard J into B)
       C      e5: n1 -> nT straight up; r 0.8, too narrow for a 0.89 mm wire plus 1 mm
       D      e6: n0 -> nT straight; r 6, crossing the forbidden zone forbidden_d
     A proximity zone sits on e3 between 20 and 30 mm, so route B has penalty 1 and A stays >= 10 mm away.
@@ -431,8 +433,9 @@ def diamond():
     n0, n1 = (0.0, 0.0, -40.0), (0.0, 0.0, 0.0)
     nT = (0.0, 0.0, 2 * a * math.cos(math.radians(45)))
     nA = plus(n1, u(45), a)
-    b = nT[2] / (2 * math.cos(math.radians(30)))
-    nB = plus(n1, u(-30), b)
+    TB = 38.0
+    b = nT[2] / (2 * math.cos(math.radians(TB)))
+    nB = plus(n1, u(-TB), b)
     seg = {  # edge: (from, to, from pos, to pos, radius, vessel)
         "e0": ("n0", "n1", n0, n1, 6.0, "trunk"),
         "e1": ("n1", "nA", n1, nA, 5.0, "wide_out"),
@@ -461,7 +464,7 @@ def diamond():
         {"id": "prox_b", "kind": "critical_branch", "tier": "proximity", "edge": "e3", "from_mm": 20, "to_mm": 30},
         {"id": "forbidden_d", "kind": "dissection", "tier": "forbidden", "edge": "e6", "from_mm": 30, "to_mm": 50},
     ]
-    z0, z1 = plus(n1, u(-30), 20.0), plus(n1, u(-30), 30.0)
+    z0, z1 = plus(n1, u(-TB), 20.0), plus(n1, u(-TB), 30.0)
 
     def clear(eid):
         _, _, p, q, _, _ = seg[eid]
@@ -478,9 +481,9 @@ def diamond():
         route_expect("A-wide", ["e0", "e1", "e2"], [False] * 3, 3 * a, [corner_deg(up, u(45)), corner_deg(u(45), u(-45))],
                      r_min=5.0, heavy=0, clearances=[min(clear(e) for e in ("e0", "e1", "e2"))],
                      notes="Takeoff 45, corner 90: theta_max 90, theta_sum 135. Wide and clear of prox_b."),
-        route_expect("B-narrow", ["e0", "e3", "e4"], [False] * 3, a + 2 * b, [corner_deg(up, u(-30)), corner_deg(u(-30), u(30))],
+        route_expect("B-narrow", ["e0", "e3", "e4"], [False] * 3, a + 2 * b, [corner_deg(up, u(-TB)), corner_deg(u(-TB), u(TB))],
                      r_min=1.2, heavy=0, clearances=[0.0],
-                     notes="Takeoff 30, corner 60: shorter and gentler than A, but narrow and through prox_b."),
+                     notes="Takeoff 38, corner 76: shorter and gentler than A, but narrow and through prox_b."),
         route_expect("C-pinhole", ["e0", "e5"], [False, False], a + nT[2], [0.0],
                      r_min=0.8, heavy=0, clearances=[min(clear(e) for e in ("e0", "e5"))],
                      notes="Straight but r 0.8 mm: 1.6 mm is under 0.89 + 1 mm, so too narrow for every preset."),

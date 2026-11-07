@@ -75,7 +75,7 @@ tests/crosscheck/.venv/Scripts/python tests/crosscheck/dump_numpy.py
 | `helix` | a = 15, pitch 40, 2 turns: exact 5 mm chord angle θ_w = 16.164°, ΘΣ = (L/w)·θ_w = 661.977° (κL = 662.78° is noted for reference) |
 | `y-branch` | Trunk and two straight daughters at +30° and −45°: clearance to a zone 10 mm up the left daughter = 10 from the trunk and 10·sin 75° from the right daughter; zone overlaps; tapers |
 | `bend` (extra) | Straight, then a 90° arc, then straight: the window neither loses nor invents turning at the transitions (ΘΣ = 90°) |
-| `diamond` | Four paths from one entry to one target, for the V3 optimizer. A: wide, 45° then 90°. B: shorter, 30° then 60°, but narrow and through a proximity zone. C: straight, but 0.8 mm (too narrow). D: straight, but crossing a forbidden zone. The closed-form frontier is soft-A, soft-B and J-B (see `client/src/optimize/optimizer.test.ts`). |
+| `diamond` | Four paths from one entry to one target, for the V3 optimizer. A: wide, 45° then 90°. B: shorter, 38° then 76°, but narrow and through a proximity zone. C: straight, but 0.8 mm (too narrow). D: straight, but crossing a forbidden zone. The closed-form frontier is soft-A, soft-B and J-B (see `client/src/optimize/optimizer.test.ts`). |
 | `junction` | A straight parent and two straight children with takeoff (deflection) angles of 120° and 45°, the 45° one out of plane. Routes: parent→retro (120°, the flagged turn), parent→side (45°), retro walked backwards→side (acos(cos 45°/2) = 69.295°), and parent alone (0°). Every edge on its own has 0 turning. |
 
 The closed-form derivations are in `generate.py` and in each `expected.json` `notes` field.
