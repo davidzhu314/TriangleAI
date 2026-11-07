@@ -286,24 +286,3 @@ export async function renderCompare(root: HTMLElement, key: string): Promise<voi
     note: '',
   });
 }
-
-/** Drive placeholder until A5: the case name and nothing invented. */
-export async function renderDrivePlaceholder(root: HTMLElement, key: string): Promise<void> {
-  await loadBundled().catch(() => undefined);
-  const e = entry(key);
-  const c = loadedCase(e);
-  if (!e || !c) return notFound(root, key);
-  renderShell(
-    root,
-    {
-      crumbs: [{ label: 'Library', href: href.library() }, { label: c.title, href: href.brief(key) }, { label: 'Drive' }],
-      body: h(
-        'div',
-        { class: 'screen' },
-        h('div', { class: 'title-row' }, h('h1', {}, `Drive: ${c.title}`), h('p', { class: 'subline' }, 'The drive view is not built yet.')),
-        h('a', { class: 'btn btn-secondary', href: href.compare(key) }, 'Back to Compare'),
-      ),
-    },
-    'library',
-  );
-}

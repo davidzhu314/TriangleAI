@@ -115,3 +115,84 @@
   stroke: var(--color-route-4);
   stroke-dasharray: var(--dash-route-4);
 }
+
+/* Drive view (spec §5.5). Front: translucent vessels, ghost trail, opaque wire. X-ray: grey ground, dark wire only
+   while fluoro is held, vessels only during a contrast puff, fading over --duration-contrast-fade. */
+.drive-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.drive-view .plan-view-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ghost-trail {
+  fill: none;
+  stroke: var(--color-scene-ghost);
+  stroke-opacity: var(--opacity-scene-ghost);
+  stroke-width: var(--stroke-route-player);
+  stroke-dasharray: var(--dash-route-2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wire-line {
+  fill: none;
+  stroke: var(--color-scene-wire);
+  stroke-width: var(--stroke-route-player);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wire-tip {
+  fill: var(--color-scene-ghost);
+}
+
+.drive-dim .vessels,
+.drive-dim .zones {
+  opacity: var(--opacity-scene-vessel);
+}
+
+/* X-ray */
+.drive-view[data-mode='xray'] .vessel {
+  stroke: var(--color-xray-ink);
+  stroke-opacity: 0;
+}
+
+.drive-view[data-mode='xray'] .zones,
+.drive-view[data-mode='xray'] .ghost-trail,
+.drive-view[data-mode='xray'] .markers {
+  display: none;
+}
+
+.drive-view[data-mode='xray'] .wire-line,
+.drive-view[data-mode='xray'] .wire-tip {
+  stroke: var(--color-xray-ink);
+  fill: var(--color-xray-ink);
+  opacity: 0;
+}
+
+.drive-view[data-mode='xray'].fluoro-on .wire-line,
+.drive-view[data-mode='xray'].fluoro-on .wire-tip {
+  opacity: 1;
+}
+
+.drive-view[data-mode='xray'] .wire-line {
+  fill: none;
+}
+
+.drive-view[data-mode='xray'].contrast-on .vessel {
+  stroke-opacity: var(--opacity-xray-contrast);
+  transition: none;
+}
+
+.drive-view[data-mode='xray'].contrast-fading .vessel {
+  stroke-opacity: 0;
+  transition: stroke-opacity var(--duration-contrast-fade) linear;
+}
