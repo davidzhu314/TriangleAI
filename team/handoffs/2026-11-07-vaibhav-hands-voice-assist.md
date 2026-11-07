@@ -25,7 +25,7 @@ Request filed: `team/requests/to-all-from-vaibhav-hands-voice-assist.md`. David 
   - **Tests:** all on a synthetic hand builder, including a gesture-driven rail drive of fixture-y that reaches the target with no wrong branch.
 - **`client/src/input/voice/`:**
   - command phrasings;
-  - a matcher (optional "Hey Catherine", word edit distance, alternatives in order);
+  - a matcher (optional "Hey Kathy" wake word, word edit distance, alternatives in order);
   - a push-to-talk state machine;
   - a Web Speech wrapper that never throws and that nothing calls.
 - **`client/src/input/README.md`** is the hookup guide.
