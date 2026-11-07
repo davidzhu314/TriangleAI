@@ -131,7 +131,7 @@ test('route toward the heavy target shows the heavy-crossing warning first', asy
   if (expectedFirst.level === 'heavy') await expect(page.getByTestId('first-warning')).toContainText('heavy risk zone');
 });
 
-test('Compare routes stores the plan and opens the Compare placeholder', async ({ page }) => {
+test('Compare routes stores the plan and opens Compare', async ({ page }) => {
   const presetId = engine.WIRE_PRESETS[0]!.id;
   const { clean } = targets(presetId);
   await openPlan(page, presetId, clean);
@@ -139,7 +139,7 @@ test('Compare routes stores the plan and opens the Compare placeholder', async (
   await page.getByTestId('compare').click();
   await expect(page).toHaveURL(/#\/case\/fixture-y\/compare$/);
   await expect(page.getByRole('heading', { level: 1, name: `Compare: ${c.title}` })).toBeVisible();
-  await expect(page.getByText('The comparison view is not built yet.')).toBeVisible();
+  await expect(page.getByTestId('finding')).not.toBeEmpty();
 });
 
 test('the view draws the case and the route trace', async ({ page }) => {

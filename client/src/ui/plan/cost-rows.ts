@@ -25,7 +25,19 @@ export const COST_ROWS: readonly CostRow[] = [
   { key: 'estFluoroS', label: 'Estimated fluoro time', unit: 's', scale: 1, decimals: 1, formulaRef: 'measure.est_fluoro', illustrative: true },
 ];
 
-/** Formula text per FormulaRef, from the spec. Only the refs the Plan screen shows. */
+/** Every measure, for Compare's table and sliders: the Plan rows plus total turning and the two simulated measures. */
+export const MEASURE_ROWS: readonly CostRow[] = [
+  ...COST_ROWS.slice(0, 2),
+  { key: 'totalTurningDeg', label: 'Total turning', unit: '°', scale: 1, decimals: 0, formulaRef: 'measure.total_turning' },
+  ...COST_ROWS.slice(2),
+  { key: 'simPeakForceN', label: 'Simulated peak force', unit: 'N', scale: 1, decimals: 2, formulaRef: 'measure.sim_peak_force' },
+  { key: 'simSuccessRate', label: 'Simulated success rate', unit: '%', scale: 100, decimals: 0, formulaRef: 'measure.sim_success_rate' },
+];
+
+/** The two measures that exist only with real recorded runs (DECISIONS.md: recorded runs are real or absent). */
+export const SIMULATED_KEYS: readonly string[] = ['simPeakForceN', 'simSuccessRate'];
+
+/** Formula text per FormulaRef, from the spec. Only the refs the Plan and Compare screens show. */
 export const FORMULA_TEXT: Partial<Record<FormulaRef, string>> = {
   'measure.length': 'Sum of the distances between consecutive centerline points along the route (spec §4.2).',
   'measure.sharpest_turn': 'The largest turning angle along the route, measured over a 5 mm window with branch points included (spec §4.2).',
@@ -34,6 +46,10 @@ export const FORMULA_TEXT: Partial<Record<FormulaRef, string>> = {
   'measure.heavy_crossings': 'How many heavy risk zones the route passes through (spec §4.6).',
   'measure.proximity': 'Sum over proximity zones of (1 − clearance / 10 mm), clamped at 0; no unit (spec §4.6).',
   'measure.est_fluoro': 'Length × seconds per cm + turns × seconds per turn (spec §4.6). The coefficients are illustrative.',
+  'measure.total_turning': 'The sum of turning angles along the route, over a 5 mm window (spec §4.2, ΘΣ).',
+  'measure.sim_peak_force': 'Peak wall force in the arch segment, from pre-recorded runs (spec §4.6).',
+  'measure.sim_success_rate': 'Share of pre-recorded runs that reached the target (spec §4.6).',
+  'rank.weighted': 'S = Σ w_k ĉ_k: each measure min–max normalised to 0–1 across the candidates, weighted by your sliders; lower is better (spec §4.8).',
 };
 
 export interface Formatted {

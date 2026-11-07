@@ -8,7 +8,7 @@
  *   package that happens to share its id (every broken test package is "fixture-y").
  */
 import { listBundledCases, loadCase, type CaseSource } from '../case';
-import type { CaseLoadResult, LoadedCase, Stars, ValidationFix, WirePresetId } from '../contracts';
+import type { CaseLoadResult, LoadedCase, Stars, ValidationFix, Weights, WirePresetId } from '../contracts';
 import { bestStars, nextCase as nextOpenCase, type ProgressRecord } from '../score';
 
 export type CatalogOrigin = 'bundled' | 'imported' | 'physics';
@@ -191,15 +191,34 @@ export interface SavedPlan {
   targetId: string;
   presetId: WirePresetId;
   edges: string[];
+  /** The weights the player chose the route at (Compare); V5 scores regret at these. */
+  weights?: Weights;
 }
 
-const plans = new Map<string, SavedPlan>();
+const PLANS_KEY = 'threadsim.plans.v1';
 
-/** Keep the player's plan for this session (Compare reads it in A4). */
+/** Plans live in this tab's session storage, so a refresh on Compare keeps the route. Never sent anywhere. */
+function readPlans(): Record<string, SavedPlan> {
+  try {
+    const parsed: unknown = JSON.parse(sessionStorage.getItem(PLANS_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, SavedPlan>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Keep the player's plan for this session: Compare reads it, and Plan shows it again. */
 export function savePlan(key: string, plan: SavedPlan): void {
-  plans.set(key, { ...plan, edges: [...plan.edges] });
+  const copy: SavedPlan = { ...plan, edges: [...plan.edges], ...(plan.weights ? { weights: { ...plan.weights } } : {}) };
+  try {
+    sessionStorage.setItem(PLANS_KEY, JSON.stringify({ ...readPlans(), [key]: copy }));
+  } catch {
+    memoryPlans.set(key, copy); // storage blocked: keep it in memory for this page
+  }
 }
+
+const memoryPlans = new Map<string, SavedPlan>();
 
 export function savedPlan(key: string): SavedPlan | undefined {
-  return plans.get(key);
+  return readPlans()[key] ?? memoryPlans.get(key);
 }

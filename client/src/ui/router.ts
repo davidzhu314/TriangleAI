@@ -4,7 +4,8 @@ export type Route =
   | { name: 'library' }
   | { name: 'brief'; key: string }
   | { name: 'plan'; key: string }
-  | { name: 'compare'; key: string };
+  | { name: 'compare'; key: string }
+  | { name: 'drive'; key: string };
 
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -13,6 +14,7 @@ export function parseRoute(hash: string): Route {
     if (parts.length === 2) return { name: 'brief', key };
     if (parts.length === 3 && parts[2] === 'plan') return { name: 'plan', key };
     if (parts.length === 3 && parts[2] === 'compare') return { name: 'compare', key };
+    if (parts.length === 3 && parts[2] === 'drive') return { name: 'drive', key };
   }
   return { name: 'library' };
 }
@@ -22,4 +24,5 @@ export const href = {
   brief: (key: string): string => `#/case/${encodeURIComponent(key)}`,
   plan: (key: string): string => `#/case/${encodeURIComponent(key)}/plan`,
   compare: (key: string): string => `#/case/${encodeURIComponent(key)}/compare`,
+  drive: (key: string): string => `#/case/${encodeURIComponent(key)}/drive`,
 };

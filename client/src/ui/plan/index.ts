@@ -259,19 +259,3 @@ export async function renderPlan(root: HTMLElement, key: string): Promise<void> 
   const graph = graphFor(c);
   draw({ root, key, c, graph, state: initialState(key, c, graph), paletteOpen: false });
 }
-
-/** Compare placeholder until A4: the case name and the plan handed over, nothing invented. */
-export async function renderComparePlaceholder(root: HTMLElement, key: string): Promise<void> {
-  await loadBundled().catch(() => undefined);
-  const e = entry(key);
-  const c = loadedCase(e);
-  if (!e || !c) return notFound(root, key);
-  const plan = savedPlan(key);
-  const content = h(
-    'div',
-    { class: 'screen' },
-    h('div', { class: 'title-row' }, h('h1', {}, `Compare: ${c.title}`), h('p', { class: 'subline' }, plan ? 'The comparison view is not built yet.' : 'No route planned yet.')),
-    h('a', { class: 'btn btn-secondary', href: href.plan(key) }, 'Back to Plan'),
-  );
-  renderShell(root, { crumbs: [{ label: 'Library', href: href.library() }, { label: c.title, href: href.brief(key) }, { label: 'Compare' }], body: content }, 'library');
-}
