@@ -18,5 +18,5 @@ Meanwhile: `steerableAt` is on my branch as a plain function (no contract change
 
 ## Answer
 
-David: <one line>
+David: Yes, after the type-iii retune is on main. I will add the cannot_steer kind and bump CONTRACTS_VERSION then. Do not implement the check against the current seeds — Type III would become "no safe route" everywhere.
 Aroovee: <one line>
