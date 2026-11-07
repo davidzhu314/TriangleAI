@@ -87,7 +87,7 @@ One line per decision: date · who · decision · why. Append only. A decision t
 - 2026-11-07 · David · **D6-min: the Type III 120° turn is in a tortuous right iliac, not at the arch takeoff.** V3 builds its frontier only from safe routes, and its sharpest preset limit is 110° (soft angled, illustrative). A 120° brachiocephalic takeoff would make every femoral route to the right carotid unsafe and leave only right-arm routes, and a vessel tree gives at most two of those. So in `type-iii` (seed 251):
   - **Brachiocephalic takeoff:** steep but passable at 97.5°. It needs the soft angled wire; standard J (80°) fails.
   - **Right femoral route:** the scenario's tortuous right iliac gives it a 120.1° turn, flagged as too sharp for every preset.
-  - **Frontier:** right radial, left radial and left femoral. They come from extra entries (`fem_l`, `rad_r`, `rad_l`) with no anastomosis, and V3 on `lane/vaibhav` gives exactly these three.
+  - **Frontier:** right radial, left radial and left femoral. They come from extra entries (`fem_l`, `rad_r`, `rad_l`) with no anastomosis, and V3's `optimizeCase` gives exactly these three (tested).
 - 2026-11-07 · David · **D6-min generator** (`tools/generator/`). Each vessel is a centripetal Catmull–Rom spline through control points. Branches start at a point on the parent spline and share that node, and centerlines are resampled about 1 mm apart from the splines.
   - **Determinism:** arithmetic and `Math.sqrt` only, plus the mulberry32 PRNG. Coordinates are rounded to 4 decimals.
   - **Arch type** sets how high the arch rises and where the origins sit along it.

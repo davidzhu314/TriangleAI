@@ -12,6 +12,8 @@ import { parseGlb, countTriangles } from '../../client/src/case/glb';
 import type { CaseJson, CenterlinesJson, LoadedCase } from '../../client/src/contracts/case';
 import schema from '../../client/src/contracts/case.schema.json';
 import { AORTA_RADIUS_RANGE_MM, AORTA_VESSEL_ID, MESH_TRIANGLE_BUDGET } from '../../client/src/contracts/validation';
+import { buildGraph } from '../../client/src/optimize/graph';
+import { optimizeCase } from '../../client/src/optimize/optimizer';
 import { generateArch } from './arch';
 import { measureAll, safeFrontier, SOFT_ANGLED_MAX_TURN_DEG } from './analyze';
 import { buildGeneratedFiles, GENERATED_CASES } from './build';
@@ -166,5 +168,27 @@ describe('route tuning (V2 measureRoute, 5 mm window across junctions)', () => {
 
   it('low-tort: every route stays well under the sharp-turn flag', async () => {
     for (const r of measureAll(await loadBundled('low-tort'))) expect(r.measures.cost.sharpestTurnDeg, `${r.entry}->${r.target}`).toBeLessThan(90);
+  });
+
+  it('type-iii: the V3 optimizer frontier for the right carotid is those three routes; right femoral is flagged', async () => {
+    const res = optimizeCase(buildGraph(await loadBundled('type-iii')), { caseId: 'type-iii', targetId: 'rcca' });
+    expect(res.kind).toBe('frontier');
+    if (res.kind !== 'frontier') return;
+    expect(new Set(res.routes.map((r) => r.entryId))).toEqual(new Set(['fem_l', 'rad_r', 'rad_l']));
+    const femR = res.candidates.filter((r) => r.entryId === 'fem_r');
+    expect(femR.length).toBeGreaterThan(0);
+    for (const r of femR) {
+      expect(r.feasible).toBe(false);
+      expect(r.violations).toContainEqual(expect.objectContaining({ kind: 'turn_too_sharp', edge: 'e_r_iliac' }));
+    }
+  });
+
+  it('low-tort: the V3 optimizer finds a standard J route to each carotid', async () => {
+    const c = await loadBundled('low-tort');
+    for (const targetId of ['rcca', 'lcca']) {
+      const res = optimizeCase(buildGraph(c), { caseId: 'low-tort', targetId });
+      expect(res.kind).toBe('frontier');
+      if (res.kind === 'frontier') expect(res.routes.map((r) => r.presetId)).toContain('standard_j');
+    }
   });
 });

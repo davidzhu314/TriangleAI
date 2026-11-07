@@ -30,8 +30,8 @@ The 120° evidence (V2 `measureRoute`, 5 mm window across junctions), `type-iii`
 | `rad_l` | 97.5° | `e_bca` | 51.7 cm | 1.3 mm | 0 |
 
 The three-route evidence: `fem_l`, `rad_r` and `rad_l` are geometrically distinct and no route dominates another. Each is under the soft angled limit (110°) and has no heavy crossing.
-- I ran Vaibhav's unmerged V3 `optimizeCase` from a throwaway worktree of `lane/vaibhav` (nothing imported into main).
-- On `rcca` it returns exactly these three as the frontier:
+- V3 merged to main during this session, so `generator.test.ts` now runs the real `optimizeCase`.
+- On `rcca` it returns exactly these three as the frontier (labels from V3):
   - `rad_r`: shortest, gentlest, least radiation;
   - `rad_l`: farthest from risk;
   - `fem_l`: widest, farthest from risk.
@@ -53,7 +53,7 @@ Who switches:
 
 Mock replaced: none (fixture-y stays as the test fixture).
 Contracts version after this handoff: unchanged (1).
-Tests: `pnpm test` gives 222 green (2 tuning tests skipped). New:
+Tests: `pnpm test` gives 311 green after merging main with V3 (2 tuning tests skipped). New:
 - **Byte tests:** the committed files equal the generator's output, and the same seed builds twice identically.
 - **Semantic tests,** per case:
   - schema;
@@ -67,6 +67,7 @@ Tests: `pnpm test` gives 222 green (2 tuning tests skipped). New:
   - Type III `fem_r` → `rcca` Θmax within 117–123° on `e_r_iliac`;
   - ≥ 3 distinct, non-dominated safe routes;
   - low-tort every route under 90°.
+- **V3 optimizer test:** on Type III `rcca`, the frontier is exactly `fem_l`, `rad_r` and `rad_l`, and `fem_r` is flagged `turn_too_sharp` on `e_r_iliac`; on low-tort, standard J reaches both carotids.
 - **Catalog test:** `index.json` matches.
 - `pnpm fixtures` from a clean state writes the same bytes.
 - Both GLBs pass the Khronos glTF validator with 0 errors and 0 warnings (run from the scratchpad; not a dependency).
@@ -75,7 +76,6 @@ New dependencies: none.
 Decisions logged: bovine not yet implemented; Type III's 120° turn sits in the right iliac (and why); the generator method and the catalog owner.
 Known gaps:
 - No Type I or II, bovine, or other ladder packages; those come in D6.
-- The safe-frontier check in the tests copies V3's preset limits (110°, 1.89 mm) as constants. When V3 merges, switch the test to `optimizeCase`.
 - Tubes overlap at junctions; they are not merged into one surface, same as fixture-y.
 - No zip is emitted (bundled cases are folders).
 - Teaching geometry, not measured anatomy.

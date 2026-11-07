@@ -6,6 +6,7 @@ import { loadCase } from '../../client/src/case';
 import type { CaseLoadResult, CostVector, LoadedCase, RouteMeasures } from '../../client/src/contracts';
 import { buildGraph } from '../../client/src/optimize/graph';
 import { measureRoute } from '../../client/src/optimize/measure-route';
+import { getPreset } from '../../client/src/optimize/presets';
 import { writeGlb } from '../lib/glb';
 import { stableStringify } from '../lib/stable-json';
 import type { GeneratedCase } from './arch';
@@ -17,12 +18,9 @@ export interface MeasuredRoute {
   measures: RouteMeasures;
 }
 
-/**
- * Turn and diameter limits of V3's illustrative presets, read from lane/vaibhav (not imported).
- * Used only to check the Type III case keeps three routes some preset could take.
- */
-export const SOFT_ANGLED_MAX_TURN_DEG = 110;
-export const MIN_VESSEL_DIAMETER_M = 0.00089 + 0.001;
+/** The most permissive V3 preset (illustrative values): the seed search keeps routes it could take. */
+export const SOFT_ANGLED_MAX_TURN_DEG = getPreset('soft_angled').maxTurnDeg;
+export const MIN_VESSEL_DIAMETER_M = getPreset('soft_angled').minVesselDiameterM;
 
 export async function loadGenerated(g: GeneratedCase, withMesh = true): Promise<CaseLoadResult> {
   const enc = new TextEncoder();
