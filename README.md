@@ -46,6 +46,26 @@ One case is one pass through six screens, each at its own hash route:
 - **Numbers:** every number on screen comes from the engine (`client/src/optimize`, `client/src/score`) or the case file, with a formula tooltip. A missing value shows as a dash.
 - **Mock build:** `VITE_ENGINE=mock pnpm build` runs on the engine mocks and shows a "Mock data" badge.
 
+## Engine (Vaibhav)
+
+The engine is plain TypeScript in `client/src/optimize/`, `client/src/score/` and `client/src/wire/rail*`. No AI model computes any route, measure, score or feedback number.
+
+- **Measures and optimizer:** spec §4 measures, the Pareto frontier with labels, and weighted ranking. They're checked against closed-form synthetic fixtures and an independent NumPy implementation (within 0.1 mm and 0.5°).
+- **Rail wire:** a deterministic 30 Hz model with branch entry by tip direction, prolapse, a force proxy and back-out. `optimize/steerability.ts` checks that a planned route can be steered.
+- **Scoring:** plan and drive scores, stars, the radiation budget, feedback sentences and replay data, reproducible from the event log.
+- **Progression:** the unlock ladder, adaptive suggestions and course grading.
+- **Assistant answers:** "best next artery", "my options" and "how am I doing", computed by the engine (`optimize/assist.ts`, `score/live.ts`).
+- **Performance:** timing budgets are asserted in CI; the summary is `metrics/vaibhav/v7-summary.md`.
+
+Engine cross-checks (Python 3.12; details in `tests/crosscheck/README.md`):
+
+```sh
+pip install -r tests/crosscheck/requirements.txt
+pytest tests/crosscheck
+```
+
+**Hand gestures and voice commands** (MediaPipe hands, push-to-talk, and an opt-in always-listen mode woken by "Hey Cathy") are built and tested on a draft branch (`lane/vaibhav-input`, PR #22). They're planned for **after the demo**. See `client/src/input/README.md` on that branch.
+
 ## Who owns what
 
 David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
