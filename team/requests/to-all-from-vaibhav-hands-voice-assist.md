@@ -8,7 +8,8 @@ What I need: your go-ahead, and the pieces each of you owns, for three optional 
   - point at the model and pinch → select the hovered branch.
 - **Push-to-talk voice commands:** zoom in, zoom out, and three assistant questions.
   - A spoken wake word, "Hey Cathy", is optional while push-to-talk is held. (The app is still named Catherine.)
-  - Outside push-to-talk, the app never listens.
+  - Push-to-talk is the default: the app listens only while the talk control is held.
+  - **New, needs your explicit OK:** an opt-in "always listen" mode. The player switches it on; the microphone stays live, and only phrases that start with "Hey Cathy" run a command. It is off by default, the UI must show that the microphone is live and that audio streams to Google (Chrome), and it can be dropped if you say no. Built on the draft branch only.
 - **Assistant answers, from the engine only:** no AI model computes anything (CLAUDE.md, spec §11).
   - "Best next artery": the next branch on the best-ranked frontier route.
   - "My options": the next branches on all frontier routes, with their labels, highlighted for point-and-pinch.
@@ -42,6 +43,7 @@ Meanwhile: nothing in the app imports the new modules. The camera and microphone
   - Rename the on-screen product name to Catherine.
 
   `client/src/input/README.md` (on the draft branch) is the hookup guide.
+- **Team decision:** is the opt-in always-listen mode acceptable, given that it departs from "never listens outside push-to-talk"?
 - **Team decision:** should using an assistant hint mark the attempt "assisted" on Results, or cost anything? Until you decide, the engine only counts hints (`ProgressRecord.hintsUsed`, optional, unused by progression).
 
 ## Claims
