@@ -1,36 +1,37 @@
-# Template. Replace @david-gh, @vaibhav-gh and @aroovee-gh with real GitHub usernames, then uncomment.
 # Generated from the ownership table in CLAUDE.md; David maintains it.
 
-# /client/src/contracts/        @david-gh
-# /client/src/case/             @david-gh
-# /client/src/wire/physics*     @david-gh
-# /client/src/wire/replay*      @david-gh
-# /client/src/wire/select.ts    @david-gh
-# /client/public/cases/         @david-gh
-# /physics/                     @david-gh
-# /tools/                       @david-gh
-# /slicer/                      @david-gh
-# /tests/fixtures/broken/       @david-gh
-# /package.json                 @david-gh
-# /pnpm-lock.yaml               @david-gh
-# /vite.config.ts               @david-gh
-# /.github/                     @david-gh
-# /metrics/david/               @david-gh
+/client/src/contracts/        @davidzhu314
+/client/src/case/             @davidzhu314
+/client/src/wire/physics*     @davidzhu314
+/client/src/wire/replay*      @davidzhu314
+/client/src/wire/select.ts    @davidzhu314
+/client/public/cases/         @davidzhu314
+/physics/                     @davidzhu314
+/tools/                       @davidzhu314
+/slicer/                      @davidzhu314
+/tests/fixtures/broken/       @davidzhu314
+/package.json                 @davidzhu314
+/pnpm-lock.yaml               @davidzhu314
+/vite.config.ts               @davidzhu314
+/vitest.config.*              @davidzhu314
+/playwright.config.*          @davidzhu314
+/.github/                     @davidzhu314
+/metrics/david/               @davidzhu314
 
-# /client/src/optimize/         @vaibhav-gh
-# /client/src/score/            @vaibhav-gh
-# /client/src/wire/rail*        @vaibhav-gh
-# /client/src/wire/mock-source.ts @vaibhav-gh
-# /tests/crosscheck/            @vaibhav-gh
-# /tests/fixtures/synthetic/    @vaibhav-gh
-# /tests/fixtures/logs/         @vaibhav-gh
-# /metrics/vaibhav/             @vaibhav-gh
+/client/src/optimize/         @Vaibhav-K32
+/client/src/score/            @Vaibhav-K32
+/client/src/wire/rail*        @Vaibhav-K32
+/client/src/wire/mock-source.ts @Vaibhav-K32
+/tests/crosscheck/            @Vaibhav-K32
+/tests/fixtures/synthetic/    @Vaibhav-K32
+/tests/fixtures/logs/         @Vaibhav-K32
+/metrics/vaibhav/             @Vaibhav-K32
 
-# /DESIGN.md                    @aroovee-gh
-# /client/src/styles/           @aroovee-gh
-# /client/src/render/           @aroovee-gh
-# /client/src/ui/               @aroovee-gh
-# /client/src/assets/           @aroovee-gh
-# /tests/e2e/                   @aroovee-gh
-# /team/DEMO.md                 @aroovee-gh
-# /metrics/aroovee/             @aroovee-gh
+/DESIGN.md                    @aroovee-nandakumar
+/client/src/styles/           @aroovee-nandakumar
+/client/src/render/           @aroovee-nandakumar
+/client/src/ui/               @aroovee-nandakumar
+/client/src/assets/           @aroovee-nandakumar
+/tests/e2e/                   @aroovee-nandakumar
+/team/DEMO.md                 @aroovee-nandakumar
+/metrics/aroovee/             @aroovee-nandakumar

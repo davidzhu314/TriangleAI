@@ -1,0 +1,18 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 204.769568,
+   "notes": "Helix a = 15, pitch 40, 2 turns: L = 2*pi*turns*sqrt(a^2 + c^2), c = pitch/(2 pi). theta_w = acos(num/den) is the exact 5 mm chord angle (constant along a helix). theta_sum = (L / w) * theta_w, the spec 4.2 sum of 5 mm-window angles. For reference, the continuous total curvature kappa*L = 662.778186 deg differs by 0.800771 deg: that is the window's own smoothing, not error.",
+   "overlapping_zones": [],
+   "proximity_clearance_mm": null,
+   "r_min_mm": 4.0,
+   "theta_max_deg": 16.16396,
+   "theta_sum_deg": 661.977415
+  }
+ },
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}

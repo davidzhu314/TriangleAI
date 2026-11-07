@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.glb binary
+*.zip binary
+DECISIONS.md merge=union
+THIRD_PARTY.md merge=union

@@ -1,0 +1,2 @@
+# Fixtures are compared byte-for-byte with generate.py output: keep LF everywhere.
+* text eol=lf

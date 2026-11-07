@@ -1,0 +1,20 @@
+{
+ "edges": {
+  "e0": {
+   "L_mm": 100.0,
+   "notes": "Straight: L = 100; every turning angle is 0; r_min = 12 - 4 = 8; the proximity zone lies on this edge, so clearance = 0.",
+   "overlapping_zones": [
+    "prox_self"
+   ],
+   "proximity_clearance_mm": 0.0,
+   "r_min_mm": 8.0,
+   "theta_max_deg": 0.0,
+   "theta_sum_deg": 0.0
+  }
+ },
+ "tolerance": {
+  "deg": 0.5,
+  "mm": 0.1
+ },
+ "window_mm": 5.0
+}
