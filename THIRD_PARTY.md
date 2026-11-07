@@ -24,3 +24,13 @@ Added in D1 (physics process only, `physics/requirements-sim.txt`; none of these
 | websockets | 13.1 | BSD-3-Clause | https://github.com/python-websockets/websockets | `physics/probe/probe_server.py` |
 | three.js (CDN, probe page only) | 0.160.0 | MIT | https://threejs.org | `physics/probe/index.html` |
 | Inter (variable, Latin subset, from `@fontsource-variable/inter`) | 5.3.0 | SIL OFL 1.1 | https://github.com/rsms/inter | `client/src/assets/fonts/`, licence alongside |
+
+### Client runtime (D2)
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| Ajv | 8.20.0 | MIT | https://github.com/ajv-validator/ajv | `client/src/case/validate.ts` (schema check, loaded on first use) |
+| fast-deep-equal | 3.1.3 | MIT | https://github.com/epoberezkin/fast-deep-equal | via Ajv |
+| fast-uri | 3.1.9 | BSD-3-Clause | https://github.com/fastify/fast-uri | via Ajv |
+| json-schema-traverse | 1.0.0 | MIT | https://github.com/epoberezkin/json-schema-traverse | via Ajv |
+| require-from-string | 2.0.2 | MIT | https://github.com/floatdrop/require-from-string | via Ajv |
