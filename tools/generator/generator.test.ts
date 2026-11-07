@@ -1,0 +1,194 @@
+/**
+ * D6-min: the two generated cases. Byte test (committed files equal the generator's output, and
+ * the same seed builds identically twice), with semantic tests beside it so a failure says what
+ * changed.
+ */
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { Ajv2020 } from 'ajv/dist/2020.js';
+import { describe, expect, it } from 'vitest';
+import { loadCase } from '../../client/src/case';
+import { parseGlb, countTriangles } from '../../client/src/case/glb';
+import type { CaseJson, CenterlinesJson, LoadedCase } from '../../client/src/contracts/case';
+import schema from '../../client/src/contracts/case.schema.json';
+import { AORTA_RADIUS_RANGE_MM, AORTA_VESSEL_ID, MESH_TRIANGLE_BUDGET } from '../../client/src/contracts/validation';
+import { buildGraph } from '../../client/src/optimize/graph';
+import { optimizeCase } from '../../client/src/optimize/optimizer';
+import { generateArch } from './arch';
+import { measureAll, safeFrontier, SOFT_ANGLED_MAX_TURN_DEG } from './analyze';
+import { buildGeneratedFiles, GENERATED_CASES } from './build';
+import { LOW_TORT, TYPE_III } from './cases';
+
+const CASES_DIR = join(import.meta.dirname, '../../client/public/cases');
+const update = process.env['UPDATE_FIXTURES'] === '1';
+const built = buildGeneratedFiles();
+
+/** fetch over client/public/cases, as Vite serves it at /cases/. */
+const diskFetch = (async (url: string) => {
+  try {
+    return new Response(readFileSync(join(CASES_DIR, String(url).replace(/^\/cases\//, ''))));
+  } catch {
+    return new Response('not found', { status: 404 });
+  }
+}) as typeof fetch;
+
+const readJson = <T>(rel: string): T => JSON.parse(readFileSync(join(CASES_DIR, rel), 'utf8')) as T;
+
+async function loadBundled(id: string): Promise<LoadedCase> {
+  const r = await loadCase({ kind: 'url', baseUrl: `/cases/${id}/`, origin: 'bundled' }, { fetch: diskFetch });
+  if (!r.ok) throw new Error(JSON.stringify(r.results, null, 2));
+  return r.case;
+}
+
+describe('generated case files', () => {
+  it(update ? 'writes the committed files' : 'match the committed files byte for byte', () => {
+    for (const [rel, content] of Object.entries(built)) {
+      const path = join(CASES_DIR, rel);
+      const bytes = typeof content === 'string' ? Buffer.from(content, 'utf8') : Buffer.from(content);
+      if (update) {
+        mkdirSync(dirname(path), { recursive: true });
+        writeFileSync(path, bytes);
+      }
+      expect(readFileSync(path).equals(bytes), `${rel} is stale; run pnpm fixtures`).toBe(true);
+    }
+  });
+
+  it('build identically twice from the same seed', () => {
+    const again = buildGeneratedFiles();
+    for (const [rel, content] of Object.entries(built)) expect(Buffer.from(again[rel]!).equals(Buffer.from(content)), rel).toBe(true);
+  });
+
+  it('change with the seed', () => {
+    const a = generateArch(TYPE_III).centerlines.edges.find((e) => e.id === 'e_r_iliac')!.points;
+    const b = generateArch({ ...TYPE_III, seed: TYPE_III.seed + 1 }).centerlines.edges.find((e) => e.id === 'e_r_iliac')!.points;
+    expect(a).not.toEqual(b);
+  });
+
+  it('refuse bovine until D6 implements it', () => {
+    expect(() => generateArch({ ...LOW_TORT, bovine: true as false })).toThrow(/bovine/);
+  });
+});
+
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+const validateCase = ajv.compile(schema);
+const validateCenterlines = ajv.compile({ $ref: 'urn:threadsim:case:1#/$defs/centerlines' });
+
+describe.each(GENERATED_CASES.map((p) => [p.id, p] as const))('%s (semantic)', (id, params) => {
+  const caseJson = () => readJson<CaseJson>(`${id}/case.json`);
+  const centerlines = () => readJson<CenterlinesJson>(`${id}/centerlines.json`);
+
+  it('matches case.schema.json', () => {
+    expect(validateCase(caseJson()), JSON.stringify(validateCase.errors)).toBe(true);
+    expect(validateCenterlines(centerlines()), JSON.stringify(validateCenterlines.errors)).toBe(true);
+  });
+
+  it('matches the generator in topology, points within 1e-6 mm and metadata', () => {
+    const g = generateArch(params);
+    const cl = centerlines();
+    expect(cl.nodes.map((n) => [n.id, n.kind])).toEqual(g.centerlines.nodes.map((n) => [n.id, n.kind]));
+    expect(cl.edges.map((e) => [e.id, e.from, e.to, e.vessel, e.points.length])).toEqual(
+      g.centerlines.edges.map((e) => [e.id, e.from, e.to, e.vessel, e.points.length]),
+    );
+    cl.edges.forEach((e, i) => {
+      const ge = g.centerlines.edges[i]!;
+      e.points.forEach((p, k) => p.forEach((v, a) => expect(Math.abs(v - ge.points[k]![a]!)).toBeLessThan(1e-6)));
+      e.radii_mm.forEach((r, k) => expect(Math.abs(r - ge.radii_mm[k]!)).toBeLessThan(1e-6));
+    });
+    expect(caseJson()).toEqual(JSON.parse(JSON.stringify(g.caseJson)));
+  });
+
+  it('is parametric teaching anatomy with every optional field filled', () => {
+    const c = caseJson();
+    expect(c.source).toEqual({ kind: 'parametric', dataset: 'ThreadSim arch generator (tools/generator)', license: 'Generated by ThreadSim tools; no third-party data', seed: params.seed });
+    expect(c.physics).toEqual({ available: false });
+    expect(c.anatomy).toEqual({ arch_type: params.arch_type, bovine: false, tortuosity: params.tortuosity });
+    expect(c.scenario).toMatch(/^Teaching scenario:/);
+    expect(c.difficulty).toBe(params.difficulty);
+    expect(c.fluoro_budget_s).toBeGreaterThan(0);
+    expect(c.entries.map((e) => e.id)).toContain('fem_r');
+    expect(c.vessels.map((v) => v.id)).toEqual(expect.arrayContaining(['aorta', 'bca', 'rcca', 'lcca', 'l_subclavian']));
+  });
+
+  it('has one radius per point, all > 0, points about 1 mm apart, and edges that end on their nodes', () => {
+    const cl = centerlines();
+    const pos = new Map(cl.nodes.map((n) => [n.id, n.pos]));
+    for (const e of cl.edges) {
+      expect(e.radii_mm).toHaveLength(e.points.length);
+      expect(e.radii_mm.every((r) => r > 0)).toBe(true);
+      for (let i = 1; i < e.points.length; i++) {
+        const [a, b] = [e.points[i - 1]!, e.points[i]!];
+        const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+        expect(d, `${e.id}[${i}]`).toBeGreaterThan(0.9);
+        expect(d, `${e.id}[${i}]`).toBeLessThan(1.1);
+      }
+      expect(e.points[0]).toEqual(pos.get(e.from));
+      expect(e.points.at(-1)).toEqual(pos.get(e.to));
+    }
+  });
+
+  it('has an aorta whose largest radius is inside the units check', () => {
+    const r = Math.max(...centerlines().edges.filter((e) => e.vessel === AORTA_VESSEL_ID).flatMap((e) => e.radii_mm));
+    expect(r).toBeGreaterThanOrEqual(AORTA_RADIUS_RANGE_MM[0]);
+    expect(r).toBeLessThanOrEqual(AORTA_RADIUS_RANGE_MM[1]);
+  });
+
+  it('has one GLB node per vessel, named by vessel id, under the triangle budget', () => {
+    const glb = parseGlb(new Uint8Array(readFileSync(join(CASES_DIR, id, 'vessels.glb'))));
+    expect(glb.json['nodes'].map((n: { name: string }) => n.name)).toEqual(caseJson().vessels.map((v) => v.id));
+    const tris = countTriangles(glb.json);
+    expect(tris).toBeGreaterThan(0);
+    expect(tris).toBeLessThan(MESH_TRIANGLE_BUDGET);
+  });
+
+  it('loads through the real loadCase with no validation results; every entry reaches every target', async () => {
+    const c = await loadBundled(id);
+    expect(c.validation).toEqual([]);
+    expect(c.planningOnly).toBe(true);
+    expect(c.targets.every((t) => t.reachable)).toBe(true);
+  });
+});
+
+describe('route tuning (V2 measureRoute, 5 mm window across junctions)', () => {
+  it('type-iii: the right femoral route to the right carotid has a turn of about 120° in the right iliac', async () => {
+    const routes = measureAll(await loadBundled('type-iii'));
+    const r = routes.find((x) => x.entry === 'fem_r' && x.target === 'rcca')!;
+    expect(r.measures.cost.sharpestTurnDeg).toBeGreaterThan(117);
+    expect(r.measures.cost.sharpestTurnDeg).toBeLessThan(123);
+    expect(r.measures.sharpestTurnEdge).toBe('e_r_iliac');
+  });
+
+  it('type-iii: at least three distinct safe routes to the right carotid, none dominated by another', async () => {
+    const frontier = safeFrontier(measureAll(await loadBundled('type-iii')), 'rcca');
+    expect(frontier.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(frontier.map((f) => f.edges.join(','))).size).toBe(frontier.length);
+    expect(new Set(frontier.map((f) => JSON.stringify(f.measures.cost))).size).toBe(frontier.length);
+    expect(frontier.map((f) => f.entry).sort()).toEqual(['fem_l', 'rad_l', 'rad_r']);
+    for (const f of frontier) expect(f.measures.cost.sharpestTurnDeg).toBeLessThan(SOFT_ANGLED_MAX_TURN_DEG - 5);
+  });
+
+  it('low-tort: every route stays well under the sharp-turn flag', async () => {
+    for (const r of measureAll(await loadBundled('low-tort'))) expect(r.measures.cost.sharpestTurnDeg, `${r.entry}->${r.target}`).toBeLessThan(90);
+  });
+
+  it('type-iii: the V3 optimizer frontier for the right carotid is those three routes; right femoral is flagged', async () => {
+    const res = optimizeCase(buildGraph(await loadBundled('type-iii')), { caseId: 'type-iii', targetId: 'rcca' });
+    expect(res.kind).toBe('frontier');
+    if (res.kind !== 'frontier') return;
+    expect(new Set(res.routes.map((r) => r.entryId))).toEqual(new Set(['fem_l', 'rad_r', 'rad_l']));
+    const femR = res.candidates.filter((r) => r.entryId === 'fem_r');
+    expect(femR.length).toBeGreaterThan(0);
+    for (const r of femR) {
+      expect(r.feasible).toBe(false);
+      expect(r.violations).toContainEqual(expect.objectContaining({ kind: 'turn_too_sharp', edge: 'e_r_iliac' }));
+    }
+  });
+
+  it('low-tort: the V3 optimizer finds a standard J route to each carotid', async () => {
+    const c = await loadBundled('low-tort');
+    for (const targetId of ['rcca', 'lcca']) {
+      const res = optimizeCase(buildGraph(c), { caseId: 'low-tort', targetId });
+      expect(res.kind).toBe('frontier');
+      if (res.kind === 'frontier') expect(res.routes.map((r) => r.presetId)).toContain('standard_j');
+    }
+  });
+});
