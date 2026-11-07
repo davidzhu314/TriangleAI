@@ -19,7 +19,6 @@ import { scoreCase } from './score';
 
 const CASES = join(import.meta.dirname, '../../public/cases');
 const HAS_TYPE_III = existsSync(join(CASES, 'type-iii', 'case.json'));
-const DRIVABILITY_REQUEST = 'team/requests/to-david-from-vaibhav-type-iii-drivability.md';
 const SAFETY: Weights = { proximityPenalty: 0.5, sharpestTurnDeg: 0.3, narrowestRadiusM: 0.2 };
 const SHORT: Weights = { lengthM: 0.7, estFluoroS: 0.3 };
 
@@ -73,8 +72,8 @@ for (const [id, target, typeIII] of [['fixture-y', 'left_branch', false], ['type
       if (typeIII) expect(a).not.toEqual(b);
     });
 
-    // type-iii: undrivable until David retunes the seed (see DRIVABILITY_REQUEST); never loosen the check
-    (typeIII ? it.fails : it)(`Drive → Results: the best route is driven cleanly and scored (${DRIVABILITY_REQUEST})`, async () => {
+    // Every case, type-iii included, must drive cleanly (type-iii since the D6-min drivability retune); never loosen the check
+    it('Drive → Results: the best route is driven cleanly and scored', async () => {
       const t0 = performance.now();
       const log = await drive(c, f, SAFETY);
       const kinds = log.events.map((e) => e.kind);

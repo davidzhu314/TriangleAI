@@ -47,5 +47,5 @@ Meanwhile: nothing changes. I won't write MediaPipe code until this is answered 
 
 ## Answer
 
-David: <one line>
+David: After the demo, not before S5. No demo beat uses it. Keyboard, gamepad and WebXR stay sufficient.
 Aroovee: <one line>

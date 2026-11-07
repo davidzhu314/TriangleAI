@@ -53,3 +53,20 @@ def test_ras_to_yup_matches_the_client_contract():
     assert ras_mm_to_yup_m([-1000, 0, 0]) == [1.0, 0.0, 0.0]
     assert ras_mm_to_yup_m([0, 1000, 0]) == [0.0, 0.0, 1.0]
     assert ras_mm_to_yup_m([12, -40, 250]) == [-0.012, 0.25, -0.04]
+
+
+def test_cathsim_to_ras_mm_puts_superior_on_s_and_patient_right_on_r():
+    from wire_protocol import cathsim_m_to_ras_mm
+
+    # CathSim +y is superior, +x patient left, +z anterior.
+    assert cathsim_m_to_ras_mm([0.0, 0.1, 0.0]) == [0.0, 0.0, 100.0]
+    assert cathsim_m_to_ras_mm([0.01, 0.0, 0.0]) == [-10.0, 0.0, 0.0]
+    assert cathsim_m_to_ras_mm([0.0, 0.0, 0.02]) == [0.0, 20.0, 0.0]
+
+
+def test_cathsim_frame_round_trips_to_the_client_frame():
+    from wire_protocol import cathsim_m_to_ras_mm, ras_mm_to_yup_m
+
+    for p in ([0.0, 0.0, 0.0], [-0.043272, 0.136586, 0.034102], [0.0179, -0.0214, 0.0713]):
+        q = ras_mm_to_yup_m(cathsim_m_to_ras_mm(p))
+        assert all(abs(a - b) < 1e-12 for a, b in zip(q, p))

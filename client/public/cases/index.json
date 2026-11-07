@@ -1,6 +1,14 @@
 {
   "cases": [
     {
+      "id": "low-tort",
+      "path": "low-tort/"
+    },
+    {
+      "id": "type-iii",
+      "path": "type-iii/"
+    },
+    {
       "id": "fixture-y",
       "path": "fixture-y/"
     }
