@@ -1,9 +1,9 @@
 # Status — Vaibhav (Teammate 2)
 
 Contracts version: 1
-Now: V2-prep done (TypeScript measures + route-level turning); waiting for Vaibhav to review
-Done: V0 (synthetic fixtures, NumPy references); V2-prep (TS port of the §4.2 measures in client/src/optimize/measures/, junction fixture, route-level Θmax/ΘΣ)
-Blocked: nothing. V1 is unblocked (D0b merged, CONTRACTS_VERSION = 1) and waits for Vaibhav's go-ahead
-Waiting to swap: fixture-y → generated Type III and low-tortuosity cases in cross-checks (when David's D6-min handoff lands)
-Next handoff: V1 mocks → Aroovee builds screens on them
-Last session: 2026-11-07 (V2-prep)
+Now: V1 done (mocks in contract shape, behind the VITE_ENGINE=mock build guard); PR #6
+Done: V0 (synthetic fixtures, NumPy references); V2-prep (TS measures, route-level turning); V1 (optimize/mock.ts, score/mock.ts, wire/mock-source.ts, mock LoadedCase builder, recorded-runs test fixture)
+Blocked: nothing. V2 waits for Vaibhav's go-ahead
+Waiting to swap: optimize/mock-case.ts → David's loadCase (D2); fixture-y → generated Type III and low-tortuosity cases in cross-checks (D6-min)
+Next handoff: V2 measureRoute in a Worker → Aroovee's live cost panel goes real
+Last session: 2026-11-07 (V1)
