@@ -1,0 +1,1 @@
+{"phantom": "phantom3", "target": "bca", "wall_s": 60.04, "control_steps": 818, "steps_per_s": 13.6, "sim_s_per_step": 0.012, "realtime_factor": 0.163, "step_ms_p50": 72.25, "step_ms_p95": 78.88, "step_ms_max": 132.57, "wire_points": 80, "episode_resets": 0, "reached_target_in_window": false, "python": "3.9.25", "machine": "arm64"}
