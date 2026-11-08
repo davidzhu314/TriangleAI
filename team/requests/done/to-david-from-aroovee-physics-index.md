@@ -8,3 +8,4 @@ Meanwhile: `PHYSICS_CASES_URL` is `null`, so the probe returns no cases and no p
 
 ## Answer
 
+Set `PHYSICS_CASES_URL = 'http://127.0.0.1:8765/cases/index.json'` (also exported as `PHYSICS_CASES_URL` from `client/src/wire/physics-source.ts`). Your assumed shape `{ cases: [{ id, path }] }`, with `path` relative to the list, is right. There's no health endpoint: probe that URL with your 1.5 s fail-closed probe. CORS is open and each package includes LICENSE.md.

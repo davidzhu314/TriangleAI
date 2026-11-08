@@ -157,3 +157,15 @@ One line per decision: date · who · decision · why. Append only. A decision t
 - 2026-11-07 · Aroovee · **Results has no "Replay" action.** No log-replay wire is on main (`wire/replay*` is David's, not landed). Results shows `replayTimeline` instead: a time axis with a mark per event and the driven path over the best route. Replay joins the actions when a replay source exists.
 - 2026-11-07 · Aroovee · **Routing moved to `ui/app.ts` (`startApp`)**, with the wire factory as an option (default `select.ts`). `main.ts` only loads styles and starts it. A test-only full-app harness (`tests/e2e/harness/app.html`) injects `RailWireSource`, so the click-through drives before `select.ts` lands. It is never in the build.
 - 2026-11-07 · Aroovee · **Five icons drawn for Results on the A1 grid:** star, force spike, wrong branch, prolapse and back-out. Timeline marks for force spikes, wrong branches, prolapses and back-outs are also drawn in `--color-negative`, but their icons and labels carry the meaning.
+- 2026-11-07 · David · **D5 physics process.** `python -m server` in `physics/` serves the D3a packages over HTTP (`http://127.0.0.1:8765/cases/index.json`, same shape as the bundled index) and the §5.2 socket at `ws://127.0.0.1:8765/wire` on one localhost port. There is no separate health endpoint: the Library probes the index URL.
+  - **Units:** positions are CathSim world metres, sent unchanged (D3a).
+  - **Contact force:** the per-frame mean of the summed `mj_contactForce` normal over every wire-to-wall contact.
+  - **Controls:** full push is about 2 cm/s (rail's speed) and full rotate about 1 rad/s. Faster spin whips the tip into the wall.
+  - **Presets on CathSim:** the tip's 60° rest curve is scaled by the preset's tip angle (soft angled 45°, standard J 60°, stiff straight 0°). Wire joint stiffness is ×0.5, ×1 and ×2 respectively. Illustrative.
+  - **Target:** `at_target` is CathSim's own test, the head within 4 mm of the site. The episode is never ended on success, so the player keeps driving.
+- 2026-11-07 · David · **Fallback behaviour (select.ts).** A phantom served by the physics process drives on physics. Every other case drives on rail.
+  - **Triggers:** the socket fails, the server closes with 1013 (`server_unavailable`, CathSim missing), or no state arrives for 2 s.
+  - **What happens:** the drive switches to rail, `onFallback` fires once, and **rail restarts the drive from the entry**. Rail has no way to continue from a physics wire shape. The log `stop()` returns is rail's.
+  - **First state:** it gets 10 s, because building a CathSim drive takes up to 3.5 s; the 2 s stall rule starts once states flow.
+  - **Events:** physics-mode events come from the tip position: `wrong_branch` once the tip leaves the planned lumen into another edge, and `back_out`, `force_spike` (rail's threshold) and `target_reached`. Prolapse is not detected in physics mode.
+  - **Replay and mock:** replay is not offered (no recorded runs). Its file format, for when real runs exist, is a JSON array of physics `state` messages. The V1 mock wire is not reachable from select.ts.

@@ -6,7 +6,7 @@ One entry per dependency or asset: name · version · license · URL · where it
 | --- | --- | --- | --- | --- |
 | CathSim code and phantoms | — | CC BY-NC-SA 4.0 (no commercial use without the authors' permission) | https://github.com/airvlab/cathsim | `physics/` only, separate process; never in `client/` |
 | MuJoCo, dm_control | — | Apache 2.0 | — | `physics/` (via CathSim) |
-| three.js | — | MIT | — | `client/src/render/` |
+| three.js (`three`, runtime; `@types/three`, dev) | 0.187.0 | MIT | https://threejs.org | `client/src/render/` |
 | TotalSegmentator (total task only) | — | Apache 2.0 code; total task free for any use | — | `tools/` (offline), if a CTA case is built |
 | 3D Slicer, SlicerVMTK | — | Permissive (keep notices) | — | `slicer/`, `tools/` |
 

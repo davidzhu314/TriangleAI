@@ -1,12 +1,12 @@
 """WebSocket message shapes for /wire, mirroring client/src/contracts/physics-protocol.ts (spec 5.2).
 
-D0a stub: message validation only. The server itself lands in D5. Python 3.9 compatible.
-CathSim is never imported here; the server wraps it in its own module.
+Message validation and the state message builder, used by the D5 server (physics/server/).
+Python 3.9 compatible. CathSim is never imported here; the server wraps it in its own module.
 """
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 WS_PATH = "/wire"
 STATE_HZ = 30
@@ -73,16 +73,22 @@ def make_state(
     wire: Sequence[Sequence[float]],
     contact_force_n: float,
     at_target: bool,
+    tip: Optional[Sequence[float]] = None,
 ) -> Dict[str, Any]:
-    """Build a state message. `t` is simulation time in seconds; the tip is the last wire point."""
+    """Build a state message. `t` is simulation time in seconds; `tip` defaults to the last wire point."""
     points: List[List[float]] = [[float(c) for c in p] for p in wire]
     if not points or any(len(p) != 3 for p in points):
         raise ProtocolError("wire must be a non-empty list of 3D points")
+    head = [float(c) for c in tip] if tip is not None else list(points[-1])
+    if len(head) != 3 or not all(math.isfinite(c) for c in head):
+        raise ProtocolError("tip must be a 3D point")
+    if not all(math.isfinite(c) for p in points for c in p) or not _finite(contact_force_n):
+        raise ProtocolError("positions and force must be finite")
     return {
         "type": "state",
         "t": float(t),
         "wire": points,
-        "tip": list(points[-1]),
+        "tip": head,
         "contact_force_n": float(contact_force_n),
         "at_target": bool(at_target),
     }
