@@ -281,6 +281,7 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'assist.complete': { target: 'Left branch' },
   'assist.no_continuation': { target: 'Left branch' },
   'assist.no_safe_route': {},
+  'assist.cannot_steer': {},
 };
 
 describe('feedback templates (§6.4)', () => {

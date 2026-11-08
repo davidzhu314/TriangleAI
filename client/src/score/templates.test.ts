@@ -52,6 +52,7 @@ const PLACEHOLDERS: Readonly<Record<TemplateId, readonly string[]>> = Object.fre
   'assist.off_frontier': ['vessels'],
   'assist.complete': ['target'],
   'assist.no_continuation': ['target'],
+  'assist.cannot_steer': [],
   'assist.no_safe_route': [],
 });
 
