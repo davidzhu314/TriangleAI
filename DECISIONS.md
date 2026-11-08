@@ -342,3 +342,8 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Commands:** every hand gesture, voice command and key, read from `input/help.ts` and the Drive key bindings. Each section has its own switch, which only hides that list (David's choice).
 
   Settings live in localStorage `threadsim.settings.v1`, with defaults whenever storage is blocked. Built by David in Aroovee's folders (`ui/`, `styles/tokens.css`, `tests/e2e/`) at David's request; existing tokens only.
+- 2026-11-08 · David · **Shipping the unmodified BodyParts3D reference body in `client/public/` for the demo (CC BY-SA 2.1 JP), authorized by David as release manager without waiting for the open licence request.**
+  - An unmodified copy of `assets/vascular/bodyparts3d-aortic.glb` ships as `client/public/anatomy/vascular.glb`, with its `ATTRIBUTION.md` (attribution, licence link and notice of changes) beside it.
+  - The app loads it fail-soft, like body context: if the file is there, generated cases show it aligned per case; if not, the placeholder stays. No `VITE_` variable, secret or contract change.
+  - We are not cutting cases or `vessels.glb` from it: anything adapted from it would be share-alike.
+  - This supersedes "No CC BY-SA asset ships in `client/` before the demo" for this one file.

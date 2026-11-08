@@ -94,9 +94,12 @@ Shipped in the client build with no third-party license: the client runtime is e
 
 ### Realistic vascular asset (Gibran, staged, not in the client build)
 
+**Update 2026-11-08 (David):** an unmodified copy of `bodyparts3d-aortic.glb` now ships in the client build at `client/public/anatomy/vascular.glb`, with `ATTRIBUTION.md` beside it (see the table above). The "not in the client build" heading and the "only third-party data in `client/public/`" lines above predate this. Nothing else is cut from the asset.
+
 | Name | Version | License | URL | Where used |
 | --- | --- | --- | --- | --- |
 | BodyParts3D / Anatomography (© DBCLS), via OrganUI Vessels `public/models/vessels.glb` | BodyParts3D 4.3 (FMA3.0); OrganUI commit `74be339badd85f1d3d93e585ed2a5a79c7679342`, GLB SHA-256 `d2dd9911…701d` | **CC BY-SA 2.1 Japan** (share-alike; commercial use allowed). OrganUI's MIT license covers its code only, not the model. Cite Mitsuhashi et al., NAR 37 (2009) D782–D785 | https://lifesciencedb.jp/bp3d/ · https://github.com/organui/vessels-3d | `assets/vascular/` only (31 structures split into 50 nodes, mm RAS, `prepare_vessels.py`). Not imported by `client/`; the license boundary is pending `team/requests/to-all-from-gibran-license-vascular-assets.md` |
+| BodyParts3D / Anatomography 4.3 (© DBCLS), the reference body shipped in the client | An unmodified copy of `assets/vascular/bodyparts3d-aortic.glb` (SHA-256 `c111c817a525da4a…`, 778,920 bytes), which is DBCLS's BodyParts3D adapted by OrganUI, then by ThreadSim's `prepare_vessels.py` | **CC BY-SA 2.1 Japan**. The attribution, licence link and notice of changes ship beside it as `client/public/anatomy/ATTRIBUTION.md` (an unmodified copy of `assets/vascular/ATTRIBUTION.md`), and the GLB carries `asset.copyright`. Cite Mitsuhashi et al., NAR 37 (2009) D782–D785 | https://lifesciencedb.jp/bp3d/ | `client/public/anatomy/vascular.glb`, the reference body on generated cases (2026-11-08, authorized by David for the demo). No case or `vessels.glb` is cut from it |
 
 ## Hands and voice (integration branch, 2026-11-08)
 
