@@ -43,6 +43,8 @@ export interface DriveView {
   update(state: DriveViewState): void;
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
   zoom(factor: number): boolean;
+  /** Pan the view (3D or flat) by a share of its size. */
+  pan(dx: number, dy: number): void;
   /** Start a contrast puff: the X-ray silhouette shows, then fades. */
   puff(): void;
   dispose(): void;
@@ -101,6 +103,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
   return {
     element,
     toolbar,
+    pan: (dx, dy) => dual.pan(dx, dy),
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;

@@ -29,6 +29,12 @@ export interface CompareViewState {
 
 export interface CompareView {
   readonly element: HTMLElement;
+  /** The view's toolbar: screens may add their own controls to it. */
+  readonly toolbar: HTMLElement;
+  /** Pan the view (3D or flat) by a share of its size. */
+  pan(dx: number, dy: number): void;
+  /** Zoom the 3D view; false in the flat view. */
+  zoom(factor: number): boolean;
   update(state: CompareViewState): void;
   dispose(): void;
 }
@@ -58,6 +64,14 @@ export function createCompareView(c: LoadedCase): CompareView {
 
   return {
     element,
+    toolbar: dual.toolbar,
+    pan: (dx, dy) => dual.pan(dx, dy),
+    zoom(factor) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      scene.zoom(factor);
+      return true;
+    },
     update(state) {
       lines.replaceChildren();
       // The selected line last, so it sits above the other frontier lines (the player's route stays on top).

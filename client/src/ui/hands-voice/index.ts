@@ -1,13 +1,14 @@
 /**
- * Hands-free input on Plan and Drive (option A, integration/hands-voice): the camera with a mirrored self-view and
- * Vaibhav's gesture machine, and push-to-talk voice (hold V) with a caption.
+ * Hands-free input on Plan, Compare and Drive (option A, integration/hands-voice): the camera with a mirrored
+ * self-view and Vaibhav's gesture machine (both hands: drive, point, pinch, pan), and voice: a "Voice" switch that
+ * listens for "Hey Cathy, …" (the wake listener), with a caption.
  *
- * - Off until the trainee turns it on. The camera stays on this device (MediaPipe runs in the page).
- * - While the microphone is open, a notice says Chrome sends that audio to Google to recognise speech.
+ * - Both are off until the trainee turns them on. The camera stays on this device (MediaPipe runs in the page).
+ * - While voice is on, a notice says the microphone is live and Chrome sends the audio to Google.
  * - Keyboard and gamepad keep working and win over the hand (mergeControl), so the keyboard-only demo stays the
  *   fallback at every moment.
  */
-import { createBrowserRecognizer, createPushToTalk, type GestureOutput, type HandFrame, type PttState, type VoiceAction, type VoiceMatch } from '../../input';
+import { createBrowserRecognizer, createWakeListener, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
 import { h } from '../dom';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
 import './hands-voice.css';
@@ -18,6 +19,7 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   assist_best_next: 'Best next artery',
   assist_options: 'My options',
   assist_review: 'How am I doing',
+  undo: 'Undo last step',
 };
 
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
@@ -25,6 +27,15 @@ const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
   lost: 'Hand lost. Show it again.',
   gun: 'Gun pose: aim to push or pull, twist to rotate.',
   point: 'Pointing: pinch to pick the branch under the dot.',
+  pan: 'Panning',
+};
+
+/** Words for the wake listener's errors (Web Speech codes); anything else is said generically. */
+const VOICE_ERROR_WORDS: Readonly<Record<string, string>> = {
+  'not-allowed': 'Voice stopped: microphone access was blocked.',
+  'service-not-allowed': 'Voice stopped: the speech service is not allowed here.',
+  'audio-capture': 'Voice stopped: no microphone found.',
+  'language-not-supported': 'Voice stopped: this language is not supported.',
 };
 
 const ERROR_WORDS: Readonly<Record<TrackerError, string>> = {
@@ -38,6 +49,8 @@ export interface HandsVoiceOptions {
   host: HTMLElement;
   /** Every gesture frame while the camera is on (null when it turns off). */
   onGesture?: (g: GestureOutput | null) => void;
+  /** A pan this frame, in screen widths in the user's view (either hand, averaged). */
+  onPan?: (dx: number, dy: number) => void;
   /** A recognised command: return the answer to show under the caption, or null. */
   onVoice: (action: VoiceAction) => string | null | Promise<string | null>;
   /** Which commands this screen answers; others get "not on this screen". */
@@ -45,7 +58,7 @@ export interface HandsVoiceOptions {
 }
 
 export interface HandsVoice {
-  /** The Hands and Talk buttons, for the screen's toolbar. */
+  /** The Hands and Voice buttons, for the screen's toolbar. */
   readonly controls: HTMLElement;
   /** The latest gesture while the camera is on, else null. */
   gesture(): GestureOutput | null;
@@ -58,7 +71,7 @@ declare global {
   }
 }
 
-export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoiceOptions): HandsVoice {
+export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: HandsVoiceOptions): HandsVoice {
   let tracker: HandTracker | null = null;
   let latest: GestureOutput | null = null;
   let starting = false;
@@ -68,7 +81,7 @@ export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoi
   const status = h('p', { class: 'hv-status', 'data-testid': 'hands-status' });
   const cameraNote = h('p', { class: 'hv-note' }, 'Camera on. Frames stay on this device.');
   const selfView = h('div', { class: 'hv-self', hidden: true, 'data-testid': 'hands-self-view' }, video, status, cameraNote);
-  const micNotice = h('p', { class: 'pill pill-warning hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech.');
+  const micNotice = h('p', { class: 'pill pill-warning hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
   const caption = h('div', { class: 'hv-caption', role: 'status', 'aria-live': 'polite', 'data-testid': 'voice-caption' });
   const panel = h('div', { class: 'hv-panel' }, selfView, micNotice, caption);
   const pointer = h('div', { class: 'hv-pointer', hidden: true, 'aria-hidden': 'true' });
@@ -83,6 +96,7 @@ export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoi
       pointer.style.setProperty('--hv-x', `${g.pointer.x * 100}%`);
       pointer.style.setProperty('--hv-y', `${g.pointer.y * 100}%`);
     } else pointer.hidden = true;
+    if (g?.pan) onPan?.(g.pan.dx, g.pan.dy);
     onGesture?.(g);
   };
 
@@ -114,7 +128,7 @@ export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoi
   };
   handsButton.addEventListener('click', () => void setHands(handsButton.getAttribute('aria-pressed') !== 'true'));
 
-  // ---- push-to-talk: hold V, or hold the Talk button
+  // ---- voice: a switch that listens for "Hey Cathy, …" (Vaibhav's wake listener), off by default
   const recognizer = createBrowserRecognizer();
   const answer = async (m: VoiceMatch): Promise<void> => {
     const heard = h('p', { class: 'hv-heard' }, m.action ? `Heard: “${m.heard}” → ${ACTION_WORDS[m.action]}` : `Heard: “${m.heard}”. No command matched.`);
@@ -128,35 +142,25 @@ export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoi
     const text = await onVoice(m.action);
     if (text) caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text));
   };
-  const onState = (s: PttState): void => {
-    micNotice.hidden = s === 'idle';
-    talkButton.setAttribute('aria-pressed', String(s === 'listening'));
-    host.dataset['mic'] = s;
+  const onState = (state: WakeState): void => {
+    host.dataset['mic'] = state;
+    micNotice.hidden = state === 'off' || state === 'error';
+    voiceButton.setAttribute('aria-pressed', String(state === 'listening' || state === 'armed'));
+    if (state === 'armed') caption.replaceChildren(h('p', { class: 'hv-heard' }, 'Heard “Hey Cathy”… say the command.'));
+    else if (state === 'listening' && !caption.querySelector('.hv-answer, .hv-heard')) caption.replaceChildren(h('p', { class: 'hv-heard' }, 'Listening for “Hey Cathy”.'));
+    else if (state === 'off') caption.replaceChildren();
+    else if (state === 'error') caption.replaceChildren(h('p', { class: 'hv-heard' }, VOICE_ERROR_WORDS[wake.error ?? ''] ?? 'Voice stopped.'));
   };
-  const ptt = createPushToTalk(recognizer, (m) => void answer(m), { onStateChange: onState });
-  const talkButton = h('button', { type: 'button', class: 'btn btn-secondary hv-talk', 'aria-pressed': 'false', 'aria-keyshortcuts': 'V', 'data-testid': 'talk' }, 'Hold V to talk');
-  const press = (): void => {
+  const wake = createWakeListener(recognizer, (m) => void answer(m), onState);
+  const voiceButton = h('button', { type: 'button', class: 'btn btn-secondary hv-voice', 'aria-pressed': 'false', 'data-testid': 'voice-toggle' }, 'Voice');
+  voiceButton.addEventListener('click', () => {
     if (!recognizer.isSupported) {
       caption.replaceChildren(h('p', { class: 'hv-heard' }, "Voice isn't available in this browser. Chrome supports it."));
       return;
     }
-    ptt.press();
-  };
-  talkButton.addEventListener('pointerdown', (e) => {
-    e.preventDefault();
-    press();
+    if (wake.state === 'listening' || wake.state === 'armed') wake.stop();
+    else wake.start();
   });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel'] as const) talkButton.addEventListener(ev, () => ptt.release());
-  const typing = (t: EventTarget | null): boolean => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
-  const keydown = (e: KeyboardEvent): void => {
-    if (e.code !== 'KeyV' || e.repeat || typing(e.target)) return;
-    press();
-  };
-  const keyup = (e: KeyboardEvent): void => {
-    if (e.code === 'KeyV') ptt.release();
-  };
-  window.addEventListener('keydown', keydown);
-  window.addEventListener('keyup', keyup);
 
   // Under automation only: recorded hand frames through the same gesture pipeline (no camera in CI).
   if (navigator.webdriver) {
@@ -167,17 +171,15 @@ export function createHandsVoice({ host, onGesture, onVoice, actions }: HandsVoi
     window.__threadsimHands = { feed };
   }
 
-  const controls = h('div', { class: 'hv-controls', role: 'group', 'aria-label': 'Hands-free input' }, handsButton, talkButton);
+  const controls = h('div', { class: 'hv-controls', role: 'group', 'aria-label': 'Hands-free input' }, handsButton, voiceButton);
   return {
     controls,
     gesture: () => latest,
     dispose() {
       tracker?.stop();
       tracker = null;
-      ptt.release();
+      wake.stop();
       recognizer.abort?.();
-      window.removeEventListener('keydown', keydown);
-      window.removeEventListener('keyup', keyup);
       if (window.__threadsimHands) delete window.__threadsimHands;
       panel.remove();
       pointer.remove();

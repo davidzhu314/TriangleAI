@@ -5,8 +5,10 @@
  *   app) → the gesture machine. The fake picture has no hand, so the machine reports "none".
  * - Gestures: Vaibhav's recorded real-hand clip (tests/fixtures/hands/) fed through the same machine with the
  *   automation-only hook, since CI has no hand to show.
- * - Voice: Chrome's speech service needs a microphone and Google, so a stub stands in for webkitSpeechRecognition and
- *   "hears" what the test sets. Everything after it (push-to-talk, matching, the answer) is the app's.
+ * - Pan: a synthetic panning hand from Vaibhav's test helper (the recorded clip predates the pan pose).
+ * - Voice: Chrome's speech service needs a microphone and Google, so a stub stands in for the recogniser and
+ *   "hears" each phrase the test queues, once, then silence. Everything after it (the "Hey Cathy" wake listener,
+ *   matching, the answer) is the app's.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -29,6 +31,7 @@ const clip = JSON.parse(gunzipSync(readFileSync(join(process.cwd(), 'tests', 'fi
 
 let vite: ViteDevServer;
 let expectedBest = '';
+let synth: typeof import('../../client/src/input/hands/synthetic-hand.testutil');
 
 test.beforeAll(async () => {
   vite = await createServer({ configFile: false, root: process.cwd(), logLevel: 'silent', server: { middlewareMode: true, hmr: false }, appType: 'custom' });
@@ -36,6 +39,7 @@ test.beforeAll(async () => {
   const engine = await load<typeof import('../../client/src/optimize')>('/client/src/optimize/index.ts');
   const score = await load<typeof import('../../client/src/score')>('/client/src/score/index.ts');
   const { loadCase } = await load<typeof import('../../client/src/case')>('/client/src/case/index.ts');
+  synth = await load('/client/src/input/hands/synthetic-hand.testutil.ts');
   const dir = join(process.cwd(), 'client', 'public', 'cases', 'type-iii');
   const files = Object.fromEntries(['case.json', 'centerlines.json', 'vessels.glb'].map((n) => [n, new Uint8Array(readFileSync(join(dir, n)))]));
   const r = await loadCase({ kind: 'files', origin: 'bundled', files });
@@ -52,7 +56,10 @@ test.afterAll(async () => {
   await vite?.close();
 });
 
-/** A stand-in for Chrome's recogniser: start() "hears" window.__nextSpeech, then ends, like a short utterance. */
+/**
+ * A stand-in for Chrome's recogniser: each start() hears the next queued phrase (window.__speech) once, or nothing,
+ * then the session ends, so the wake listener starts a new one, as it does with Chrome.
+ */
 async function stubSpeech(page: Page): Promise<void> {
   await page.addInitScript(() => {
     class FakeRecognition {
@@ -63,18 +70,27 @@ async function stubSpeech(page: Page): Promise<void> {
       onresult: ((e: unknown) => void) | null = null;
       onend: (() => void) | null = null;
       onerror: ((e: unknown) => void) | null = null;
+      private live = false;
       start(): void {
-        const said = (window as unknown as { __nextSpeech?: string }).__nextSpeech ?? '';
+        this.live = true;
+        const queue = ((window as unknown as { __speech?: string[] }).__speech ??= []);
+        const said = queue.shift();
         setTimeout(() => {
-          const alt = { transcript: said, confidence: 0.92 };
-          this.onresult?.({ results: [Object.assign([alt], { isFinal: true })] });
-        }, 150);
+          if (!this.live) return;
+          if (said !== undefined) this.onresult?.({ results: [Object.assign([{ transcript: said, confidence: 0.92 }], { isFinal: true })] });
+          setTimeout(() => this.end(), said === undefined ? 250 : 50);
+        }, 120);
+      }
+      private end(): void {
+        if (!this.live) return;
+        this.live = false;
+        this.onend?.();
       }
       stop(): void {
-        setTimeout(() => this.onend?.(), 50);
+        this.end();
       }
       abort(): void {
-        this.onend?.();
+        this.end();
       }
     }
     // The recogniser prefers the unprefixed name, which this Chromium has natively: replace both.
@@ -82,12 +98,15 @@ async function stubSpeech(page: Page): Promise<void> {
   });
 }
 
+/** Turn Voice on (once per page) and queue what the trainee says. */
+async function voiceOn(page: Page): Promise<void> {
+  await page.getByTestId('voice-toggle').click();
+  await expect(page.getByTestId('voice-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('mic-live')).toBeVisible(); // the live-mic notice for as long as Voice is on
+}
+
 async function say(page: Page, words: string): Promise<void> {
-  await page.evaluate((w) => ((window as unknown as { __nextSpeech?: string }).__nextSpeech = w), words);
-  await page.keyboard.down('KeyV');
-  await expect(page.getByTestId('mic-live')).toBeVisible(); // the live-mic notice while V is held
-  await page.waitForTimeout(400);
-  await page.keyboard.up('KeyV');
+  await page.evaluate((w) => ((window as unknown as { __speech?: string[] }).__speech ??= []).push(w), words);
 }
 
 test('Hands turns the camera on: self-view, hand tracking running, and it stays on this device', async ({ page }) => {
@@ -104,26 +123,42 @@ test('Hands turns the camera on: self-view, hand tracking running, and it stays 
   await expect(page.getByTestId('hands-self-view')).toBeHidden();
 });
 
-test('push-to-talk on Plan: the mic notice while held, the caption, zoom, and Cathy\'s best next artery from the engine', async ({ page }) => {
+test('"Hey Cathy" on Plan: the live-mic notice, the caption, zoom, undo, and Cathy\'s best next artery from the engine', async ({ page }) => {
   await stubSpeech(page);
   await page.goto('/#/case/type-iii/plan');
   await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');
-  await expect(page.getByTestId('mic-live')).toBeHidden();
-  await expect(page.getByTestId('mic-live')).toHaveCount(1);
+  await expect(page.getByTestId('mic-live')).toBeHidden(); // off by default
+  await voiceOn(page);
+  await expect(page.getByTestId('voice-caption')).toContainText('Listening for “Hey Cathy”');
 
-  await say(page, 'zoom in');
-  await expect(page.getByTestId('voice-caption')).toContainText('Heard: “zoom in” → Zoom in');
-  await expect(page.getByTestId('mic-live')).toBeHidden(); // the mic is cut after release
+  await say(page, 'zoom in'); // not addressed to Cathy: ignored
+  await page.waitForTimeout(600);
+  await expect(page.getByTestId('voice-caption')).not.toContainText('Zoom in');
 
+  await say(page, 'hey cathy zoom in');
+  await expect(page.getByTestId('voice-caption')).toContainText('Heard: “hey cathy zoom in” → Zoom in');
+
+  await say(page, 'hey cathy'); // the wake word alone arms it for the next phrase
+  await expect(page.getByTestId('voice-caption')).toContainText('Heard “Hey Cathy”… say the command.');
   await say(page, 'best next artery');
   await expect(page.getByTestId('voice-caption')).toContainText('→ Best next artery');
   await expect(page.getByTestId('voice-answer')).toHaveText(expectedBest);
 
-  await say(page, 'make me a sandwich');
-  await expect(page.getByTestId('voice-caption')).toContainText('No command matched');
+  // "Undo" does exactly what the Undo button does.
+  const steps = () => page.getByTestId('next-steps').innerText();
+  const before = await steps();
+  await page.getByTestId('next-steps').getByRole('button').first().click();
+  await expect.poll(steps).not.toBe(before);
+  await say(page, 'hey cathy undo');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Undo last step');
+  await expect.poll(steps).toBe(before);
+
+  await page.getByTestId('voice-toggle').click();
+  await expect(page.getByTestId('mic-live')).toBeHidden();
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-mic', 'off');
 });
 
-test('push-to-talk on Drive: Cathy answers from the drive so far (driveAssist on the rail log)', async ({ page }) => {
+test('"Hey Cathy" on Drive: Cathy answers from the drive so far (driveAssist on the rail log); undo lives on Plan', async ({ page }) => {
   await stubSpeech(page);
   await page.addInitScript(() =>
     sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
@@ -134,12 +169,15 @@ test('push-to-talk on Drive: Cathy answers from the drive so far (driveAssist on
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(800);
   await page.keyboard.up('KeyW');
-  await say(page, 'how am I doing');
+  await voiceOn(page);
+  await say(page, 'hey cathy how am I doing');
   await expect(page.getByTestId('voice-caption')).toContainText('→ How am I doing');
   await expect(page.getByTestId('voice-answer')).not.toHaveText('Start the drive first.');
   await expect(page.getByTestId('voice-answer')).not.toBeEmpty();
-  await say(page, 'zoom out');
+  await say(page, 'hey cathy zoom out');
   await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom out');
+  await say(page, 'hey cathy undo');
+  await expect(page.getByTestId('voice-answer')).toHaveText('Undo works on Plan.');
 });
 
 test('a recorded real hand drives the wire on Drive through the gesture machine', async ({ page }) => {
@@ -173,6 +211,33 @@ test('pointing shows the pointer dot, and pinches pass through as picks on Plan'
   }
   expect(pointing).toBe(true);
   await expect(page.getByTestId('hands-self-view')).toBeVisible();
+});
+
+test('the pan gesture moves the view, on Plan, Compare and Drive', async ({ page }) => {
+  // Three fingers out, pinky folded: a pan. Hold still to engage, then sweep right.
+  const panHand = (x: number) => synth.syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.5 } });
+  const frames = Array.from({ length: 50 }, (_, i) => synth.frame(i * synth.FRAME_MS, panHand(0.3 + (i > 12 ? (i - 12) * 0.01 : 0))));
+  const sweep = async (view: string): Promise<void> => {
+    const flat = page.locator(`${view} .plan-view-svg`).first();
+    await page.locator(`button[data-view-kind=flat]`).first().click(); // the flat face shows the pan as a viewBox shift (Drive keeps the switch in its HUD)
+    const before = await flat.getAttribute('viewBox');
+    let panned = false;
+    for (const f of frames) {
+      await page.evaluate((frame) => window.__threadsimHands!.feed(frame as never), f);
+      if (!panned && (await page.locator(view).first().getAttribute('data-hands')) === 'pan') panned = true;
+    }
+    expect(panned).toBe(true);
+    await expect(page.getByTestId('hands-status')).toHaveText('Panning');
+    expect(await flat.evaluate((el) => (el as SVGSVGElement).viewBox.baseVal.x)).not.toBe(Number(before!.split(' ')[0]));
+  };
+  await page.addInitScript(() =>
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
+  );
+  for (const [hash, view] of [['#/case/fixture-y/plan', '.plan-view'], ['#/case/fixture-y/compare', '.plan-view'], ['#/case/fixture-y/drive', '.drive-view']] as const) {
+    await page.goto(`/${hash}`);
+    await expect(page.locator(view).first()).toHaveAttribute('data-scene', 'ready');
+    await sweep(view);
+  }
 });
 
 test('the keyboard-only demo path is untouched when Hands is off: nothing asks for the camera', async ({ page }) => {

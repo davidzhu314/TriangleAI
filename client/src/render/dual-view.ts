@@ -39,6 +39,8 @@ export interface DualView {
   readonly element: HTMLElement;
   /** The view-style switch and AR entry; views may move it (Drive puts it in its HUD). */
   readonly toolbar: HTMLElement;
+  /** Pan the face that is showing: the 3D camera, or the flat drawing's viewBox. Shares of the view's size. */
+  pan(dx: number, dy: number): void;
   /** Null until the scene has loaded, and always when WebGL isn't available. */
   scene(): CaseScene | null;
   kind(): ViewKind;
@@ -157,6 +159,17 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
       if (!scene?.closeUp || userFramed || !p) return;
       const want: FrameKind = scene.inCloseUp(p) ? 'close' : 'whole';
       if (want !== framed) frameTo(want);
+    },
+    pan(dx, dy) {
+      if (scene && wanted === '3d') {
+        scene.pan(dx, dy);
+        return;
+      }
+      const svg = flat as SVGSVGElement;
+      const vb = svg.viewBox?.baseVal;
+      if (!vb || !vb.width) return;
+      vb.x -= dx * vb.width;
+      vb.y -= dy * vb.height;
     },
     anatomy: () => anatomyControls,
     resetCamera,

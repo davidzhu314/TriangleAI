@@ -77,6 +77,8 @@ export interface CaseScene {
   pickAt(x: number, y: number): string | null;
   /** Move the camera toward (factor < 1) or away from (factor > 1) what it looks at. */
   zoom(factor: number): void;
+  /** Pan the view by a share of the canvas (dx of its width, dy of its height), as dragging the picture would. */
+  pan(dx: number, dy: number): void;
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -393,6 +395,19 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       }
       // Within about a fingertip's width on screen (a touch target).
       return best && best.d <= tokenNumber('--size-touch') ? best.id : null;
+    },
+    pan(dx, dy) {
+      // The size of the canvas, in world units, at the distance of what the camera looks at.
+      const dist = camera.position.distanceTo(controls.target);
+      const height = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const width = height * camera.aspect;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      // The picture moves with the hand, so the camera moves the other way.
+      const move = right.multiplyScalar(-dx * width).add(up.multiplyScalar(dy * height));
+      camera.position.add(move);
+      controls.target.add(move);
+      controls.update();
     },
     zoom(factor) {
       const to = camera.position.clone().sub(controls.target).multiplyScalar(factor);

@@ -9,6 +9,7 @@ import { buildGraph, createRanker, normaliseWeights, optimize, routeFor, WIRE_PR
 import { svgEl } from '../../render/case-svg';
 import { createCompareView, type CompareView } from '../../render/compare-view';
 import { notFound } from '../brief';
+import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { dash, h } from '../dom';
 import { labelled } from '../icons';
 import { formatCost, FORMULA_TEXT, type CostRow } from '../plan/cost-rows';
@@ -22,7 +23,11 @@ import { finding, groupRanks, groupRoutes, overlaySelection, startingWeights, vi
 let liveView: CompareView | null = null;
 /** Kept across redraws of the same case (every slider move redraws): the 3D camera stays put. */
 let liveCase: LoadedCase | null = null;
+/** Hands-free input for the live view (pan and zoom here): kept and disposed with it. */
+let liveHands: HandsVoice | null = null;
 export function disposeCompareView(): void {
+  liveHands?.dispose();
+  liveHands = null;
   liveView?.dispose();
   liveView = null;
   liveCase = null;
@@ -92,8 +97,16 @@ function draw(sc: Screen): void {
   // ---- overlay, the largest block
   if (!liveView || liveCase !== c) {
     disposeCompareView();
-    liveView = createCompareView(c);
+    const created = createCompareView(c);
+    liveView = created;
     liveCase = c;
+    liveHands = createHandsVoice({
+      host: created.element,
+      actions: ['zoom_in', 'zoom_out', 'undo'],
+      onPan: (dx, dy) => created.pan(dx, dy),
+      onVoice: (a) => (a === 'undo' ? 'Undo works on Plan.' : created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
+    });
+    created.toolbar.append(liveHands.controls);
   }
   const view = liveView;
   const entryNode = graph.entries.get(plan.entryId);

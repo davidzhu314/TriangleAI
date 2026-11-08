@@ -29,6 +29,8 @@ export interface PlanView {
   pickAt(x: number, y: number): string | null;
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
   zoom(factor: number): boolean;
+  /** Pan the view (3D or flat) by a share of its size. */
+  pan(dx: number, dy: number): void;
   update(state: PlanViewState): void;
   dispose(): void;
 }
@@ -74,6 +76,7 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
   return {
     element,
     toolbar: dual.toolbar,
+    pan: (dx, dy) => dual.pan(dx, dy),
     pickAt(x, y) {
       const scene = dual.scene();
       if (scene && dual.kind() === '3d') return scene.pickAt(x, y);

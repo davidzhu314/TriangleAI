@@ -250,8 +250,10 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_review'],
+    actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_review', 'undo'],
+    onPan: (dx, dy) => view.pan(dx, dy),
     onVoice: async (a) => {
+      if (a === 'undo') return 'Undo works on Plan.';
       if (a === 'zoom_in' || a === 'zoom_out') return view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
       const lines = await driveLines();
       if (!lines) return 'Start the drive first.';
