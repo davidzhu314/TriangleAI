@@ -75,7 +75,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   panel.setAttribute('role', 'group');
   panel.setAttribute('aria-label', 'Anatomy layer');
 
-  const check = (key: 'visible' | 'arteries' | 'veins' | 'labels', text: string): HTMLInputElement => {
+  const check = (key: 'visible' | 'arteries' | 'veins' | 'labels' | 'body', text: string): HTMLInputElement => {
     const label = document.createElement('label');
     label.className = 'anatomy-row';
     const input = document.createElement('input');
@@ -86,10 +86,15 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
     panel.append(label);
     return input;
   };
+  // A case with its own body context gets one switch, "Body". The vascular rows are for the generic model, which is
+  // never drawn on such a case, so they don't appear there.
+  const context = config.context === true;
+  const body = context ? check('body', 'Body') : null;
   const show = check('visible', 'Show anatomy');
   const arteries = check('arteries', 'Arteries');
   const veins = check('veins', 'Veins');
   const labels = check('labels', 'Labels');
+  for (const i of [show, arteries, veins, labels]) i.closest('label')!.hidden = context;
 
   const opacityRow = document.createElement('label');
   opacityRow.className = 'anatomy-row anatomy-opacity';
@@ -103,6 +108,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   opacity.dataset['anatomy'] = 'opacity';
   opacity.addEventListener('input', () => set({ opacity: Number(opacity.value) / 100 }));
   opacityRow.append(opacityText, opacity);
+  opacityRow.hidden = context; // the body keeps its own quiet opacities (tokens)
   panel.append(opacityRow);
 
   const reset = document.createElement('button');
@@ -114,8 +120,12 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
 
   const note = document.createElement('p');
   note.className = 'anatomy-note';
-  note.textContent = config.placeholder ? 'Placeholder model, fitted to this case. Not anatomy.' : '';
-  note.hidden = !config.placeholder;
+  note.textContent = config.placeholder
+    ? 'Placeholder model, fitted to this case. Not anatomy.'
+    : context
+      ? "Bone and heart from this case's scan, for scale and orientation only."
+      : '';
+  note.hidden = !note.textContent;
   panel.append(note);
   const status = document.createElement('p');
   status.className = 'anatomy-note';
@@ -156,6 +166,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   };
 
   const sync = (): void => {
+    if (body) body.checked = current.body;
     show.checked = current.visible;
     arteries.checked = current.arteries;
     veins.checked = current.veins;
@@ -163,9 +174,12 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
     for (const i of [arteries, veins, labels, opacity]) i.disabled = !current.visible;
     opacity.value = String(Math.round(current.opacity * 100));
     opacity.setAttribute('aria-valuetext', `${opacity.value} percent`);
-    toggle.setAttribute('aria-pressed', String(current.visible));
-    if (current.visible) ensureLayer();
-    layer?.apply({ ...current, visible: current.visible && !suppressed });
+    const on = context ? current.body : current.visible;
+    toggle.setAttribute('aria-pressed', String(on));
+    if (on) ensureLayer();
+    // Suppressed (Drive's X-ray): nothing of the layer shows, whatever the settings.
+    layer?.apply({ ...current, visible: !context && current.visible && !suppressed, body: context && current.body && !suppressed });
+    host.dataset['anatomySuppressed'] = String(suppressed);
   };
 
   function set(change: Partial<AnatomyState>): AnatomyState {

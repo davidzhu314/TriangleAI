@@ -336,3 +336,7 @@
 [data-view-kind='flat'] > .anatomy-labels {
   display: none;
 }
+
+.anatomy-row[hidden] {
+  display: none;
+}

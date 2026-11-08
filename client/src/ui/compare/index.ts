@@ -8,6 +8,7 @@ import type { Frontier, LoadedCase, OptimizeResult, Route, Weights, WirePresetId
 import { buildGraph, createRanker, normaliseWeights, optimize, routeFor, WIRE_PRESETS, type RouteGraph } from '../../optimize';
 import { svgEl } from '../../render/case-svg';
 import { createCompareView, type CompareView } from '../../render/compare-view';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { dash, h } from '../dom';
@@ -97,7 +98,7 @@ function draw(sc: Screen): void {
   // ---- overlay, the largest block
   if (!liveView || liveCase !== c) {
     disposeCompareView();
-    const created = createCompareView(c);
+    const created = createCompareView(c, anatomyFor(entry(key), c));
     liveView = created;
     liveCase = c;
     liveHands = createHandsVoice({

@@ -130,8 +130,8 @@ def vessel_meshes(seg, vessel_ids):
     return meshes
 
 
-def write_glb(meshes, path):
-    """glTF 2.0 binary, one node and mesh per vessel (same layout as tools/lib/glb.ts)."""
+def write_glb(meshes, path, extras=None):
+    """glTF 2.0 binary, one node and mesh per vessel (same layout as tools/lib/glb.ts). `extras`: node name -> extras."""
     chunks, views, accessors, gl_meshes = [], [], [], []
     offset = 0
 
@@ -158,7 +158,7 @@ def write_glb(meshes, path):
         "asset": {"version": "2.0", "generator": "threadsim slicer/export_case.py", "extras": {"axes": "RAS", "units": "mm"}},
         "scene": 0,
         "scenes": [{"nodes": list(range(len(meshes)))}],
-        "nodes": [{"name": m[0], "mesh": i} for i, m in enumerate(meshes)],
+        "nodes": [dict({"name": m[0], "mesh": i}, **({"extras": extras[m[0]]} if extras and m[0] in extras else {})) for i, m in enumerate(meshes)],
         "meshes": gl_meshes,
         "accessors": accessors,
         "bufferViews": views,
