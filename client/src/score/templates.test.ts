@@ -5,7 +5,7 @@
  *   means updating the map in the same commit);
  * - no template text contains a digit, so every number on screen comes from computed values;
  * - no template contains a never-say phrase (spec §9.4, team/DEMO.md).
- * Also: every template is used by feedback.ts, replay.ts or live.ts, and they use no unknown template.
+ * Also: every template is used by feedback.ts, replay.ts, live.ts, warn.ts or plan-marks.ts (G5), and they use no unknown template.
  */
 
 import { readFileSync } from 'node:fs';
@@ -57,6 +57,14 @@ const PLACEHOLDERS: Readonly<Record<TemplateId, readonly string[]>> = Object.fre
   'assist.no_continuation': ['target'],
   'assist.cannot_steer': [],
   'assist.no_safe_route': [],
+  'assist.wrong_branch_ahead': ['direction', 'vessel', 'wrong_vessel'],
+  'assist.wrong_branch_ahead_no_roll': ['vessel', 'wrong_vessel'],
+  'assist.on_plan': ['vessel'],
+  'assist.on_plan_last': ['target'],
+  'assist.mark_cannot_steer': ['vessel'],
+  'assist.mark_off_frontier': ['vessel'],
+  'assist.mark_heavy_zone': ['vessel', 'zone'],
+  'assist.no_answer': [],
 });
 
 /** Spec §9.4 "must not say" and team/DEMO.md "Never say". */
@@ -77,8 +85,8 @@ describe('feedback voice guard', () => {
     for (const phrase of NEVER_SAY) expect(text.toLowerCase()).not.toContain(phrase);
   });
 
-  it('feedback.ts, replay.ts and live.ts use every template and no unknown one', () => {
-    const src = ['feedback.ts', 'replay.ts', 'live.ts'].map((f) => readFileSync(join(import.meta.dirname, f), 'utf8')).join('\n');
+  it('feedback.ts, replay.ts, live.ts, warn.ts and plan-marks.ts use every template and no unknown one', () => {
+    const src = ['feedback.ts', 'replay.ts', 'live.ts', 'warn.ts', 'plan-marks.ts'].map((f) => readFileSync(join(import.meta.dirname, f), 'utf8')).join('\n');
     const used = new Set([...src.matchAll(/feedbackLine\(\s*'([\w.]+)'/g)].map((m) => m[1]!));
     expect([...used].sort()).toEqual([...ids].sort());
   });

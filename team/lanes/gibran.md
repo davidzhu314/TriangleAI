@@ -60,6 +60,39 @@ Attach a failing test where you can.
     - Hand clean clips to Vaibhav as fixtures, each with the expected status sequence and select count. Vaibhav owns `tests/fixtures/hands/` and the gesture constants.
     - Done when: at least 5 clips are delivered, with notes on any gesture that misbehaves.
 
+5. **G5 — Cathy as a hybrid: an LLM for understanding and phrasing, the engine for every fact** (after the demo; handover from Vaibhav, 2026-11-08).
+    - **First, a request to all:** `team/requests/to-all-from-gibran-cathy-llm.md` asks for the server function, the dependency, the privacy line and template fallback. Until it's approved, everything runs against a mock LLM and recorded responses.
+    - **Engine facts (`client/src/score/`):**
+      - `driveWarning` (`warn.ts`): the wrong branch ahead, within `WARN_AHEAD_M`;
+      - `planMarks` (`plan-marks.ts`);
+      - `cathyFacts` (`cathy-facts.ts`): the only thing the LLM sees;
+      - `groundingCheck` (`grounding.ts`).
+    - **A deterministic `assist_check` action** that works with the LLM off.
+    - **The LLM layer:** `client/src/input/voice/cathy-llm.ts`, with `understand()` and `answer()`, an injected transport, a 2 s timeout and the template fallback.
+    - **Requests:**
+      - to David: the server function, with code attached;
+      - to Aroovee: the warning, plan marks, captions and privacy line;
+      - to Vaibhav: rail state access, index exports, illustrative rows and review.
+    - **Tests:**
+      - an adversarial grounding table;
+      - recorded-response tests for every failure path;
+      - the warning before every wrong branch and never on a clean drive, on every bundled case, under 0.2 ms;
+      - an `assist_check` voice corpus with and without the wake word;
+      - the eval set (`metrics/gibran/cathy-eval.md`, 40+ questions per screen), run live only after approval.
+    - **Allowed edits (Vaibhav's handover, G5 only):**
+      - `client/src/score/live.ts`;
+      - `templates.ts` (new `assist.*` only) and its two template-list tests;
+      - `client/src/optimize/assist.ts`;
+      - `client/src/input/voice/commands.ts`;
+      - new files under `client/src/score/` and `client/src/input/voice/`.
+
+      Server code and dependencies are David's; screens are Aroovee's.
+    - Done when:
+      - everything above passes in `pnpm test` and the crosscheck, with the LLM mocked;
+      - the requests are filed and DECISIONS.md has its lines;
+      - a handoff and status are written;
+      - a PR from `lane/gibran-cathy` is open for Vaibhav's review.
+
 ## Starter prompt for Gibran's Claude Code
 
 ```text

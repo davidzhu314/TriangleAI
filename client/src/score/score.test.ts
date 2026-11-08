@@ -284,6 +284,14 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'assist.complete': { target: 'Left branch' },
   'assist.no_continuation': { target: 'Left branch' },
   'assist.no_safe_route': {},
+  'assist.wrong_branch_ahead': { wrong_vessel: 'Right branch', vessel: 'Left branch', direction: 'left' },
+  'assist.wrong_branch_ahead_no_roll': { wrong_vessel: 'Right branch', vessel: 'Left branch' },
+  'assist.on_plan': { vessel: 'Left branch' },
+  'assist.on_plan_last': { target: 'Left branch target' },
+  'assist.mark_cannot_steer': { vessel: 'Left vertebral' },
+  'assist.mark_off_frontier': { vessel: 'Left subclavian' },
+  'assist.mark_heavy_zone': { vessel: 'Aortic arch', zone: 'the calcified plaque in the Aortic arch' },
+  'assist.no_answer': {},
   'assist.cannot_steer': {},
 };
 

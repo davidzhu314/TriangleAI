@@ -16,6 +16,7 @@ export type VoiceAction =
   | 'assist_best_next'
   | 'assist_options'
   | 'assist_review'
+  | 'assist_check'
   | 'undo';
 
 export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = {
@@ -30,6 +31,8 @@ export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = 
   assist_best_next: ['best next artery', 'where next', 'which way', 'best path', 'next best'],
   assist_options: ['what are my options', 'show options', 'options', 'show me the paths'],
   assist_review: ['how am i doing', 'what am i doing wrong', 'analyze', 'check my drive', 'any mistakes'],
+  /** "Am I on the right path" (G5): the wrong-branch warning, else "pull back", else where the plan goes next. */
+  assist_check: ['am i on the right path', 'am i on the right track', 'is this right', 'is this the right way', 'am i going the right way', 'am i lost', 'right path', 'am i on track'],
   /** Undo the last step: on Plan, remove the last branch added to the route. */
   undo: ['undo', 'undo that', 'undo last step', 'undo the last step', 'go back a step', 'take that back', 'remove the last step', 'undue'],
 };
