@@ -1,7 +1,9 @@
 /**
  * The Drive screen's view (spec §5.5), behind one interface like PlanView and CompareView.
  *
- * - Front view: translucent vessels, the planned route as a ghost trail, the wire opaque, the tip marked.
+ * - Front view: translucent vessels, the planned route as a ghost trail, the wire opaque with a rounded tip, and the
+ *   catheter (chain mode) as a translucent sleeve over it. The tip is drawn as the device's own end, not a ball, so its
+ *   shaped bend shows.
  * - X-ray view: grey ground; the wire as a dark line only while fluoro is held; vessels as a dark silhouette only
  *   during a contrast puff, fading over --duration-contrast-fade (1.5 s, spec §5.5).
  * - Difficulty ladder: "dim" lowers the front view (intermediate); the screen hides it for expert cases.
@@ -29,6 +31,8 @@ export interface DriveViewState {
   plan: { startNode: string | undefined; edges: readonly string[] };
   /** Wire body points, base to tip, metres; empty before the wire starts. */
   wire: readonly Vec3[];
+  /** The catheter's points, base to its tip, when the wire source has one (chain mode); else empty or absent. */
+  catheter?: readonly Vec3[];
   tip: Vec3 | null;
   fluoro: boolean;
   /** Front view dimmed (intermediate difficulty). */
@@ -60,13 +64,19 @@ export interface DriveView {
   dispose(): void;
 }
 
+/** Device widths in the scene's line unit: thin enough that the shaped tip reads, thick enough to see from afar. */
+const WIRE_WIDTH = 0.9;
+const CATHETER_WIDTH = 1.8;
+
 export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anatomy?: Promise<AnatomyConfig | null>): DriveView {
   const d = drawCase(c, label, 'drive-hatch');
   const ghost = svgEl('polyline', { points: '', class: 'ghost-trail' });
   const wire = svgEl('polyline', { points: '', class: 'wire-line' });
-  const tip = svgEl('circle', { cx: 0, cy: 0, r: d.handle * 0.9, class: 'wire-tip' });
+  const catheter = svgEl('polyline', { points: '', class: 'catheter-line' });
+  // The tip is the wire's own rounded end (round line caps); this small dot only keeps it findable when zoomed out.
+  const tip = svgEl('circle', { cx: 0, cy: 0, r: d.handle * 0.3, class: 'wire-tip' });
   const markers = svgEl('g', { class: 'markers' });
-  d.svg.append(ghost, wire, tip, markers);
+  d.svg.append(ghost, wire, catheter, tip, markers);
   const dual: DualView = createDualView(c, label, d.svg, 'drive-view', ar, (scene) => {
     scene.onFrame(fadeFrame);
     if (last) draw3d(last);
@@ -89,8 +99,13 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
     const front = tokenNumber('--opacity-scene-vessel');
     scene.setVessels(xray ? { colorToken: '--color-xray-ink', opacity: contrast, zones: false, wall: false } : { colorToken: '--color-scene-vessel', opacity: s.dim ? front * front : front, zones: !s.dim });
     scene.setRoute('ghost', xray ? null : scene.routePoints(s.plan.startNode, s.plan.edges), { colorToken: '--color-scene-ghost', opacityToken: '--opacity-scene-ghost' });
-    scene.setRoute('wire', wireShown && s.wire.length > 1 ? s.wire : null, { colorToken: xray ? '--color-xray-ink' : '--color-scene-wire', heavy: true });
-    scene.setPoint('tip', wireShown ? s.tip : null, xray ? '--color-xray-ink' : '--color-scene-ghost');
+    // The devices at their own widths: a thin wire with a rounded tip (no ball, so the shaped bend shows), and the
+    // catheter as a translucent sleeve over the wire inside it.
+    const ink = xray ? '--color-xray-ink' : '--color-scene-wire';
+    scene.setRoute('wire', wireShown && s.wire.length > 1 ? s.wire : null, { colorToken: ink, width: WIRE_WIDTH, cap: true });
+    const cath = s.catheter ?? [];
+    scene.setRoute('catheter', wireShown && cath.length > 1 ? cath : null, { colorToken: ink, opacityToken: '--opacity-scene-ghost', width: CATHETER_WIDTH, cap: true, order: 3 });
+    scene.setPoint('tip', null);
     dual.anatomy()?.suppress(xray); // X-ray shows only the silhouette, wire and contrast
     dual.follow(s.tip); // the whole tree from the entry, then the close-up once the tip reaches the arch
     scene.setMarkers(s.entryNode, s.targetNode);
@@ -136,6 +151,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
       element.classList.toggle('fluoro-on', s.fluoro);
       ghost.setAttribute('points', d.routePoints(s.plan.startNode, s.plan.edges));
       wire.setAttribute('points', s.wire.length ? toPoints(s.wire) : '');
+      catheter.setAttribute('points', s.catheter && s.catheter.length > 1 ? toPoints(s.catheter) : '');
       if (s.tip) {
         const [x, y] = [s.tip[0] * 1000, -s.tip[1] * 1000];
         tip.setAttribute('cx', String(x));

@@ -15,12 +15,12 @@ colors:
   primary: "#1f1e1e"
   primary-foreground: "#ffffff"
   link: "#1f1e1e"
-  focus: "#0b6a7d"
-  brand: "#0b6a7d"
+  focus: "#8e2433"
+  brand: "#8e2433"
   positive: "#247b50"
   negative: "#c4242a"
   warning: "#92400e"
-  chart-1: "#0b6a7d"
+  chart-1: "#2f5584"
   chart-2: "#2e2d2d"
   chart-3: "#706e6d"
 typography:
@@ -131,6 +131,20 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 **Face and signature, chosen before any screen.** The face is the brand hue on the main data element. The signature element is the **route trace**: the player's route as one heavier teal line, the same line on Plan, Compare and the Results replay, so a trainee follows one object through the whole case.
 
 ## Colors
+
+**Oxblood & Navy (2026-11-08, Aroovee's choice for the demo).** Arteries and veins name the two hues, so the palette says what the app is about before any screen does:
+
+| Role | Light | Dark | Use |
+| --- | --- | --- | --- |
+| Ground | `#f6f5f3` warm off-white (short of cream) | true neutral, unchanged | `--color-background` |
+| Ink | `#1b2a44` navy | unchanged neutral light ink | headings, figures, the one filled button (`--color-primary`) |
+| Text | `#3e4656` navy-grey, muted `#5f6673` | unchanged | running text, labels |
+| Oxblood (artery) | `#8e2433`, tint `#f6e7e9` | `#e08591`, tint `#3b2125` | `--color-brand`: the accent, the suggested case, focus, artery drawings; never a button fill |
+| Steel blue (vein) | `#2f5584`, tint `#e6edf6` | `#8fb0db`, tint `#1e2a38` | `--color-vein`, `--color-link`, the player's route (`--color-route-player`), the Library's picture tiles |
+| Danger | `#c4242a` | unchanged | forbidden zones and errors: brighter and redder than oxblood, so the accent never reads as a warning |
+
+The player's route moved from teal to steel blue, so on Plan it stays apart from the red risk zones. The dark theme stays true neutral: only the accents are lifted.
+
 
 | Role | Token | Use it for | Never for |
 | --- | --- | --- | --- |
@@ -244,6 +258,14 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 
 Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover and press, `--duration-base` for menus, `--duration-slow` for sheets, `--ease-standard` throughout. Nothing performs an entrance. `theme.css` honours reduced motion. The contrast fade is the one timed effect, and it belongs to the X-ray shader.
 
+### Library (2026-11-08)
+
+- A grid of case cards, three across at desktop, two at tablet, one on a phone. Each card: the case's own flat vessel drawing (oxblood on a vein-blue tile, decorative), the title as the link into the case (the whole card is its hit area), the synopsis (case.json `scenario`, or the trainee's own), difficulty, mode, stars, and "Left off at Plan" or "Left off at Results" with a link back when the case was started this session.
+- Filters over the grid: Difficulty (segmented) and Arch type (a select). No age filter and no "Assigned" tab: the cases carry no patient age, and nothing assigns cases yet.
+- "+ Add a case" opens a dialog: Name, Synopsis, then the import drop zone with its checks and fixes. The name and synopsis replace the package's own on the card only.
+- "…" on a card: "Download case (.zip)", the package as loaded. Never "MRI": the cases are CT angiograms and generated models.
+- The suggested next case is first, marked "Suggested next" and edged in oxblood.
+
 ## Iconography & Graphics
 
 **Icons** live in `client/src/assets/icons/`, one file each, drawn with `/draw-svg`. The family: 24 canvas, 2 units of padding, stroke 1.75 (`--stroke-icon`, measured), round caps and joins, outline only, a coordinate step of 0.5 where the geometry allows, and paint on the root in `currentColor`. A solid dot is a stroked circle of `r=".75"`, so it needs no fill. No `transform`, no `<use>`, no text inside. Inline them, because `currentColor` can't reach inside an `<img>`. Show them at `--size-icon` beside a label or `--size-icon-lg` on controls, grey, never in a container. The caller sets colour: risk icons take `--color-risk-*`, and everything else takes the text colour around it.
@@ -264,6 +286,7 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 - **AR (A7) is built but unverified on a headset.** "Enter AR" shows only where immersive-ar is supported. It places the case at 50% scale (1:1 on a button), grab moves it, both hands scale and turn it, select picks a branch, the cost panel and the HUD float beside it, and the controller drives. The 72 fps target and the 14 ms simplified-mesh switch are coded and unit-tested, but have not been measured on a Quest 3.
 - **Anatomy layer (feature/vascular-ui):** an optional anatomical model behind the case in 3D. Arteries are warm and veins cool, from `--color-anatomy-artery` and `--color-anatomy-vein`, starting at `--opacity-anatomy`. Labels name every vessel, so colour is never the only signal. It sits under the route trace and markers. Until David's model arrives it is a fitted placeholder, and the panel says so.
 - **Body context:** a real CT case can carry `context.glb` (bone and heart from the same scan, in the same frame as its vessels). It is placed exactly, never fitted, and switched by "Body" in the anatomy panel, off by default. It is quiet background, `--color-body-bone` and `--color-body-heart` at `--opacity-body-bone` and `--opacity-body-heart`, drawn first and depth-tested, so the vessels, risk zones, route tubes and branch handles stay on top and clickable. It carries no labels, and its note says "for scale and orientation only". The generic placeholder is never drawn on such a case.
+- **Veins on a context case:** when that `context.glb` also holds the same patient's veins (nodes tagged `extras.kind: "vein"`), the panel adds "Veins", off by default and remembered on its own (`bodyVeins`, not the generic model's Veins). They use `--color-anatomy-vein` at `--opacity-anatomy`, depth-tested, writing no depth, drawn after the body and before the case's own vessels, so the arteries, risk zones, route tubes and branch handles stay on top and clickable. They are never picked, and carry no labels (the context panel has no Labels switch). The note then reads "Bone, heart and veins from this case's scan, for scale and orientation only." Drive's X-ray hides them, like Body, without changing the setting.
 - The Results replay view stays 2D: it is small, and its job is the path over the best route, which reads best flat.
 - Taste Skill is pinned at v2.1.5 (`DECISIONS.md`). The `npx skills add` line in the lane file installs 2.5.0, which has no `draw.mjs --app`, `lint.mjs` or `inspect.mjs`.
 

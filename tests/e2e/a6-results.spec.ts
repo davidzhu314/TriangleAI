@@ -128,10 +128,10 @@ test('Next case goes where the Library says, and the Library shows the new stars
   await openResults(page, g);
   const next = await page.getByTestId('results-next').getAttribute('href');
   await page.goto(`${base}${APP}?wire=none#/library`);
-  // fixture-y's row (or the next-case card, if it is the next case) shows the recorded stars.
-  const fixtureY = page.locator('.case-row, [data-testid=next-case]').filter({ has: page.locator('a[href="#/case/fixture-y"]') });
+  // fixture-y's card shows the recorded stars.
+  const fixtureY = page.locator('.case-card').filter({ has: page.locator('a[href="#/case/fixture-y"]') });
   await expect(fixtureY).toContainText(`${g.result.stars} of 3 stars`);
-  const libraryNext = await page.getByTestId('next-case').getByRole('link', { name: 'Open case' }).getAttribute('href');
+  const libraryNext = await page.getByTestId('next-case').locator('.case-card-link').getAttribute('href');
   expect(next).toBe(libraryNext);
 });
 

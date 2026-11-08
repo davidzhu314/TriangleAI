@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { RAS_MM_TO_YUP_M } from '../contracts';
 import { anatomyConfig } from './anatomy-config';
-import { classify, defaultState, fitToBox, labelFor, readState, shows } from './anatomy-model';
+import { classify, defaultState, fitToBox, glbNodeKinds, labelFor, readState, shows } from './anatomy-model';
 
 describe('sorting nodes into arteries and veins', () => {
   it('trusts extras.kind first', () => {
@@ -54,18 +54,18 @@ describe('state', () => {
   const fallback = defaultState(0.35);
 
   it('starts hidden, with every part on when shown', () => {
-    expect(fallback).toEqual({ visible: false, arteries: true, veins: true, labels: true, body: false, opacity: 0.35 });
+    expect(fallback).toEqual({ visible: false, arteries: true, veins: true, labels: true, body: false, bodyVeins: false, opacity: 0.35 });
   });
 
   it('reads a saved state and repairs bad fields', () => {
-    expect(readState({ visible: true, veins: false, opacity: 2 }, fallback)).toEqual({ visible: true, arteries: true, veins: false, labels: true, body: false, opacity: 1 });
+    expect(readState({ visible: true, veins: false, opacity: 2 }, fallback)).toEqual({ visible: true, arteries: true, veins: false, labels: true, body: false, bodyVeins: false, opacity: 1 });
     expect(readState({ arteries: 'yes', opacity: 'x' }, fallback)).toEqual(fallback);
     expect(readState(null, fallback)).toEqual(fallback);
   });
 
   it('reads a state saved before the Body toggle existed as body off', () => {
     const old = { visible: true, arteries: true, veins: false, labels: true, opacity: 0.5 }; // no "body" key
-    expect(readState(old, fallback)).toEqual({ ...old, body: false });
+    expect(readState(old, fallback)).toEqual({ ...old, body: false, bodyVeins: false });
     expect(readState({ ...old, body: true }, fallback).body).toBe(true);
     expect(readState({ ...old, body: 'yes' }, fallback).body).toBe(false);
   });
@@ -114,5 +114,69 @@ describe('the placeholder asset', () => {
       expect(n.extras.placeholder).toBe(true);
       expect(n.extras.label.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("the scan's veins on a context case", () => {
+  it('Veins (bodyVeins) is off by default, and old saved states without it read as off', () => {
+    expect(defaultState(0.35).bodyVeins).toBe(false);
+    expect(readState({ visible: true, body: true }, defaultState(0.35)).bodyVeins).toBe(false);
+    expect(readState({ bodyVeins: true }, defaultState(0.35)).bodyVeins).toBe(true);
+  });
+
+  it('on a context case, bone and heart follow body, veins follow bodyVeins, nothing else shows', () => {
+    const s = { ...defaultState(0.35), visible: true, veins: true, body: false, bodyVeins: true };
+    expect(shows('vein', s, true)).toBe(true);
+    expect(shows('context', s, true)).toBe(false);
+    expect(shows('artery', s, true)).toBe(false);
+    expect(shows(null, s, true)).toBe(false);
+    expect(shows('vein', { ...s, bodyVeins: false }, true)).toBe(false); // the generic veins switch doesn't apply
+    expect(shows('context', { ...s, body: true, bodyVeins: false }, true)).toBe(true);
+  });
+
+  it('the generic model is unchanged: veins follow visible and veins', () => {
+    const s = { ...defaultState(0.35), visible: true, bodyVeins: false };
+    expect(shows('vein', s)).toBe(true);
+    expect(shows('vein', { ...s, visible: false, bodyVeins: true })).toBe(false);
+  });
+});
+
+describe('reading node kinds from a GLB without loading it', () => {
+  const glb = (json: unknown): ArrayBuffer => {
+    const text = new TextEncoder().encode(JSON.stringify(json));
+    const padded = new Uint8Array(text.length + ((4 - (text.length % 4)) % 4)).fill(0x20);
+    padded.set(text);
+    const out = new Uint8Array(20 + padded.length);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, 0x46546c67, true);
+    dv.setUint32(4, 2, true);
+    dv.setUint32(8, out.length, true);
+    dv.setUint32(12, padded.length, true);
+    dv.setUint32(16, 0x4e4f534a, true);
+    out.set(padded, 20);
+    return out.buffer;
+  };
+
+  it('sorts bone, heart and extras-tagged veins, with their labels', () => {
+    const kinds = glbNodeKinds(glb({ nodes: [{ name: 'bone' }, { name: 'heart' }, { name: 'n7', extras: { kind: 'vein', label: 'Inferior vena cava' } }] }));
+    expect(kinds).toEqual([
+      { name: 'bone', kind: 'context', label: null },
+      { name: 'heart', kind: 'context', label: null },
+      { name: 'n7', kind: 'vein', label: 'Inferior vena cava' },
+    ]);
+  });
+
+  it('is empty for anything that is not a GLB', () => {
+    expect(glbNodeKinds(new TextEncoder().encode('<!doctype html><html></html>').buffer)).toEqual([]);
+    expect(glbNodeKinds(new ArrayBuffer(4))).toEqual([]);
+  });
+
+  it('reads the e2e fixtures: the bone-and-heart one has no veins, the veins one has two', () => {
+    const read = (f: string): ArrayBuffer => {
+      const b = readFileSync(join(process.cwd(), 'tests', 'e2e', 'fixtures', f));
+      return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
+    };
+    expect(glbNodeKinds(read('context-ts-s1404-cta.glb')).filter((n) => n.kind === 'vein')).toEqual([]);
+    expect(glbNodeKinds(read('context-veins.glb')).filter((n) => n.kind === 'vein').map((n) => n.name)).toEqual(['vein_ivc', 'vein_svc']);
   });
 });
