@@ -46,16 +46,79 @@ export function pointSegmentDistance(p: readonly number[], a: readonly number[],
   return Math.hypot(ap0 - t * ab0, ap1 - t * ab1, ap2 - t * ab2);
 }
 
+/** Squared distance from p to segment ab (no square root): the same projection as pointSegmentDistance. */
+function segmentDistance2(p: readonly number[], a: readonly number[], b: readonly number[]): number {
+  const ab0 = b[0]! - a[0]!;
+  const ab1 = b[1]! - a[1]!;
+  const ab2 = b[2]! - a[2]!;
+  const ap0 = p[0]! - a[0]!;
+  const ap1 = p[1]! - a[1]!;
+  const ap2 = p[2]! - a[2]!;
+  const len2 = ab0 * ab0 + ab1 * ab1 + ab2 * ab2;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, (ap0 * ab0 + ap1 * ab1 + ap2 * ab2) / len2)) : 0;
+  const x = ap0 - t * ab0;
+  const y = ap1 - t * ab1;
+  const z = ap2 - t * ab2;
+  return x * x + y * y + z * z;
+}
+
 /** §6.2 fidelity: (1/N) Σ_t min_q ‖tip_t − q‖ over the planned centerline. 0 with no samples. */
 export function meanTipDistanceM(log: EventLog, segments: readonly Segment[]): number {
   if (log.samples.length === 0 || segments.length === 0) return 0;
+  // Exact and fast:
+  // - Prune: a segment can't be nearer than |p − midpoint| − half its length, so it is skipped when
+  //   that bound can't beat the nearest so far (compared squared, with no square roots). Seeding with
+  //   the previous sample's nearest segment (the tip moves little between samples) prunes most.
+  // - Search in squared distance, then take the reported distance with pointSegmentDistance over
+  //   the segments tied (within 1e-9) for nearest, so the value is the same as a full scan's.
+  const n = segments.length;
+  const mid = new Float64Array(3 * n);
+  const half = new Float64Array(n);
+  segments.forEach(([a, b], i) => {
+    mid[3 * i] = (a[0] + b[0]) / 2;
+    mid[3 * i + 1] = (a[1] + b[1]) / 2;
+    mid[3 * i + 2] = (a[2] + b[2]) / 2;
+    half[i] = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / 2;
+  });
+  const d2 = new Float64Array(n);
+  const near: number[] = [];
   let sum = 0;
+  let seed = 0;
   for (const s of log.samples) {
-    let d = Infinity;
-    for (const [a, b] of segments) {
-      const x = pointSegmentDistance(s.tip, a, b);
-      if (x < d) d = x;
+    const p = s.tip;
+    near.length = 0;
+    let best2 = segmentDistance2(p, segments[seed]![0], segments[seed]![1]);
+    d2[seed] = best2;
+    near.push(seed);
+    let bestD = Math.sqrt(best2);
+    for (let i = 0; i < n; i++) {
+      if (i === seed) continue;
+      const dx = p[0] - mid[3 * i]!;
+      const dy = p[1] - mid[3 * i + 1]!;
+      const dz = p[2] - mid[3 * i + 2]!;
+      const reach = bestD + half[i]! + 1e-12;
+      if (dx * dx + dy * dy + dz * dz >= reach * reach) continue;
+      const x2 = segmentDistance2(p, segments[i]![0], segments[i]![1]);
+      d2[i] = x2;
+      near.push(i);
+      if (x2 < best2) {
+        best2 = x2;
+        bestD = Math.sqrt(x2);
+      }
     }
+    // the reported distance: pointSegmentDistance over the segments tied for nearest
+    let d = Infinity;
+    let bestI = seed;
+    const tie = best2 * (1 + 1e-9) + 1e-30;
+    for (const i of near) {
+      if (d2[i]! > tie) continue;
+      const x = pointSegmentDistance(p, segments[i]![0], segments[i]![1]);
+      if (x < d || (x === d && i < bestI)) {
+        d = x;
+        bestI = i;
+      }
+    }
+    seed = bestI;
     sum += d;
   }
   return sum / log.samples.length;

@@ -28,7 +28,12 @@ export interface ReferenceRoute {
   edges: readonly string[];
 }
 
-/** Drive `route` with the rail autopilot. Samples (initial one included) are summed as the log is. */
+/**
+ * Drive `route` with the rail autopilot. Samples (initial one included) are summed as the log is.
+ * The drive stops at the first wrong branch or prolapse: a reference that goes wrong is no
+ * reference, and an autopilot that can't steer would otherwise retry for REFERENCE_MAX_S
+ * (2.7 s of scoring on a real CTA case; DECISIONS.md, "Gentleness reference: steerable route").
+ */
 export function forceReference(c: LoadedCase, route: ReferenceRoute, sampleHz: number): ForceReference {
   const dt = 1 / sampleHz;
   const model = createRailModel(c, route.entryId, route.targetId, route.presetId, route.edges);
@@ -37,9 +42,11 @@ export function forceReference(c: LoadedCase, route: ReferenceRoute, sampleHz: n
   let cum = state.forceN * dt;
   const maxSteps = Math.ceil(REFERENCE_MAX_S * sampleHz);
   for (let i = 0; i < maxSteps && !state.atTarget; i++) {
-    state = step(model, state, railAutopilot(model, state, dt), dt).state;
+    const r = step(model, state, railAutopilot(model, state, dt), dt);
+    state = r.state;
     if (state.forceN > peak) peak = state.forceN;
     cum += state.forceN * dt;
+    if (r.events.some((e) => e.kind === 'wrong_branch' || e.kind === 'prolapse')) break;
   }
   return { routeId: route.id, peakForceN: peak, cumulativeForceNs: cum, reached: state.atTarget };
 }
