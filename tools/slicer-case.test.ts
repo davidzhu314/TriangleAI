@@ -98,14 +98,20 @@ describe.each(SUBJECTS.map((subject) => [`ts-${subject}-cta`, subject] as const)
     expect(countTriangles(glb.json)).toBeLessThanOrEqual(MESH_TRIANGLE_BUDGET);
   });
 
-  it('has a context.glb beside the package: same subject\'s bones and heart, mm and RAS, never part of the case', () => {
+  it('has a context.glb beside the package: same subject\'s bones, heart and major veins, mm and RAS, never part of the case', () => {
     const ctx = bytes('context.glb');
-    expect(ctx.length, 'about 1.5 MB at most').toBeLessThanOrEqual(1.5 * 1024 * 1024);
+    expect(ctx.length, 'about 2 MB at most').toBeLessThanOrEqual(2 * 1024 * 1024);
     const glb = parseGlb(ctx);
     expect(glb.json['asset'].extras).toEqual({ axes: 'RAS', units: 'mm' });
     expect(glb.json['nodes']).toEqual([
       { name: 'bone', mesh: 0, extras: { kind: 'context', label: 'Bones' } },
       { name: 'heart', mesh: 1, extras: { kind: 'context', label: 'Heart' } },
+      { name: 'inferior_vena_cava', mesh: 2, extras: { kind: 'vein', label: 'Inferior vena cava' } },
+      { name: 'superior_vena_cava', mesh: 3, extras: { kind: 'vein', label: 'Superior vena cava' } },
+      { name: 'l_iliac_vein', mesh: 4, extras: { kind: 'vein', label: 'Left iliac vein' } },
+      { name: 'r_iliac_vein', mesh: 5, extras: { kind: 'vein', label: 'Right iliac vein' } },
+      { name: 'l_brachiocephalic_vein', mesh: 6, extras: { kind: 'vein', label: 'Left brachiocephalic vein' } },
+      { name: 'r_brachiocephalic_vein', mesh: 7, extras: { kind: 'vein', label: 'Right brachiocephalic vein' } },
     ]);
     expect(countTriangles(glb.json)).toBeLessThanOrEqual(MESH_TRIANGLE_BUDGET);
     // The loader reads only the package files; case.json never names the context file.
