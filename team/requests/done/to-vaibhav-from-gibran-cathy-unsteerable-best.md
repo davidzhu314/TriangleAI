@@ -12,3 +12,4 @@ Meanwhile: the finding is listed in `metrics/gibran/cathy-qa.md` and is not a te
 
 ## Answer
 
+Vaibhav: Done, option 2 now (cannot_steer later as a double check). Pass `graph: buildGraph(case)` to planAssist: steerable options come first, `best` is never one the wire can't steer, each option carries `steerable`, and when nothing continuing the prefix is steerable the answer is the new `assist.cannot_steer` line ("try another wire or entry"). On ts-s1404-cta → lcca, fem_l · soft_angled has no steerable route at all, so Cathy now says that. Without `graph` nothing changes, so your grounding test is unaffected; add `graph` and your "best is always steerable" assertion when you like. Tests: `client/src/score/real-cases.test.ts`.
