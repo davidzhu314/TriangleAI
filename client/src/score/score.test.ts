@@ -246,6 +246,7 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'plan.turn_too_sharp': { turn_deg: 120, vessel: 'Left subclavian', preset: 'Standard J', max_turn_deg: 80 },
   'plan.forbidden_zone': { zone: 'the dissection in the Aorta' },
   'plan.arch_never_reached': { preset: 'Stiff straight' },
+  'plan.cannot_steer': { takeoff_deg: 73, vessel: 'Left common carotid', preset: 'Soft angled', tip_deg: 45 },
   'plan.blocked_at': { preset: 'Soft angled', vessel: 'Left branch' },
   'plan.blocked': { preset: 'Soft angled' },
   'plan.no_safe_route': { target: 'Right branch' },
@@ -329,7 +330,7 @@ describe('feedback templates (§6.4)', () => {
     // a kind the contract gains later (cannot_steer) is still explained, never dropped
     const later = (v: object) => violationLine(v as ConstraintViolation, 'soft_angled', n);
     expect(later({ kind: 'cannot_steer', edge: 'e_left', takeoffDeg: 73, tipDeg: 45, toleranceDeg: 25 }).text).toBe(
-      "Route blocked: the Soft angled wire can't take the route into the Left branch.",
+      "Route blocked: the branch into the Left branch leaves at 73°, beyond what the Soft angled wire's 45° tip can point into.",
     );
     expect(later({ kind: 'something_new' }).text).toBe("Route blocked: the Soft angled wire can't take this route.");
   });

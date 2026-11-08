@@ -34,6 +34,7 @@ import type { RouteGraph } from './graph';
 import { measureRouteDetailed, type DetailedRouteMeasures } from './measure-route';
 import { DFS_PATH_CAP, simplePaths, yenKShortest, YEN_K, type GraphPath } from './paths';
 import { getPreset, PRESET_IDS } from './presets';
+import { BRANCH_ENTRY_DEG, steerableAt, type Steerability } from './steerability';
 
 /** Graphs with more edges than this switch from DFS to Yen's k-shortest. Illustrative. */
 export const LARGE_GRAPH_EDGES = 64;
@@ -48,9 +49,17 @@ export const isSafe = (r: Route): boolean => r.feasible && r.cost.heavyCrossings
 export class RouteEnumerator {
   private readonly paths = new Map<string, GraphPath[]>();
   private readonly measured = new Map<string, DetailedRouteMeasures>();
+  private readonly steered = new Map<string, Steerability>();
   readonly large: boolean;
 
-  constructor(readonly graph: RouteGraph) {
+  /**
+   * `steering: false` skips the cannot_steer check. Only for synthetic graphs that test path search
+   * or timing (grids with 90° branches no wire can steer); the app and every case keep it on.
+   */
+  constructor(
+    readonly graph: RouteGraph,
+    readonly options: { steering?: boolean } = {},
+  ) {
     this.large = graph.edges.size > LARGE_GRAPH_EDGES;
   }
 
@@ -59,7 +68,7 @@ export class RouteEnumerator {
     const to = this.graph.targets.get(targetId);
     if (from === undefined) throw new Error(`unknown entry ${entryId}`);
     if (to === undefined) throw new Error(`unknown target ${targetId}`);
-    return this.pathsFor(from, to, presetId).map((p) => assembleRoute(entryId, targetId, presetId, p, this.measure(from, p)));
+    return this.pathsFor(from, to, presetId).map((p) => assembleRoute(entryId, targetId, presetId, p, this.measure(from, p), () => this.steer(from, p, presetId)));
   }
 
   private pathsFor(from: string, to: string, presetId: WirePresetId): GraphPath[] {
@@ -82,6 +91,17 @@ export class RouteEnumerator {
     return ps;
   }
 
+  private steer(from: string, p: GraphPath, presetId: WirePresetId): Steerability {
+    if (this.options.steering === false) return { ok: true, failures: [] };
+    const key = `${from}>${presetId}>${p.edges.join(',')}`;
+    let s = this.steered.get(key);
+    if (!s) {
+      s = steerableAt(this.graph, p.edges, presetId, from);
+      this.steered.set(key, s);
+    }
+    return s;
+  }
+
   private measure(from: string, p: GraphPath): DetailedRouteMeasures {
     const key = `${from}>${p.edges.join(',')}`;
     let m = this.measured.get(key);
@@ -93,8 +113,17 @@ export class RouteEnumerator {
   }
 }
 
-/** A Route from a measured path, with the preset's constraint checks (§4.4). */
-function assembleRoute(entryId: string, targetId: string, presetId: WirePresetId, p: GraphPath, m: DetailedRouteMeasures): Route {
+/**
+ * The steering violations (spec §5.3, contracts v2): one per branch point where the preset's tip can't
+ * point into the planned edge, so the rail wire would take another branch (DECISIONS.md, "cannot_steer").
+ * Checked only on routes that pass every other constraint, so a blocked route keeps one clear reason.
+ */
+export function steerViolations(s: Steerability): ConstraintViolation[] {
+  return s.failures.map((f) => ({ kind: 'cannot_steer' as const, edge: f.edge, takeoffDeg: f.takeoffDeg, tipDeg: f.tipDeg, toleranceDeg: BRANCH_ENTRY_DEG }));
+}
+
+/** A Route from a measured path, with the preset's constraint checks (§4.4) and steering (§5.3). */
+function assembleRoute(entryId: string, targetId: string, presetId: WirePresetId, p: GraphPath, m: DetailedRouteMeasures, steer: () => Steerability): Route {
   const preset = getPreset(presetId);
   const violations: ConstraintViolation[] = [];
   m.route.edges.forEach((e, i) => {
@@ -106,6 +135,7 @@ function assembleRoute(entryId: string, targetId: string, presetId: WirePresetId
     if (turnDeg > preset.maxTurnDeg) violations.push({ kind: 'turn_too_sharp', edge: e.id, turnDeg, maxTurnDeg: preset.maxTurnDeg });
   });
   violations.push(...m.measures.violations);
+  if (violations.length === 0) violations.push(...steerViolations(steer()));
   return {
     id: routeId(entryId, presetId, p.edges),
     entryId,
@@ -130,7 +160,7 @@ export function routeFor(graph: RouteGraph, entryId: string, targetId: string, p
   const from = graph.entries.get(entryId);
   if (from === undefined) throw new Error(`unknown entry ${entryId}`);
   const m = measureRouteDetailed(graph, edges, { startNode: from });
-  return assembleRoute(entryId, targetId, presetId, { edges: [...edges], nodes: m.route.nodes }, m);
+  return assembleRoute(entryId, targetId, presetId, { edges: [...edges], nodes: m.route.nodes }, m, () => steerableAt(graph, edges, presetId, from));
 }
 
 function dedupe<T>(items: T[]): T[] {

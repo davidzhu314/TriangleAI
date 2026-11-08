@@ -120,5 +120,7 @@ export function planAssist(input: PlanAssistInput): PlanAssist {
   if (safeOpts.length > 0 && safeOpts[0]!.steerable !== false) return { options: safeOpts, best: safeOpts[0]!, reason: 'off_frontier' };
 
   if (frontOpts.length > 0 || safeOpts.length > 0) return { options: frontOpts.length > 0 ? frontOpts : safeOpts, best: null, reason: 'cannot_steer' };
+  // nothing safe at all for this entry and wire (every route blocked, e.g. by cannot_steer): say so, don't ask to undo
+  if (!optimized.candidates.some((r) => mine(r) && isSafe(r))) return none('no_safe_route');
   return none('no_continuation');
 }

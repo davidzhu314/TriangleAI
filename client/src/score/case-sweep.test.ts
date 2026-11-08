@@ -194,22 +194,24 @@ describe('scale: the optimizer on graphs larger than any case so far', () => {
     it(`${n} × ${n} grid`, () => {
       const c = gridCase(n, n);
       const g = buildGraph(c);
-      // a 90° grid: no wire can steer it, so steering isn't part of this timing
+      // a 90° grid: no wire can steer it, so the budget times path search with steering off; the
+      // steering check's own cost (it runs on every otherwise-feasible route) is reported beside it
       const req = { caseId: c.id, targetId: [...g.targets.keys()][0]! };
-      const res = optimizeCase(g, req, new RouteEnumerator(g));
-      const optMs = timeMs(() => optimizeCase(g, req, new RouteEnumerator(g)), 3);
+      const res = optimizeCase(g, req, new RouteEnumerator(g, { steering: false }));
+      const optMs = timeMs(() => optimizeCase(g, req, new RouteEnumerator(g, { steering: false })), 3);
+      const steerMs = timeMs(() => optimizeCase(g, req, new RouteEnumerator(g)), 3);
       const maxMs = g.edges.size > LARGE_GRAPH_EDGES ? BUDGET.optimizeLargeMs : BUDGET.optimizeMs;
       budget(optMs, maxMs, `${n}×${n} optimize`);
       const route = res.kind === 'frontier' ? res.routes[0]! : null;
       const measureMs = route ? timeMs(() => measureRoute(g, route.edges, { startNode: g.entries.get(route.entryId)! }), 20) : NaN;
       if (route) budget(measureMs, 16.7, `${n}×${n} measureRoute`);
       rows.push(
-        `| ${n} × ${n} grid | ${g.edges.size} | ${g.edges.size > LARGE_GRAPH_EDGES ? "Yen's k-shortest" : 'all simple paths'} | ${ms(optMs)} ms (budget ${maxMs}) | ${route ? `${ms(measureMs)} ms` : '—'} | ${res.kind === 'frontier' ? res.candidates.length : 0} |`,
+        `| ${n} × ${n} grid | ${g.edges.size} | ${g.edges.size > LARGE_GRAPH_EDGES ? "Yen's k-shortest" : 'all simple paths'} | ${ms(optMs)} ms (budget ${maxMs}) | ${ms(steerMs)} ms | ${route ? `${ms(measureMs)} ms` : '—'} | ${res.kind === 'frontier' ? res.candidates.length : 0} |`,
       );
     }, 120_000);
   }
   it('report', () => {
-    report.push('', '## Scale', '', '| Graph | Edges | Search | Optimize median | measureRoute median (one route) | Candidates |', '| --- | --- | --- | --- | --- | --- |', ...rows);
+    report.push('', '## Scale', '', '| Graph | Edges | Search | Optimize median, steering off | With the steering check on every feasible route | measureRoute median (one route) | Candidates |', '| --- | --- | --- | --- | --- | --- | --- |', ...rows);
   });
 });
 

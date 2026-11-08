@@ -71,15 +71,32 @@ describe('regret noise', () => {
   });
 });
 
-describe('gentleness reference on a case with unsteerable frontier routes', () => {
-  it('ts-s1404-cta → lcca: the reference is a steerable route, and scoring stays within its 100 ms budget', async () => {
+/** The candidate routes the steering check blocked, with their cannot_steer violations. */
+const blockedBySteering = (f: Frontier) => f.candidates.filter((r) => r.violations.some((v) => v.kind === 'cannot_steer'));
+
+describe('cannot_steer on the real CT case (contracts v2)', () => {
+  it('ts-s1404-cta → lcca: every frontier route is steerable; the 73° takeoff route is blocked with a cannot_steer reason', async () => {
     const c = await bundled('ts-s1404-cta');
     const g = buildGraph(c);
     const f = optimizeCase(g, { caseId: c.id, targetId: 'lcca' }) as Frontier;
-    const top = best(f);
-    expect(steerableAt(g, top.edges, top.presetId, g.entries.get(top.entryId)).ok).toBe(false); // the case this guards
+    for (const r of f.routes) expect(steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok, r.id).toBe(true);
 
-    const log = await autopilotLog(c, 'lcca', top, 60); // a long, messy drive: a minute stuck in wrong branches
+    // Gibran's finding: left femoral · soft angled needs a 73° takeoff into the lcca against a 45° tip
+    const blocked = blockedBySteering(f).find((r) => r.entryId === 'fem_l' && r.presetId === 'soft_angled' && r.edges.at(-1) === 'e_lcca')!;
+    expect(blocked.feasible).toBe(false);
+    const v = blocked.violations.find((x) => x.kind === 'cannot_steer')!;
+    expect(v).toMatchObject({ kind: 'cannot_steer', edge: 'e_lcca', tipDeg: 45, toleranceDeg: 25 });
+    if (v.kind === 'cannot_steer') expect(Math.round(v.takeoffDeg)).toBe(73);
+    // every blocked route really is one the rail wire can't steer, and every steerable safe route is still offered
+    for (const r of blockedBySteering(f)) expect(steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok, r.id).toBe(false);
+  });
+
+  it('a drive on a blocked route still scores within the 100 ms budget, against a steerable reference', async () => {
+    const c = await bundled('ts-s1404-cta');
+    const g = buildGraph(c);
+    const f = optimizeCase(g, { caseId: c.id, targetId: 'lcca' }) as Frontier;
+    const blocked = blockedBySteering(f)[0]!;
+    const log = await autopilotLog(c, 'lcca', blocked, 60); // a long, messy drive: a minute stuck in wrong branches
     expect(log.events.some((e) => e.kind === 'wrong_branch')).toBe(true);
     const input = { log, optimized: f, weights: DEFAULT_WEIGHTS, case: c };
     const ref = referenceFor(input);
@@ -87,10 +104,10 @@ describe('gentleness reference on a case with unsteerable frontier routes', () =
     expect(steerableAt(g, used.edges, used.presetId, g.entries.get(used.entryId)).ok).toBe(true);
     expect(ref.reached).toBe(true);
 
-    // warmed up, median of 7, like the other timing tests (alone it is ~26 ms; was 2.7 s)
-    for (let i = 0; i < 3; i++) scoreCase(input);
+    // warmed up, median of 7, like the other timing tests
+    for (let k = 0; k < 3; k++) scoreCase(input);
     const times: number[] = [];
-    for (let i = 0; i < 7; i++) {
+    for (let k = 0; k < 7; k++) {
       const t0 = performance.now();
       scoreCase(input);
       times.push(performance.now() - t0);
@@ -101,13 +118,24 @@ describe('gentleness reference on a case with unsteerable frontier routes', () =
 
   it('a reference drive that goes wrong stops at once instead of retrying for 300 s', async () => {
     const c = await bundled('ts-s1404-cta');
-    const g = buildGraph(c);
-    const f = optimizeCase(g, { caseId: c.id, targetId: 'lcca' }) as Frontier;
-    const bad = f.routes.find((r) => !steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok)!;
+    const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: 'lcca' }) as Frontier;
     const t0 = performance.now();
-    const ref = forceReference(c, bad, 30);
+    const ref = forceReference(c, blockedBySteering(f)[0]!, 30);
     expect(ref.reached).toBe(false);
     expect(performance.now() - t0).toBeLessThan(200);
+  });
+
+  it('every bundled case: every frontier route is steerable', async () => {
+    const index = JSON.parse(readFileSync(join(CASES, 'index.json'), 'utf8')) as { cases: { id: string }[] };
+    for (const { id } of index.cases) {
+      const c = await bundled(id);
+      const g = buildGraph(c);
+      for (const t of c.targets) {
+        const res = optimizeCase(g, { caseId: c.id, targetId: t.id });
+        if (res.kind !== 'frontier') continue;
+        for (const r of res.routes) expect(steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok, `${id} → ${t.id}: ${r.id}`).toBe(true);
+      }
+    }
   });
 });
 
@@ -180,24 +208,18 @@ describe('rehearsal 1 findings (Gibran, team/rehearsal/2026-11-07.md)', () => {
 });
 
 describe("Cathy never recommends a route the wire can't steer (request from Gibran)", () => {
-  it('ts-s1404-cta → lcca: the top-ranked route is unsteerable; with the graph, "best" is a steerable one', async () => {
+  it('ts-s1404-cta → lcca: with no steerable route for left femoral · soft angled, Cathy says so instead of naming one', async () => {
     const c = await bundled('ts-s1404-cta');
     const g = buildGraph(c);
     const f = optimizeCase(g, { caseId: c.id, targetId: 'lcca' }) as Frontier;
-    const top = best(f);
-    expect(steerableAt(g, top.edges, top.presetId, g.entries.get(top.entryId)).ok).toBe(false); // Gibran's finding
-    const input = { optimized: f, weights: DEFAULT_WEIGHTS, entryId: top.entryId, presetId: top.presetId, routeSoFar: [] as string[] };
-    expect(planAssist(input).best!.routeIds).toContain(top.id); // without the graph: unchanged, as before
+    const input = { optimized: f, weights: DEFAULT_WEIGHTS, entryId: 'fem_l', presetId: 'soft_angled' as const, routeSoFar: [] as string[] };
+    for (const a of [planAssist(input), planAssist({ ...input, graph: g })]) {
+      expect(a).toMatchObject({ best: null, options: [], reason: 'no_safe_route' });
+      expect(planAssistLine(a, c, 'lcca', 'best').text).toBe('No safe way on from here with this wire.');
+    }
 
-    // with the graph: no route for this entry and wire can be steered to the lcca, so Cathy says so
-    const a = planAssist({ ...input, graph: g });
-    expect(a).toMatchObject({ best: null, reason: 'cannot_steer' });
-    expect(a.options.length).toBeGreaterThan(0); // still listed, flagged
-    expect(a.options.every((o) => o.steerable === false)).toBe(true);
-    expect(planAssistLine(a, c, 'lcca', 'best').text).toBe("This wire can't steer into any of the ways on from here; try another wire or entry.");
-
-    // another entry or wire does have a steerable best, and following it step by step builds a steerable route
-    const other = f.routes.find((r) => steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok)!;
+    // another entry or wire has a steerable best, and following it step by step builds a steerable route
+    const other = f.routes[0]!;
     const walked: string[] = [];
     for (let k = 0; k < other.edges.length; k++) {
       const b = planAssist({ ...input, entryId: other.entryId, presetId: other.presetId, routeSoFar: walked, graph: g });

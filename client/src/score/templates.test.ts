@@ -18,6 +18,7 @@ const PLACEHOLDERS: Readonly<Record<TemplateId, readonly string[]>> = Object.fre
   'plan.turn_too_sharp': ['max_turn_deg', 'preset', 'turn_deg', 'vessel'],
   'plan.forbidden_zone': ['zone'],
   'plan.arch_never_reached': ['preset'],
+  'plan.cannot_steer': ['preset', 'takeoff_deg', 'tip_deg', 'vessel'],
   'plan.blocked_at': ['preset', 'vessel'],
   'plan.blocked': ['preset'],
   'plan.no_safe_route': ['target'],
