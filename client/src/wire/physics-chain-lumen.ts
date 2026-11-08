@@ -72,12 +72,14 @@ export class Lumen {
     });
   }
 
-  /** The nearest wall to `p`: the segment with the smallest slack (most inside). */
-  query(p: Vec3): LumenQuery {
+  /** The nearest wall to `p`: the segment with the smallest slack (most inside), among `only` edges if given. */
+  query(p: Vec3, only?: ReadonlySet<string>): LumenQuery {
     const key = `${Math.floor(p[0] / this.cell)},${Math.floor(p[1] / this.cell)},${Math.floor(p[2] / this.cell)}`;
-    const near = this.cells.get(key);
+    let near = this.cells.get(key);
+    if (only && near && !near.some((k) => only.has(this.segments[k]!.edge))) near = undefined;
     let best: LumenQuery | null = null;
     const consider = (sg: LumenSegment): void => {
+      if (only && !only.has(sg.edge)) return;
       const ab = sub(sg.b, sg.a);
       const u = Math.min(1, Math.max(0, dot(sub(p, sg.a), ab) / (sg.len * sg.len)));
       const centre: Vec3 = [sg.a[0] + ab[0] * u, sg.a[1] + ab[1] * u, sg.a[2] + ab[2] * u];

@@ -8,7 +8,8 @@
  * - Out: `WireState` with the v3 tip pose, both devices, contacts, the educational risk index and imaging. The log's
  *   samples carry the v3 fields, and `stop()` adds review events (wall contacts, imaging intervals, branch entries,
  *   roadmaps) in `EventLog.review`. `chain()` and `trace()` give the same data as module types.
- * - select.ts does not offer this source yet: a screen opts in once it draws the imaging states.
+ * - select.ts offers this source only behind its default-off `?wire=chain` dev switch, until a screen draws the
+ *   imaging states.
  */
 import { EVENT_SAMPLE_HZ, clampControl, createEventLog, type ControlInput, type EventLog, type ReviewEvent, type Unsubscribe, type Vec3, type WireFallback, type WireSource, type WireStartRequest, type WireState } from '../contracts';
 import { CONTACT_MIN_N, createChainModel, devicePoints, initialChainState, stepChain, tipPose, type ChainModel, type ChainState, type ContactSample, type DeviceId, type TipPose } from './physics-chain';

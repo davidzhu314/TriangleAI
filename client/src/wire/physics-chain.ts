@@ -6,32 +6,34 @@
  * Gazebo. Its repository has no license, so nothing is copied; this file adapts the same structure for a responsive,
  * deterministic browser model:
  *
- * - **Serial chain in joint space.** Links of `spacingM` run from the sheath at the entry to the furthest tip. Each
- *   joint holds a two-axis bend (a universal joint) relative to its parent link's frame. Forward kinematics from the
- *   sheath gives the node positions, so link lengths are exact by construction.
- * - **Coaxial devices.** The guidewire and the catheter share the chain but have their own inserted lengths, so
- *   either can lead. A joint's spring and rest bend depend on what is there: catheter over wire, catheter alone, or
- *   wire alone. The pre-shaped tips (the wire preset's tip angle, an angled catheter) are rest bends, turned by that
- *   device's tip roll.
- * - **Springs and walls.** Each step, every joint relaxes part of the way toward its rest bend (stiffer material
- *   faster), then one sweep from the sheath to the tip re-bends any joint whose next node would leave the lumen
- *   (physics-chain-lumen.ts), so the device slides along the wall. Bends travel with the material as it is fed or
- *   withdrawn, so a tip that has entered a branch stays there. Which branch the tip enters follows from where its
- *   shaped tip points as it reaches the junction; folding when the tip is blocked follows from the same sweep.
- * - **Contact.** A joint the wall forced away from its rest bend presses on the wall: its load is the forced bend times
- *   that material's bending stiffness, plus any penetration left over. It is an illustrative proxy, not a measured or
- *   clinical force. The educational contact-risk index integrates load, duration and pushing.
+ * - **Serial chain, follow-the-leader.** Links of `spacingM` run from the sheath at the entry to the furthest tip. Feeding
+ *   grows the tip link along its own direction (a new joint every spacing); withdrawing shrinks it back. The shape
+ *   already in the vessel stays where it is, as a device sliding along its own path does.
+ * - **Body and shaped tip.** The shaped tips at the front (the leading device's, and the other device's when it is
+ *   within 40 mm) are joint-based: each joint holds a two-axis bend (a universal joint) that relaxes part of the way to
+ *   its rest bend each step, turned by that device's tip roll. Everything behind them is position-based: each link aims
+ *   where its next node was, smoothed toward its neighbours, so the body straightens like a taut string without
+ *   swinging everything beyond a joint (relaxing joint angles along the whole device whips the far tip across a wide
+ *   vessel). Coaxial devices share the chain with their own inserted lengths, so either can lead.
+ * - **Walls.** Wherever a link's next node would leave the lumen (physics-chain-lumen.ts), the link is re-aimed by the
+ *   smallest deflection that keeps it inside and still heading away from the entry, preferring the direction furthest
+ *   along the vessel. So the device slides along the wall instead of coiling or corkscrewing in a wide vessel, and which
+ *   branch the tip enters follows from where its shaped tip points as it reaches the junction.
+ * - **Contact.** A joint the wall forced away from its rest bend presses on the wall: its load is the forced bend beyond
+ *   what following the vessel's own curve needs, times that material's bending stiffness, plus any penetration left
+ *   over. It is an illustrative proxy, not a measured or clinical force. The educational contact-risk index integrates
+ *   load, duration and pushing.
  * - **Torsion.** Rotating a device turns its hub roll at once. Its tip roll follows by stick-slip: the shaft stores
- *   twist up to a limit that grows with inserted length and wall contact, then the tip turns with a short lag. That
- *   gives torsional lag, stored twist, and whip when contact drops.
+ *   twist up to a limit that grows with inserted length and the mean wall contact, capped at 90°, then the tip turns
+ *   with a short lag. That gives torsional lag, stored twist, and whip when contact drops.
  *
- * Not modeled: inertia and dynamics, axial friction passing less push to the tip, vessel deformation, and the shaft
- * bowing proximally while the tip stays stuck (a blocked tip folds distally instead). Every constant is illustrative.
- * No AI model computes any number here. Positions are metres in the case's Y-up frame.
+ * Not modeled: inertia and dynamics, axial friction passing less push to the tip, vessel deformation, the shaft bowing
+ * proximally while the tip stays stuck, and loops that turn back toward the entry (a link always keeps some headway).
+ * Every constant is illustrative. No AI model computes any number here. Positions are metres in the case's Y-up frame.
  */
 import { BACK_OUT_THRESHOLD_M, type DeviceId, type LoadedCase, type Vec3, type WireEvent, type WirePresetId } from '../contracts';
 import { getPreset } from '../optimize/presets';
-import { Lumen } from './physics-chain-lumen';
+import { Lumen, type LumenQuery } from './physics-chain-lumen';
 
 // ---------------------------------------------------------------- parameters (illustrative)
 
@@ -66,8 +68,10 @@ export interface ChainParams {
   wallNPerM: number;
   /** Torsion: twist stored before the tip turns, per metre inserted (free shaft), radians. */
   stickRadPerM: number;
-  /** Torsion: extra twist stored per newton of contact load along the device, radians. */
+  /** Torsion: extra twist stored per newton of mean contact load per node along the device, radians. */
   stickRadPerN: number;
+  /** Torsion: the most twist the shaft stores before the tip turns, radians. */
+  stickMaxRad: number;
   /** Torsion: tip roll lag time constant, seconds. */
   rollLagS: number;
 }
@@ -89,7 +93,8 @@ export function chainParams(presetId: WirePresetId): ChainParams {
     catheterOverWireShape: 0.4,
     wallNPerM: 400,
     stickRadPerM: 0.4,
-    stickRadPerN: 1.5,
+    stickRadPerN: 4,
+    stickMaxRad: Math.PI / 2,
     rollLagS: 0.12,
   };
 }
@@ -112,6 +117,9 @@ export interface ChainModel {
   target: Vec3;
   targetRadius: number;
   edgeLength: Map<string, number>;
+  /** +1 where an edge runs away from the entry (from → to), −1 where it runs toward it. */
+  edgeAway: Map<string, number>;
+  planEdges: ReadonlySet<string>;
   /** The planned path as one polyline from the entry, with cumulative arc length, for progress. */
   planPoints: Vec3[];
   planArc: number[];
@@ -132,8 +140,8 @@ export interface ChainState {
   nodes: Vec3[];
   /** Joint bend at each node, in its parent link's frame (index 0 and the last are unused). */
   bend: Bend[];
-  /** Length of the first link (it grows and splits as length is fed in). */
-  first: number;
+  /** Length of the last link, at the tip (it grows and splits as length is fed in). */
+  last: number;
   inserted: Record<DeviceId, number>;
   roll: Record<DeviceId, DeviceRoll>;
   /** Contact load per node from the last step, N (illustrative proxy). */
@@ -207,6 +215,26 @@ function bendTo(t: Vec3, n: Vec3, u: Vec3): Bend {
 
 // ---------------------------------------------------------------- model
 
+/** For each edge, +1 if its `from` node is nearer the entry along the vessel tree, else −1 (shortest path). */
+function awayFromEntry(c: LoadedCase, entryNode: string): Map<string, number> {
+  const dist = new Map<string, number>([[entryNode, 0]]);
+  const open = [entryNode];
+  while (open.length) {
+    open.sort((a, b) => dist.get(b)! - dist.get(a)!);
+    const at = open.pop()!;
+    for (const e of c.edges) {
+      if (e.from !== at && e.to !== at) continue;
+      const other = e.from === at ? e.to : e.from;
+      const d = dist.get(at)! + e.lengthM;
+      if (d < (dist.get(other) ?? Infinity)) {
+        dist.set(other, d);
+        open.push(other);
+      }
+    }
+  }
+  return new Map(c.edges.map((e) => [e.id, (dist.get(e.from) ?? 0) <= (dist.get(e.to) ?? 0) ? 1 : -1]));
+}
+
 export function createChainModel(c: LoadedCase, entryId: string, targetId: string, presetId: WirePresetId, plan: readonly string[]): ChainModel {
   const entry = c.entries.find((e) => e.id === entryId);
   const target = c.targets.find((t) => t.id === targetId);
@@ -256,6 +284,8 @@ export function createChainModel(c: LoadedCase, entryId: string, targetId: strin
     target: nodes.get(target.node)!.pos,
     targetRadius: tr,
     edgeLength: new Map(c.edges.map((e) => [e.id, e.lengthM])),
+    edgeAway: awayFromEntry(c, entry.node),
+    planEdges: new Set(plan),
     planPoints,
     planArc,
   };
@@ -269,7 +299,7 @@ export function initialChainState(model: ChainModel): ChainState {
     t: 0,
     nodes: [],
     bend: Array.from({ length: n }, (): Bend => [0, 0]),
-    first: h,
+    last: h,
     inserted: { wire: (n - 1) * h, catheter: 0.02 },
     roll: { wire: { base: 0, tip: 0 }, catheter: { base: 0, tip: 0 } },
     load: new Array<number>(n).fill(0),
@@ -293,7 +323,8 @@ export function initialChainState(model: ChainModel): ChainState {
 
 /** Arc length from the sheath of each node. */
 function arcs(state: ChainState, h: number): number[] {
-  return state.bend.map((_, i) => (i === 0 ? 0 : state.first + (i - 1) * h));
+  const n = state.bend.length;
+  return state.bend.map((_, i) => (i < n - 1 ? i * h : (n - 2) * h + state.last));
 }
 
 /** Rest bend at a joint at arc `a`, in its parent frame. */
@@ -314,6 +345,27 @@ function restBend(model: ChainModel, state: ChainState, a: number): Bend {
   return [angle * Math.cos(roll), angle * Math.sin(roll)];
 }
 
+/** How far back from the front the shaped tips are solved joint by joint, at most, metres. */
+const TIP_REGION_MAX_M = 0.04;
+
+/**
+ * How many joints at the front are solved as the shaped tip: the leading device's shaped length, and the other
+ * device's too when its tip is within TIP_REGION_MAX_M of the front (a wire just out of an angled catheter is aimed by
+ * the catheter's shape as well as its own).
+ */
+function tipJoints(model: ChainModel, state: ChainState): number {
+  const p = model.params;
+  const lw = state.inserted.wire;
+  const lc = state.inserted.catheter;
+  const front = Math.max(lw, lc);
+  const wireStart = lw - p.wire.tipLenM;
+  const cathStart = lc - p.catheter.tipLenM;
+  let start = lw >= lc ? wireStart : cathStart;
+  const other = lw >= lc ? cathStart : wireStart;
+  if (front - other <= TIP_REGION_MAX_M) start = Math.min(start, other);
+  return clamp(Math.ceil((front - start) / p.spacingM) + 1, 2, state.bend.length - 2);
+}
+
 /** Which material is at arc `a`: its relax rate, bending stiffness, radius and device. */
 function material(model: ChainModel, state: ChainState, a: number): { relax: number; bendN: number; radius: number; device: DeviceId } {
   const p = model.params;
@@ -321,8 +373,13 @@ function material(model: ChainModel, state: ChainState, a: number): { relax: num
     const over = a <= state.inserted.wire;
     return { relax: p.catheter.relax, bendN: p.catheter.bendNPerRad + (over ? p.wire.bendNPerRad : 0), radius: p.catheter.radiusM, device: 'catheter' };
   }
-  return { relax: p.wire.relax, bendN: p.wire.bendNPerRad, radius: p.wire.radiusM, device: 'wire' };
+  // Behind its soft shaped tip, the wire's core is stiffer and straightens faster.
+  const relax = a <= state.inserted.wire - p.wire.tipLenM ? Math.max(p.wire.relax, SHAFT_RELAX) : p.wire.relax;
+  return { relax, bendN: p.wire.bendNPerRad, radius: p.wire.radiusM, device: 'wire' };
 }
+
+/** Share of the way back to straight per step for the wire's shaft behind the tip (illustrative). */
+const SHAFT_RELAX = 0.6;
 
 // ---------------------------------------------------------------- solver
 
@@ -331,26 +388,40 @@ const SLIDE_STEP_DEG = 6;
 const SLIDE_RINGS = 12;
 const SLIDE_AZIMUTHS = 12;
 
-/** Feed or withdraw `dTotal` metres of chain at the sheath, splitting or merging the first link. */
+/**
+ * Feed or withdraw `dTotal` metres of chain, follow-the-leader: the shape already in the vessel stays where it is and
+ * the tip link grows along its own direction (splitting off a new joint every spacing) or shrinks back along it. Feeding
+ * at the sheath instead would shift the whole shape forward along the sheath direction, and every curve would have to
+ * be forced back into the walls, which kinks and coils the shaft.
+ */
 function feed(model: ChainModel, state: ChainState, dTotal: number): void {
   const h = model.params.spacingM;
-  state.first += dTotal;
-  while (state.first > h * 1.5) {
-    state.first -= h;
-    state.bend.splice(1, 0, [0, 0]);
-    state.load.splice(1, 0, 0);
+  state.last += dTotal;
+  while (state.last > h * 1.5) {
+    state.last -= h;
+    const n = state.bend.length;
+    state.bend.splice(n - 1, 0, restBend(model, state, (n - 1) * h));
+    state.load.splice(n - 1, 0, 0);
+    if (state.nodes.length === n) {
+      const a = state.nodes[n - 2]!;
+      state.nodes.splice(n - 1, 0, add(a, scale(unit(sub(state.nodes[n - 1]!, a)), h)));
+    }
   }
-  while (state.first < h * 0.5 && state.bend.length > 3) {
-    state.bend.splice(1, 1);
-    state.load.splice(1, 1);
-    state.first += h;
+  while (state.last < h * 0.5 && state.bend.length > 3) {
+    const n = state.bend.length;
+    state.bend.splice(n - 2, 1);
+    state.load.splice(n - 2, 1);
+    if (state.nodes.length === n) state.nodes.splice(n - 2, 1);
+    state.last += h;
   }
-  state.first = Math.max(state.first, h * 0.25);
+  state.last = Math.max(state.last, h * 0.25);
 }
 
 /**
- * Relax every joint part of the way to its rest bend, then sweep from the sheath to the tip: forward kinematics, and
- * wherever the next node would leave the lumen, re-bend that joint so the node lands on the wall. Sets nodes and loads.
+ * One solver pass, from the sheath to the tip. The body (everything behind the shaped tips) is position-based: each
+ * link aims where its next node was, smoothed toward its neighbours. The shaped tip is joint-based: each joint relaxes
+ * part of the way to its rest bend (the shape, turned by the tip roll). Either way, wherever the next node would leave
+ * the lumen, the link is re-aimed so the node stays inside and slides along the wall. Sets nodes, bends and loads.
  */
 function relaxAndSweep(model: ChainModel, state: ChainState, share: number): void {
   const p = model.params;
@@ -362,46 +433,85 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
   let t = model.sheathDir;
   let nrm = model.sheathNormal;
   nodes[0] = model.sheath;
-  nodes[1] = add(model.sheath, scale(t, state.first));
+  const linkLen = (i: number): number => (i === n - 2 ? state.last : h);
+  const prev = state.nodes;
+  const base = n - 1 - tipJoints(model, state);
+  nodes[1] = add(model.sheath, scale(t, linkLen(0)));
+  let qPrev = model.lumen.query(nodes[1]);
   for (let j = 1; j + 1 < n; j++) {
+    const lj = linkLen(j);
     const m = material(model, state, arc[j]!);
     const rest = restBend(model, state, arc[j]!);
-    const k = 1 - (1 - m.relax) ** share;
     const was = state.bend[j]!;
+    const k = 1 - (1 - m.relax) ** share;
     let bend: Bend = [was[0] + (rest[0] - was[0]) * k, was[1] + (rest[1] - was[1]) * k];
+    if (j + 1 <= base && prev.length === n) {
+      // Body: aim at where the next node was, moved part of the way (the relax share) toward the midpoint of its
+      // neighbours. The body keeps its place in space and straightens like a taut string, so relaxing a joint does not
+      // swing everything beyond it.
+      const at = prev[j + 1]!;
+      const mid = scale(add(prev[j]!, prev[j + 2]!), 0.5);
+      bend = bendTo(t, nrm, unit(sub(add(at, scale(sub(mid, at), k)), nodes[j]!)));
+    }
     let [t2, n2] = bendFrame(t, nrm, bend);
-    let x = add(nodes[j]!, scale(t2, h));
+    let x = add(nodes[j]!, scale(t2, lj));
     let q = model.lumen.query(x);
     const room = Math.max(q.radius - material(model, state, arc[j + 1]!).radius, 0.0002);
     if (q.dist > room) {
       // Slide along the wall: deflect the link from where it wanted to go by the smallest angle that keeps the next node
       // inside, so the wall turns the device instead of folding it, and at a junction the side the tip already points
       // to wins. Search widening cones around the intended direction; on the first cone with any inside direction,
-      // take the one nearest the wall (the device keeps sliding along the wall it met, rather than jumping to the middle).
+      // take the one heading furthest along the vessel (the device slides along the wall, not around it in a corkscrew).
       const wanted = t2;
       const p1 = anyNormal(wanted);
       const p2 = cross(wanted, p1);
       let found: Vec3 | null = null;
       for (let ring = 1; ring <= SLIDE_RINGS && !found; ring++) {
         const cone = (ring * SLIDE_STEP_DEG * Math.PI) / 180;
-        let bestSlack = -Infinity;
+        let bestAhead = -Infinity;
         for (let k = 0; k < SLIDE_AZIMUTHS; k++) {
           const phi = (2 * Math.PI * k) / SLIDE_AZIMUTHS;
           const u = unit(add(scale(wanted, Math.cos(cone)), scale(add(scale(p1, Math.cos(phi)), scale(p2, Math.sin(phi))), Math.sin(cone))));
           if (dot(u, t) < 0) continue; // never back on itself
-          const xq = add(nodes[j]!, scale(u, h));
+          const xq = add(nodes[j]!, scale(u, lj));
           const qq = model.lumen.query(xq);
-          const slackHere = qq.dist - room;
-          if (slackHere <= 0 && slackHere > bestSlack) {
-            bestSlack = slackHere;
+          if (qq.dist > room) continue;
+          const ahead = headway(model, qq, u);
+          if (ahead < MIN_HEADWAY) continue; // never back toward the entry: no coils in a wide vessel
+          if (ahead > bestAhead) {
+            bestAhead = ahead;
             found = u;
           }
+        }
+      }
+      if (!found) {
+        // Nothing near where it wanted to go: search around the vessel's forward direction instead, and take the inside
+        // direction nearest to where it wanted to go. This keeps a hooked tip from bending further back on itself.
+        const qj = model.lumen.query(nodes[j]!);
+        const fwd = scale(unit(sub(qj.seg.b, qj.seg.a)), model.edgeAway.get(qj.seg.edge) ?? 1);
+        const f1 = anyNormal(fwd);
+        const f2 = cross(fwd, f1);
+        let bestAlign = -Infinity;
+        for (let ring = 0; ring <= SLIDE_RINGS && !found; ring++) {
+          const cone = (ring * SLIDE_STEP_DEG * Math.PI) / 180;
+          for (let k = 0; k < (ring ? SLIDE_AZIMUTHS : 1); k++) {
+            const phi = (2 * Math.PI * k) / SLIDE_AZIMUTHS;
+            const u = unit(add(scale(fwd, Math.cos(cone)), scale(add(scale(f1, Math.cos(phi)), scale(f2, Math.sin(phi))), Math.sin(cone))));
+            const qq = model.lumen.query(add(nodes[j]!, scale(u, lj)));
+            if (qq.dist > room || headway(model, qq, u) < MIN_HEADWAY) continue;
+            const align = dot(u, wanted);
+            if (align > bestAlign) {
+              bestAlign = align;
+              found = u;
+            }
+          }
+          // Keep widening only while nothing is inside; the first ring with an inside direction gives the answer.
         }
       }
       if (found) {
         bend = bendTo(t, nrm, found);
         [t2, n2] = bendFrame(t, nrm, bend);
-        x = add(nodes[j]!, scale(t2, h));
+        x = add(nodes[j]!, scale(t2, lj));
         q = model.lumen.query(x);
       }
       // Still outside (a dead end, or narrower than the device): project onto the wall.
@@ -410,12 +520,16 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
         const y = add(q.centre, scale(inward, room));
         bend = bendTo(t, nrm, unit(sub(y, nodes[j]!)));
         [t2, n2] = bendFrame(t, nrm, bend);
-        x = add(nodes[j]!, scale(t2, h));
+        x = add(nodes[j]!, scale(t2, lj));
         q = model.lumen.query(x);
       }
+      // Load counts only the bend beyond what following the vessel needs (the centreline's turn over this link):
+      // a device lying along a curved vessel is not pressing harder than one lying along a straight one.
       const forced = Math.hypot(bend[0] - rest[0], bend[1] - rest[1]);
-      load[j + 1] = m.bendN * forced + p.wallNPerM * Math.max(0, q.dist - room);
+      const conform = vesselTurn(qPrev, q);
+      load[j + 1] = m.bendN * Math.max(0, forced - conform) + p.wallNPerM * Math.max(0, q.dist - room);
     }
+    qPrev = q;
     state.bend[j] = bend;
     nodes[j + 1] = x;
     t = t2;
@@ -423,6 +537,24 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
   }
   state.nodes = nodes;
   state.load = load;
+}
+
+/**
+ * How far a link in direction `u` heads away from the entry along the vessel it is in, as a cosine. A link must keep
+ * some headway: deflecting sideways or back would let the shaft coil in a wide vessel, which this quasi-static model
+ * cannot resolve (it has no axial force to push a coil straight again).
+ */
+const MIN_HEADWAY = 0.2;
+function headway(model: ChainModel, q: LumenQuery, u: Vec3): number {
+  return dot(u, unit(sub(q.seg.b, q.seg.a))) * (model.edgeAway.get(q.seg.edge) ?? 1);
+}
+
+/** The angle between the centreline directions at two lumen queries, radians (either edge orientation). */
+function vesselTurn(a: LumenQuery, b: LumenQuery): number {
+  if (a.seg === b.seg) return 0;
+  const da = unit(sub(a.seg.b, a.seg.a));
+  const db = unit(sub(b.seg.b, b.seg.a));
+  return Math.acos(clamp(Math.abs(dot(da, db)), 0, 1));
 }
 
 // ---------------------------------------------------------------- derived quantities
@@ -486,6 +618,29 @@ function updateProgress(model: ChainModel, state: ChainState): void {
   state.atTarget = len(sub(tip, model.target)) <= Math.max(0.004, model.targetRadius);
 }
 
+/**
+ * Where the leading device's shaped tip is turned to point: the shaft's tangent at the start of the shaped tip and the
+ * unit direction, square to it, that the tip roll bends toward. The reference frame is carried from the sheath along
+ * the device by the smallest rotation at each joint, the same frame the solver bends in.
+ */
+export function shapedTipAim(model: ChainModel, state: ChainState): { origin: Vec3; tangent: Vec3; pointing: Vec3 } {
+  const nodes = state.nodes;
+  const base = Math.max(1, nodes.length - 1 - tipJoints(model, state));
+  let t = model.sheathDir;
+  let nrm = model.sheathNormal;
+  for (let i = 1; i < base; i++) {
+    const t2 = unit(sub(nodes[i + 1]!, nodes[i]!));
+    const axis = cross(t, t2);
+    const sn = len(axis);
+    if (sn > 1e-12) nrm = rotate(nrm, scale(axis, 1 / sn), Math.atan2(sn, dot(t, t2)));
+    nrm = unit(sub(nrm, scale(t2, dot(nrm, t2))));
+    t = t2;
+  }
+  const leading: DeviceId = state.inserted.wire >= state.inserted.catheter ? 'wire' : 'catheter';
+  const roll = state.roll[leading].tip;
+  return { origin: nodes[base]!, tangent: t, pointing: add(scale(nrm, Math.cos(roll)), scale(cross(t, nrm), Math.sin(roll))) };
+}
+
 /** The chain as points, sheath to tip, and the part each device covers. */
 export function devicePoints(model: ChainModel, state: ChainState): Record<DeviceId, Vec3[]> {
   const arc = arcs(state, model.params.spacingM);
@@ -518,15 +673,17 @@ export interface ChainStepResult {
 }
 
 /** How far from the last progress the tip is looked for along the planned path, metres. */
-export const PROGRESS_WINDOW_M = 0.015;
+export const PROGRESS_WINDOW_M = 0.005;
 
 /** Thresholds (illustrative). */
-export const CONTACT_MIN_N = 0.02;
+export const CONTACT_MIN_N = 0.05;
 export const SPIKE_N = 0.5;
+/** How far outside every planned vessel the tip must be for a wrong branch, metres. */
+export const WRONG_BRANCH_M = 0.002;
 export const PROLAPSE_FEED_M = 0.015;
 export const PROLAPSE_PROGRESS_M = 0.003;
 export const PROLAPSE_WINDOW_S = 1;
-export const RISK_SCALE = 2;
+export const RISK_SCALE = 8;
 
 export function stepChain(model: ChainModel, prev: ChainState, control: ChainControl, dt: number): ChainStepResult {
   const p = model.params;
@@ -543,16 +700,21 @@ export function stepChain(model: ChainModel, prev: ChainState, control: ChainCon
   const rotate = clamp(control.rotate, -1, 1);
   const dev = control.device;
 
-  // Torsion: the hub turns at once; the tip follows by stick-slip, limited by length and the last contact loads.
+  // Torsion: the hub turns at once; the tip follows by stick-slip. The twist stored before the tip turns grows with
+  // inserted length and with how hard the device presses on the wall on average (not in total, which would grow with
+  // length a second time), up to a cap: past it the shaft always passes the turn on.
   state.roll[dev].base += rotate * p.rollRadPerS * dt;
   const arcBefore = arcs(state, p.spacingM);
   for (const d of ['wire', 'catheter'] as const) {
     const L = state.inserted[d];
     let contact = 0;
+    let count = 0;
     state.load.forEach((f, i) => {
-      if (arcBefore[i]! <= L) contact += f;
+      if (arcBefore[i]! > L) return;
+      contact += f;
+      count++;
     });
-    const limit = p.stickRadPerM * L + p.stickRadPerN * contact;
+    const limit = Math.min(p.stickMaxRad, p.stickRadPerM * L + p.stickRadPerN * (count ? contact / count : 0));
     const r = state.roll[d];
     const twist = r.base - r.tip;
     if (Math.abs(twist) > limit) {
@@ -591,10 +753,9 @@ export function stepChain(model: ChainModel, prev: ChainState, control: ChainCon
   if (!state.spiking && peak > SPIKE_N) events.push({ kind: 'force_spike', t: state.t, forceN: peak, thresholdN: SPIKE_N });
   state.spiking = peak > SPIKE_N;
   if (!model.planStart.has(state.edge)) {
-    // Count it once the tip is 3 mm inside the branch, not while it grazes the junction.
-    const q = model.lumen.query(state.nodes.at(-1)!);
-    const local = model.lumen.edgeArc(q);
-    const deep = Math.min(local, (model.edgeLength.get(q.seg.edge) ?? 0) - local) > 0.003;
+    // Count it once the tip has left every planned vessel by WRONG_BRANCH_M, not while it crosses a junction (where a
+    // wide vessel's tube overlaps the branches).
+    const deep = model.lumen.query(state.nodes.at(-1)!, model.planEdges).slack > WRONG_BRANCH_M;
     if (deep && state.offPlanEdge !== state.edge) {
       const i = model.plan.indexOf(state.lastPlanEdge);
       events.push({ kind: 'wrong_branch', t: state.t, edge: state.edge, expectedEdge: model.plan[i + 1] ?? state.lastPlanEdge });
