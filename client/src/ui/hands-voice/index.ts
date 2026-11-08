@@ -10,11 +10,13 @@
  * - Cathy's box (bottom right, on screens that answer questions): her questions as buttons, a field that matches a
  *   typed question with the same matcher as voice, and her latest answer, from voice too. Every answer is the screen's
  *   engine template (`onVoice`): deterministic, no AI model and no network.
+ * - Cathy speaks each answer aloud (speech synthesis, Settings → "Cathy speaks", and a Sound button in her box), the
+ *   same words the box or caption shows.
  */
 import type { LoadedCase } from '../../contracts';
-import { createBrowserRecognizer, createWakeListener, matchCommand, resolveVesselTarget, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
+import { createBrowserRecognizer, createBrowserSpeaker, createWakeListener, matchCommand, resolveVesselTarget, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
 import { h } from '../dom';
-import { readSettings } from '../settings-store';
+import { readSettings, SETTINGS_EVENT, updateSettings, type Settings } from '../settings-store';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
 import './hands-voice.css';
 
@@ -153,7 +155,7 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
   const status = h('p', { class: 'hv-status', 'data-testid': 'hands-status' });
   const cameraNote = h('p', { class: 'hv-note' }, 'Camera on. Frames stay on this device.');
   const selfView = h('div', { class: 'hv-self', hidden: true, 'data-testid': 'hands-self-view' }, video, status, cameraNote);
-  const micNotice = h('p', { class: 'pill pill-warning hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
+  const micNotice = h('p', { class: 'hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
   const caption = h('div', { class: 'hv-caption', role: 'status', 'aria-live': 'polite', 'data-testid': 'voice-caption' });
   // Cathy's text stays in the view box (bottom-left, clear of the arteries at the default framing); the webcam
   // self-view sits in the page's bottom-right corner instead, so it never covers the arteries. On Drive it rises
@@ -167,6 +169,22 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
   const questions = QUESTIONS.filter((a) => actions.includes(a));
   // Settings: the Hands and Voice buttons are offered only when the trainee keeps them on (read once per screen).
   const prefs = readSettings();
+  // ---- Cathy's voice: every answer shown is also said, unless muted (Settings or the Sound button)
+  const speaker = createBrowserSpeaker();
+  let speakOn = prefs.speak;
+  const say = (text: string): void => {
+    if (speakOn) speaker.say(text);
+  };
+  const sound = h('button', { type: 'button', class: 'btn btn-secondary btn-small cathy-sound', 'aria-pressed': String(speakOn), 'data-testid': 'cathy-sound', hidden: !speaker.isSupported }, speakOn ? 'Sound on' : 'Sound off');
+  const showSound = (on: boolean): void => {
+    speakOn = on;
+    sound.setAttribute('aria-pressed', String(on));
+    sound.textContent = on ? 'Sound on' : 'Sound off';
+    if (!on) speaker.stop();
+  };
+  sound.addEventListener('click', () => updateSettings({ speak: !speakOn }));
+  const onSettings = (e: Event): void => showSound((e as CustomEvent<Settings>).detail.speak);
+  window.addEventListener(SETTINGS_EVENT, onSettings);
   const cathyOut = h('div', { class: 'cathy-out', role: 'status', 'aria-live': 'polite', 'data-testid': 'cathy-output' });
   cathyOut.append(h('p', { class: 'cathy-hint' }, prefs.voice ? 'Pick a question, type one, or turn Voice on and say “Hey Cathy, …”.' : 'Pick a question or type one.'));
   /**
@@ -176,12 +194,15 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
   const respond = async (action: VoiceAction, asked: string, into: HTMLElement, quiet = false, match?: VoiceMatch): Promise<void> => {
     const youAsked = h('p', { class: 'cathy-asked' }, asked);
     if (!actions.includes(action)) {
+      const line = `${ACTION_WORDS[action]} isn't available on this screen.`;
       into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, `“${ACTION_WORDS[action]}” isn't available on this screen.`));
+      say(line);
       return;
     }
     const text = await onVoice(action, match);
     if (!text && quiet) return;
     into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text ?? 'Done.'));
+    say(text ?? 'Done.');
   };
   let cathyBox: HTMLElement | null = null;
   if (questions.length) {
@@ -204,16 +225,16 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
       const m = matchCommand([{ transcript: typed, confidence: 1 }]);
       const action = m.action ?? typedQuestion(typed, questions);
       if (action) void respond(action, typed, cathyOut, false, m.action ? m : undefined);
-      else
-        cathyOut.replaceChildren(
-          h('p', { class: 'cathy-asked' }, typed),
-          h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, `I can answer: ${questions.map((a) => `“${ACTION_WORDS[a]}”`).join(', ')}.`),
-        );
+      else {
+        const line = `I can answer: ${questions.map((a) => `“${ACTION_WORDS[a]}”`).join(', ')}.`;
+        cathyOut.replaceChildren(h('p', { class: 'cathy-asked' }, typed), h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, line));
+        say(line);
+      }
     });
     // Typing in the box must not drive the wire or trigger the screen's other shortcuts.
     field.addEventListener('keydown', (e) => e.stopPropagation());
     field.addEventListener('keyup', (e) => e.stopPropagation());
-    const body = h('div', { class: 'cathy-body' }, buttons, form, cathyOut, h('p', { class: 'cathy-note' }, 'Answers come from the route engine, not an AI model.'));
+    const body = h('div', { class: 'cathy-body' }, buttons, form, cathyOut, h('div', { class: 'cathy-foot' }, h('p', { class: 'cathy-note' }, 'Answers come from the route engine, not an AI model.'), sound));
     const toggle = h('button', { type: 'button', class: 'cathy-toggle', 'aria-expanded': 'true', 'data-testid': 'cathy-toggle' }, 'Cathy');
     const setOpen = (open: boolean): void => {
       body.hidden = !open;
@@ -288,10 +309,14 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     }
     if (!actions.includes(m.action)) {
       caption.append(h('p', { class: 'hv-answer' }, `“${ACTION_WORDS[m.action]}” isn't available on this screen.`));
+      say(`${ACTION_WORDS[m.action]} isn't available on this screen.`);
       return;
     }
     const text = await onVoice(m.action, m);
-    if (text) caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text));
+    if (text) {
+      caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text));
+      say(text);
+    }
   };
   const onState = (state: WakeState): void => {
     host.dataset['mic'] = state;
@@ -333,6 +358,8 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
       tracker = null;
       wake.stop();
       recognizer.abort?.();
+      speaker.stop();
+      window.removeEventListener(SETTINGS_EVENT, onSettings);
       if (window.__threadsimHands) delete window.__threadsimHands;
       panel.remove();
       selfView.remove();

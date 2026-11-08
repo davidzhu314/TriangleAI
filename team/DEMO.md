@@ -1,4 +1,4 @@
-# ThreadSim — 3-minute demo script
+# Cathy — 3-minute demo script
 
 Owner: Aroovee. Source: spec §7.4, copied as written; each beat adds one fallback line. The Playwright test in `tests/e2e/` follows this file beat by beat in rail mode. Change the beats only by a request to all, because they decide what gets built.
 

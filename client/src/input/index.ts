@@ -14,7 +14,8 @@ export type { GestureConfig, GestureOutput, HandFrame, HandObservation, HandOutp
 export { VOICE_ACTIONS, VOICE_COMMANDS, type VoiceAction } from './voice/commands';
 export { matchCommand, matchZoomTo, type SpeechAlternative, type VoiceMatch } from './voice/match';
 export type { Recognizer } from './voice/recognizer';
-export { createBrowserRecognizer } from './voice/speech';
+export { createBrowserRecognizer, createBrowserSpeaker } from './voice/speech';
+export { createSpeaker, pickVoice, spokenText, type Speaker } from './voice/speaker';
 export { createWakeListener, FATAL_SPEECH_ERRORS, startsWithWake, type WakeListener, type WakeState } from './voice/wake';
 export { GESTURE_HELP, VOICE_HELP, type GestureHelp, type VoiceHelp } from './help';
 export { resolveVesselTarget, type VesselTarget } from './voice/vessel-target';

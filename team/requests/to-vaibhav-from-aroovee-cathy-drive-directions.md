@@ -19,3 +19,10 @@ Timing: before the demo if it's a template change you're comfortable with; other
 
 ## Answer
 
+
+2026-11-08 · Vaibhav: **done** on `vaibhav/cathy-directions` (draft PR). All three, with your wording, tested on `low-tort` in `client/src/score/live-directions.test.ts`:
+1. **Same vessel next:** "Keep going along the Aorta. The next branch is the Brachiocephalic trunk." (`assist.keep_going`; it says "along", not "up", since the same line serves routes going down). When the target is in that same vessel, it's "Keep going along the {vessel}. The {target} is ahead." (`assist.keep_going_target`).
+2. **Past the opening:** "You've gone past the opening of the Brachiocephalic trunk. Pull back until the tip is at the opening, then rotate toward it." (`assist.past_opening`). It's used when the tip is off the plan in a vessel the plan also uses, and the way back is a different vessel. A real wrong branch into a differently named vessel still gets "You're in the X. Pull back toward the Y."
+3. **Reaching the target:** on the last planned edge before the target, "You're on the plan. The Right common carotid is ahead." now leads, so the force line no longer comes first. `assist.at_target` still leads once `target_reached` fires.
+
+`assist_check` ("am I on the right path") uses the same lines. One blocker: Gibran's `tests/engine/cathy-grounding.test.ts` pins the old edge-by-edge lines (26 tests), and I need his OK to update it.

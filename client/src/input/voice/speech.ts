@@ -8,6 +8,7 @@
 
 import type { SpeechAlternative } from './match';
 import type { Recognizer } from './recognizer';
+import { createSpeaker, type Speaker, type Synth, type SynthUtterance } from './speaker';
 
 /** The part of the Web Speech API used here (not in TypeScript's DOM lib everywhere). */
 interface WebSpeechRecognition {
@@ -77,4 +78,15 @@ export function createBrowserRecognizer(lang = 'en-US'): Recognizer {
   rec.onend = () => r.onEnd?.();
   rec.onerror = (e) => r.onError?.(String((e as { error?: unknown } | null)?.error ?? 'unknown')); // onend follows an error
   return r;
+}
+
+/**
+ * Cathy's voice in this browser (`speechSynthesis`), or a silent speaker where there is none, and under automation
+ * (Playwright), so test runs stay quiet. Speaking needs no network with an on-device voice (see ./speaker).
+ */
+export function createBrowserSpeaker(lang = 'en-US'): Speaker {
+  const w = (globalThis as { window?: { speechSynthesis?: Synth; SpeechSynthesisUtterance?: new (t: string) => SynthUtterance; navigator?: { webdriver?: boolean } } }).window;
+  const Utt = w?.SpeechSynthesisUtterance;
+  if (!w || w.navigator?.webdriver || !w.speechSynthesis || !Utt) return createSpeaker({ synth: null, makeUtterance: null });
+  return createSpeaker({ synth: w.speechSynthesis, makeUtterance: (t) => new Utt(t), lang });
 }

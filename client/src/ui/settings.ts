@@ -83,6 +83,7 @@ export function renderSettings(root: HTMLElement): Promise<void> {
       h('h2', { id: 'settings-general' }, 'General'),
       switchRow('hands', 'Hand gestures', 'Show the Hands button on Plan, Compare and Drive, to drive and move the view with the camera.', s.hands, (on) => updateSettings({ hands: on })),
       switchRow('voice', 'Voice dictation', 'Show the Voice button, to give “Hey Cathy, …” commands by speaking. Chrome sends the audio to Google.', s.voice, (on) => updateSettings({ voice: on })),
+      switchRow('speak', 'Cathy speaks', 'Cathy reads her answers aloud. Her answers are always shown as text too. An on-device voice is used when the browser has one.', s.speak, (on) => updateSettings({ speak: on })),
       themeRow(s.theme),
     ),
     h(
