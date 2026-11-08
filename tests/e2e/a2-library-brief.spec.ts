@@ -33,18 +33,20 @@ async function drop(page: Page, bytes: Buffer): Promise<void> {
 async function importBroken(page: Page, name: string): Promise<ReturnType<Page['getByTestId']>> {
   await page.goto('/#/library');
   await expect(page.getByTestId('next-case')).toBeVisible();
+  await page.getByTestId('add-case').click(); // the import panel lives in the "Add a case" dialog
+  await expect(page.getByTestId('add-case-dialog')).toBeVisible();
   await drop(page, brokenZip(name));
   const result = page.getByTestId('import-result');
   await expect(result).not.toBeEmpty();
   return result;
 }
 
-/** fixture-y's block: the next-case card when V6 picks it, otherwise its row among the other cases. */
+/** fixture-y's card: the suggested next case when V6 picks it, otherwise its card in the grid. */
 async function fixtureY(page: Page) {
   const next = page.getByTestId('next-case');
   await expect(next).toBeVisible();
   const isNext = (await next.getByRole('heading', { name: 'Test fixture: Y branch' }).count()) > 0;
-  return { block: isNext ? next : page.locator('.case-row', { hasText: 'Test fixture: Y branch' }), isNext };
+  return { block: isNext ? next : page.locator('.case-card', { hasText: 'Test fixture: Y branch' }), isNext };
 }
 
 test('Library shows fixture-y with its badges, a next case, and the honesty line', async ({ page }) => {
@@ -61,7 +63,7 @@ test('Library shows fixture-y with its badges, a next case, and the honesty line
 test('Case brief shows the case fields and goes to Plan', async ({ page }) => {
   await page.goto('/#/library');
   const { block, isNext } = await fixtureY(page);
-  await block.getByRole('link', { name: isNext ? 'Open case' : 'Test fixture: Y branch' }).click();
+  await block.getByRole('link', { name: 'Test fixture: Y branch' }).click(); // the card's title enters the case
   await expect(page).toHaveURL(/#\/case\/fixture-y$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Test fixture: Y branch' })).toBeVisible();
   const card = page.getByTestId('scenario-card');
@@ -126,7 +128,10 @@ test('privacy: one notice in a details view, no dialog, no patient values', asyn
   await expect(details.locator('summary')).toHaveText('1 notice from the checks');
   await details.locator('summary').click();
   await expect(details.locator('[data-check=privacy]')).toContainText('Removed');
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  // The notice opens nothing of its own: the only dialog is the 'Add a case' one the trainee opened to import.
+  await expect(page.getByRole('dialog')).toHaveCount(1);
+  await expect(page.getByRole('dialog', { name: 'Add a case' })).toBeVisible();
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await expect(page.locator('body')).not.toContainText(/PLACEHOLDER|19000101/);
 });
 

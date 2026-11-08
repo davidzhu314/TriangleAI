@@ -15,12 +15,12 @@ colors:
   primary: "#1f1e1e"
   primary-foreground: "#ffffff"
   link: "#1f1e1e"
-  focus: "#0b6a7d"
-  brand: "#0b6a7d"
+  focus: "#8e2433"
+  brand: "#8e2433"
   positive: "#247b50"
   negative: "#c4242a"
   warning: "#92400e"
-  chart-1: "#0b6a7d"
+  chart-1: "#2f5584"
   chart-2: "#2e2d2d"
   chart-3: "#706e6d"
 typography:
@@ -131,6 +131,20 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 **Face and signature, chosen before any screen.** The face is the brand hue on the main data element. The signature element is the **route trace**: the player's route as one heavier teal line, the same line on Plan, Compare and the Results replay, so a trainee follows one object through the whole case.
 
 ## Colors
+
+**Oxblood & Navy (2026-11-08, Aroovee's choice for the demo).** Arteries and veins name the two hues, so the palette says what the app is about before any screen does:
+
+| Role | Light | Dark | Use |
+| --- | --- | --- | --- |
+| Ground | `#f6f5f3` warm off-white (short of cream) | true neutral, unchanged | `--color-background` |
+| Ink | `#1b2a44` navy | unchanged neutral light ink | headings, figures, the one filled button (`--color-primary`) |
+| Text | `#3e4656` navy-grey, muted `#5f6673` | unchanged | running text, labels |
+| Oxblood (artery) | `#8e2433`, tint `#f6e7e9` | `#e08591`, tint `#3b2125` | `--color-brand`: the accent, the suggested case, focus, artery drawings; never a button fill |
+| Steel blue (vein) | `#2f5584`, tint `#e6edf6` | `#8fb0db`, tint `#1e2a38` | `--color-vein`, `--color-link`, the player's route (`--color-route-player`), the Library's picture tiles |
+| Danger | `#c4242a` | unchanged | forbidden zones and errors: brighter and redder than oxblood, so the accent never reads as a warning |
+
+The player's route moved from teal to steel blue, so on Plan it stays apart from the red risk zones. The dark theme stays true neutral: only the accents are lifted.
+
 
 | Role | Token | Use it for | Never for |
 | --- | --- | --- | --- |
@@ -243,6 +257,14 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 ## Motion
 
 Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover and press, `--duration-base` for menus, `--duration-slow` for sheets, `--ease-standard` throughout. Nothing performs an entrance. `theme.css` honours reduced motion. The contrast fade is the one timed effect, and it belongs to the X-ray shader.
+
+### Library (2026-11-08)
+
+- A grid of case cards, three across at desktop, two at tablet, one on a phone. Each card: the case's own flat vessel drawing (oxblood on a vein-blue tile, decorative), the title as the link into the case (the whole card is its hit area), the synopsis (case.json `scenario`, or the trainee's own), difficulty, mode, stars, and "Left off at Plan" or "Left off at Results" with a link back when the case was started this session.
+- Filters over the grid: Difficulty (segmented) and Arch type (a select). No age filter and no "Assigned" tab: the cases carry no patient age, and nothing assigns cases yet.
+- "+ Add a case" opens a dialog: Name, Synopsis, then the import drop zone with its checks and fixes. The name and synopsis replace the package's own on the card only.
+- "…" on a card: "Download case (.zip)", the package as loaded. Never "MRI": the cases are CT angiograms and generated models.
+- The suggested next case is first, marked "Suggested next" and edged in oxblood.
 
 ## Iconography & Graphics
 

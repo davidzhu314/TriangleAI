@@ -352,6 +352,7 @@ test('2:45 Scale: the 3D Slicer-exported ts-s1404-cta case.zip imports, validate
   // DEMO.md: the presenter drags in the D3c fixture, zipped from its committed files (slicer/README.md).
   const c = cases.get('ts-s1404-cta')!;
   await page.goto(app('#/library'));
+  await page.getByTestId('add-case').click(); // "+ Add a case" opens the dialog with the drop zone
   const zip = writeZip(Object.entries(caseFiles('ts-s1404-cta')));
   await page.getByTestId('import-input').setInputFiles({ name: 'ts-s1404-cta.zip', mimeType: 'application/zip', buffer: Buffer.from(zip) });
   await expect(page.getByRole('status').first()).toContainText(`Loaded “${c.title}”`);

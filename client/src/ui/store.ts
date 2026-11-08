@@ -279,3 +279,52 @@ export function saveDrive(key: string, drive: SavedDrive): void {
 export function savedDrive(key: string): SavedDrive | undefined {
   return readDrives()[key] ?? memoryDrives.get(key);
 }
+
+// ---------------------------------------------------------------- the trainee's own name and synopsis for a case
+
+/** What the trainee typed when adding a case: shown on its Library card in place of case.json's title and scenario. */
+export interface CaseMeta {
+  name?: string;
+  synopsis?: string;
+}
+
+const META_KEY = 'threadsim.casemeta.v1';
+
+function readMeta(): Record<string, CaseMeta> {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(META_KEY) ?? '{}');
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, CaseMeta>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function caseMeta(key: string): CaseMeta {
+  return readMeta()[key] ?? {};
+}
+
+/** Save a name and synopsis for a case; blank fields fall back to the package's own. */
+export function saveCaseMeta(key: string, meta: CaseMeta): void {
+  const name = meta.name?.trim();
+  const synopsis = meta.synopsis?.trim();
+  const clean: CaseMeta = { ...(name ? { name } : {}), ...(synopsis ? { synopsis } : {}) };
+  try {
+    localStorage.setItem(META_KEY, JSON.stringify({ ...readMeta(), [key]: clean }));
+  } catch {
+    // storage blocked: the card shows the package's own title
+  }
+}
+
+// ---------------------------------------------------------------- where the trainee left off
+
+export type CaseStage = 'plan' | 'results';
+
+/**
+ * The furthest step this session reached on a case, for "Left off at …" on its card: a finished drive waits on
+ * Results; a route with at least one step waits on Plan. Null when the case wasn't started this session.
+ */
+export function stageFor(key: string): CaseStage | null {
+  if (savedDrive(key)) return 'results';
+  const plan = savedPlan(key);
+  return plan && plan.edges.length > 0 ? 'plan' : null;
+}
