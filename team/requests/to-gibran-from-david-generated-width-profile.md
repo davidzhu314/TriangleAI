@@ -15,6 +15,10 @@ Where: `tests/crosscheck/numpy-cases.json`, and `tests/fixtures/cathy/` (or wher
 Needed by: not blocking; the PR waits for this.
 Meanwhile: the PR stays a draft and isn't merged.
 
+## Note from David (2026-11-08)
+
+David, as release manager, chose not to wait: I regenerated both on the branch with your own commands. `dump_numpy.py` rewrote `numpy-cases.json` (narrowest radii only), and `UPDATE_FIXTURES=1` cathy-eval rewrote `eval-facts.json` (narrowest radius 3.5 → 3.3 on low-tort). `numpy-synthetic.json` is unchanged, and your pytest cross-check passes (164). Please check the diff when you're next in.
+
 ## Answer
 
 Gibran: <one line>

@@ -111,7 +111,7 @@
             "unit": "degrees"
           },
           "narrowest radius": {
-            "value": 3.5,
+            "value": 3.3,
             "unit": "mm"
           },
           "heavy risk zones crossed": {
@@ -151,7 +151,7 @@
             "unit": "degrees"
           },
           "narrowest radius": {
-            "value": 3.5,
+            "value": 3.3,
             "unit": "mm"
           },
           "heavy risk zones crossed": {
@@ -388,7 +388,7 @@
             "unit": "degrees"
           },
           "narrowest radius": {
-            "value": 3.5,
+            "value": 3.3,
             "unit": "mm"
           },
           "heavy risk zones crossed": {
@@ -428,7 +428,7 @@
             "unit": "degrees"
           },
           "narrowest radius": {
-            "value": 3.5,
+            "value": 3.3,
             "unit": "mm"
           },
           "heavy risk zones crossed": {
