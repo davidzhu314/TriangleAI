@@ -85,7 +85,7 @@ const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
   lost: 'Hand lost. Show it again.',
   gun: 'Gun pose: barrel straight pushes, half-curled holds, curled pulls; twist to rotate.',
   point: 'Pointing: pinch to pick the branch under the dot.',
-  pan: 'Turning: move your hand to turn the case; two hands moving opposite ways roll it.',
+  pan: 'Turning: move the pinch to turn the case; twist it to roll.',
 };
 
 /** What the gun pose is doing to the wire this frame, shown after the pose's words. */
@@ -261,7 +261,8 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     if (g?.pan) {
       const l = g.hands.Left.pan;
       const r = g.hands.Right.pan;
-      onPan?.(g.pan.dx, g.pan.dy, l && r ? (l.dy - r.dy) / 2 : 0);
+      // Roll: the pinch-grab's twist when it gives one; else two fists moving opposite ways.
+      onPan?.(g.pan.dx, g.pan.dy, g.pan.roll ?? (l && r ? (l.dy - r.dy) / 2 : 0));
     }
     onGesture?.(g);
   };

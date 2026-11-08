@@ -20,11 +20,15 @@
  *   `select` once on entering it, and freezes the pointer where it was PINCH_FREEZE_BACK_MS before.
  * - Pan: index, middle and ring out, like three fingers on a trackpad. Each frame's movement of the
  *   knuckles (smoothed, user's view) × PAN_GAIN is `pan`, with a small dead zone against jitter.
+ * - Pinch-grab (the non-dominant hand only): a held pinch, thumb tip to index tip, whatever the other fingers do,
+ *   grabs the view. The pinch point's movement × PAN_GAIN is `pan`, and twisting the pinching hand from where the
+ *   grab started is `pan.roll`. Opening the pinch (above PINCH_EXIT, after the grace period) lets go. The fist
+ *   pan still works on either hand; on the dominant hand a pinch while pointing is still a select.
  */
 
 import { DEBOUNCE_MS, MIN_SCORE, NEUTRAL_CAPTURE_MS, ONE_EURO, PAN_DEADZONE, PAN_GAIN, PINCH_ENTER, PINCH_EXIT, PINCH_FREEZE_BACK_MS, RELEASE_GRACE_MS } from './constants';
 import { OneEuro } from './filter';
-import { curlOf, isGun, isPan, isPoint, knuckleLine, panAnchor, pinchRatio, pushFromCurl, rotateFromTwist, thumbStillUp, toUserView, twistDeg, type Vec } from './pose';
+import { curlOf, isGun, isPan, isPoint, knuckleLine, panAnchor, pinchPoint, pinchRatio, pushFromCurl, rotateFromTwist, thumbStillUp, toUserView, twistDeg, type Vec } from './pose';
 import { LM, type GestureConfig, type GestureOutput, type HandFrame, type HandObservation, type HandOutput, type HandStatus } from './types';
 
 type Pose = 'gun' | 'point' | 'pan';
@@ -46,9 +50,19 @@ const engaged = (s: HandStatus): boolean => s === 'gun' || s === 'point' || s ==
 const dead = (d: number): number => (Math.abs(d) <= PAN_DEADZONE ? 0 : d);
 
 /** One hand's machine: follows the best-scored hand MediaPipe labels `side` (after `toUserView`). */
-export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side: Side): HandMachine {
+/** Twist below this per frame is jitter, not a roll, degrees. */
+const ROLL_DEADZONE_DEG = 0.5;
+
+/**
+ * One hand's machine. `grab`: this is the non-dominant hand, so a held pinch grabs the view (see the header).
+ */
+export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side: Side, grab = false): HandMachine {
   let status: HandStatus = 'none';
-  let candidate: { pose: Pose; sinceMs: number } | null = null;
+  let candidate: { pose: Pose; sinceMs: number; pinchGrab: boolean } | null = null;
+  /** The engaged pan is the pinch-grab, not the fist. */
+  let pinchGrab = false;
+  let grabNeutral: Vec | null = null;
+  let lastTwist = 0;
   /** When the engaged pose first failed its STAY checks (null while it holds). */
   let brokenSinceMs: number | null = null;
   // gun
@@ -86,6 +100,9 @@ export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side:
     axF.reset();
     ayF.reset();
     lastAnchor = null;
+    grabNeutral = null;
+    lastTwist = 0;
+    twistF.reset();
   };
   const resetPose = (p: HandStatus) => {
     if (p === 'gun') resetGun();
@@ -139,7 +156,7 @@ export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side:
 
     // keep an engaged pose at the STAY level, with a grace period; a dropped thumb releases the gun at once
     if (engaged(status)) {
-      const holds = status === 'gun' ? isGun(w, 'stay') : status === 'point' ? isPoint(w, 'stay', pinch) : isPan(w, 'stay');
+      const holds = status === 'gun' ? isGun(w, 'stay') : status === 'point' ? isPoint(w, 'stay', pinch) : pinchGrab ? pinch <= PINCH_EXIT : isPan(w, 'stay');
       if (holds) brokenSinceMs = null;
       else brokenSinceMs ??= t;
       const thumbDropped = status === 'gun' && !thumbStillUp(w);
@@ -150,14 +167,18 @@ export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side:
       }
     }
     if (!engaged(status)) {
-      const pose: Pose | null = isGun(w, 'enter') ? 'gun' : isPoint(w, 'enter') ? 'point' : isPan(w, 'enter') ? 'pan' : null;
+      // On the non-dominant hand a held pinch grabs, ahead of pointing (its pinch would otherwise select).
+      const grabbing = grab && pinch < PINCH_ENTER && !isGun(w, 'enter');
+      const pose: Pose | null = isGun(w, 'enter') ? 'gun' : grabbing ? 'pan' : isPoint(w, 'enter') ? 'point' : isPan(w, 'enter') ? 'pan' : null;
       status = 'none';
       if (!pose) candidate = null;
-      else if (!candidate || candidate.pose !== pose) candidate = { pose, sinceMs: t };
+      else if (!candidate || candidate.pose !== pose || candidate.pinchGrab !== grabbing) candidate = { pose, sinceMs: t, pinchGrab: grabbing };
       if (candidate && t - candidate.sinceMs >= DEBOUNCE_MS) {
         status = candidate.pose;
+        pinchGrab = candidate.pose === 'pan' && candidate.pinchGrab;
         candidate = null;
         resetPose(status);
+        if (pinchGrab) grabNeutral = knuckleLine(w);
         if (status === 'gun') {
           engagedMs = t;
           capturing = true;
@@ -195,10 +216,18 @@ export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side:
     }
 
     if (status === 'pan') {
-      const raw = panAnchor(hand.image);
+      const raw = pinchGrab ? pinchPoint(hand.image) : panAnchor(hand.image);
       const a = { x: axF.filter(raw.x, t), y: ayF.filter(raw.y, t) };
-      const pan = lastAnchor ? { dx: dead((a.x - lastAnchor.x) * PAN_GAIN), dy: dead((a.y - lastAnchor.y) * PAN_GAIN) } : { dx: 0, dy: 0 };
+      const pan: { dx: number; dy: number; roll?: number } = lastAnchor ? { dx: dead((a.x - lastAnchor.x) * PAN_GAIN), dy: dead((a.y - lastAnchor.y) * PAN_GAIN) } : { dx: 0, dy: 0 };
       lastAnchor = a;
+      if (pinchGrab && grabNeutral) {
+        // Roll: this frame's change in the pinching hand's twist since the grab started, in half-turns.
+        const twist = twistF.filter(twistDeg(w, grabNeutral), t);
+        const delta = twist - lastTwist;
+        lastTwist = twist;
+        pan.roll = Math.abs(delta) <= ROLL_DEADZONE_DEG ? 0 : delta / 180;
+        return out(null, null, false, pan, { pinch, twistDeg: twist });
+      }
       return out(null, null, false, pan, { pinch });
     }
 
@@ -210,21 +239,30 @@ export function createHandMachine(config: Omit<GestureConfig, 'dominant'>, side:
 
 /** Both hands: one machine each, combined (see GestureOutput). */
 export function createGestureMachine(config: GestureConfig): GestureMachine {
-  const machines = { Left: createHandMachine(config, 'Left'), Right: createHandMachine(config, 'Right') };
   const otherSide: Side = config.dominant === 'Right' ? 'Left' : 'Right';
+  // The non-dominant hand grabs the view with a pinch; the dominant hand's pinch stays a select.
+  const machines = { Left: createHandMachine(config, 'Left', otherSide === 'Left'), Right: createHandMachine(config, 'Right', otherSide === 'Right') };
 
   function step(frame: HandFrame): GestureOutput {
     const hands = { Left: machines.Left.step(frame), Right: machines.Right.step(frame) };
     const dom = hands[config.dominant];
     const oth = hands[otherSide];
     const lead = engaged(dom.status) || !engaged(oth.status) ? dom : oth;
-    const pans = [dom.pan, oth.pan].filter((p): p is { dx: number; dy: number } => p !== null);
+    const pans = [dom.pan, oth.pan].filter((p): p is { dx: number; dy: number; roll?: number } => p !== null);
+    const rolls = pans.filter((p) => p.roll !== undefined);
     return {
       status: lead.status === 'none' && (dom.status === 'lost' || oth.status === 'lost') ? 'lost' : lead.status,
       control: dom.control ?? oth.control,
       pointer: dom.pointer ?? oth.pointer,
       select: dom.select || oth.select,
-      pan: pans.length === 0 ? null : { dx: pans.reduce((s, p) => s + p.dx, 0) / pans.length, dy: pans.reduce((s, p) => s + p.dy, 0) / pans.length },
+      pan:
+        pans.length === 0
+          ? null
+          : {
+              dx: pans.reduce((s, p) => s + p.dx, 0) / pans.length,
+              dy: pans.reduce((s, p) => s + p.dy, 0) / pans.length,
+              ...(rolls.length ? { roll: rolls.reduce((s, p) => s + (p.roll ?? 0), 0) } : {}),
+            },
       debug: lead.debug,
       hands,
     };

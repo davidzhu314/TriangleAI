@@ -49,8 +49,8 @@ export const GESTURE_HELP: readonly GestureHelp[] = [
   { id: 'hold', name: 'Hold', how: 'In the gun, fingers half curled', does: 'Holds the wire still', where: 'drive' },
   { id: 'pull', name: 'Pull', how: 'In the gun, fingers curled', does: 'Pulls the wire back', where: 'drive' },
   { id: 'rotate', name: 'Rotate', how: 'In the gun, twist the hand', does: 'Rolls the wire tip', where: 'drive' },
-  { id: 'pan', name: 'Pan', how: 'Make a fist, thumb tucked, and move it: grab and drag', does: 'Moves and turns the view', where: 'any' },
-  { id: 'two-hands', name: 'Two hands', how: 'One hand in the gun, the other a fist', does: 'Drive and move the view at once', where: 'any' },
+  { id: 'pan', name: 'Turn the view', how: 'With your other hand, pinch thumb to index and move it; twist the pinch to roll (a fist also works)', does: 'Turns the case on three axes', where: 'any' },
+  { id: 'two-hands', name: 'Two hands', how: 'One hand in the gun, the other pinching', does: 'Drive and turn the view at once', where: 'any' },
   { id: 'point', name: 'Point', how: 'Index out, the other fingers folded', does: 'Moves the pointer', where: 'plan' },
   { id: 'pinch', name: 'Pinch', how: 'While pointing, touch thumb to index tip', does: 'Picks the branch under the pointer', where: 'plan' },
 ];
