@@ -1,0 +1,47 @@
+{
+  "schema": "threadsim.visual-alignment/1",
+  "caseId": "type-i-plaque",
+  "model": "assets/vascular/bodyparts3d-aortic.glb",
+  "scale": 0.932666,
+  "rotationDeg": [
+    -2.4436,
+    0.9373,
+    16.3962
+  ],
+  "translationMm": [
+    36.51,
+    -148.443,
+    -890.727
+  ],
+  "method": "landmark-fit",
+  "landmarks": {
+    "bca": [
+      "brachiocephalic_trunk"
+    ],
+    "rcca": [
+      "r_carotid_arteries"
+    ],
+    "lcca": [
+      "l_carotid_arteries"
+    ],
+    "r_subclavian": [
+      "r_subclavian_arteries"
+    ],
+    "l_subclavian": [
+      "l_subclavian_arteries"
+    ],
+    "r_iliac": [
+      "r_common_iliac_arteries",
+      "r_external_iliac_arteries"
+    ],
+    "l_iliac": [
+      "l_common_iliac_arteries",
+      "l_external_iliac_arteries"
+    ]
+  },
+  "recorded": {
+    "inside": 0.4623,
+    "medianExcessMm": 9.8,
+    "rmsMm": 11.36
+  }
+}
