@@ -45,6 +45,7 @@ export const FEEDBACK_TEMPLATES = {
   'assist.complete': 'Your route already reaches the {target}.',
   'assist.no_continuation': 'No route to the {target} continues from here; undo the last branch.',
   'assist.no_safe_route': 'No safe way on from here with this wire.',
+  'assist.cannot_steer': "This wire can't steer into any of the ways on from here; try another wire or entry.",
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;

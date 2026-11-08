@@ -72,10 +72,14 @@ export function planAssistLine(assist: PlanAssist, c: LoadedCase, targetId: stri
       return feedbackLine('assist.complete', { target: n.target(targetId) }, 'rank.weighted');
     case 'no_continuation':
       return feedbackLine('assist.no_continuation', { target: n.target(targetId) }, 'rank.weighted');
+    case 'cannot_steer':
+      return feedbackLine('assist.cannot_steer', {}, 'plan.feasible');
   }
-  const vessels = [...new Set(assist.options.map((o) => vesselOf(o.edge)))].join(', ');
+  // only options the wire can steer are spoken (all of them when steering wasn't checked)
+  const spoken = assist.options.filter((o) => o.steerable !== false);
+  const vessels = [...new Set(spoken.map((o) => vesselOf(o.edge)))].join(', ');
   if (assist.reason === 'off_frontier') return feedbackLine('assist.off_frontier', { vessels }, 'rank.weighted');
-  if (ask === 'options') return feedbackLine('assist.options', { n: assist.options.length, vessels }, 'rank.weighted');
+  if (ask === 'options') return feedbackLine('assist.options', { n: spoken.length, vessels }, 'rank.weighted');
   const best = assist.best!;
   const label = best.labels.map((l) => l.replace(/_/g, ' ')).join(', ');
   return label

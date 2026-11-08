@@ -8,13 +8,16 @@ import { expect, test, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import type { WireState } from '../../client/src/contracts';
 
+/** Prebundled up front, so a cold dependency cache never reloads a page mid-test when three.js first loads. */
+const THREE_DEPS = { include: ['three', 'three/examples/jsm/controls/OrbitControls.js', 'three/examples/jsm/loaders/GLTFLoader.js'] };
+
 test.describe.configure({ mode: 'serial' });
 
 let vite: ViteDevServer;
 let base = '';
 
 test.beforeAll(async () => {
-  vite = await createServer({ configFile: false, root: process.cwd(), logLevel: 'silent', server: { port: 0, strictPort: false, hmr: false }, appType: 'mpa' });
+  vite = await createServer({ configFile: false, root: process.cwd(), logLevel: 'silent', server: { port: 0, strictPort: false, hmr: false }, appType: 'mpa', optimizeDeps: THREE_DEPS });
   await vite.listen();
   const addr = vite.httpServer?.address();
   base = typeof addr === 'object' && addr ? `http://localhost:${addr.port}` : '';

@@ -20,6 +20,7 @@ import { href } from '../router';
 import { renderShell } from '../shell';
 import { entry, loadBundled, loadedCase, saveDrive, savedPlan, type SavedPlan } from '../store';
 import './drive.css';
+import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 
 type SelectModule = { selectWireSource?: (c: LoadedCase) => Promise<WireSource> };
@@ -54,6 +55,8 @@ export function disposeDrive(): void {
 interface Live {
   state: WireState | null;
   fluoroUsedS: number;
+  /** The wire has reached the target in this drive: fluoro stops counting (fluoro-cap.ts). */
+  reached: boolean;
   lastT: number | null;
   mode: DriveViewMode;
 }
@@ -121,13 +124,19 @@ export function mountDrive(root: HTMLElement, { key, c, plan, getWireSource }: D
 function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph, plan: SavedPlan, planned: Route | null, getWireSource: WireFactory): void {
   const target = c.targets.find((t) => t.id === plan.targetId)?.name ?? plan.targetId;
   const expert = c.difficulty === 'expert';
-  const live: Live = { state: null, fluoroUsedS: 0, lastT: null, mode: expert ? 'xray' : 'front' };
+  const live: Live = { state: null, fluoroUsedS: 0, reached: false, lastT: null, mode: expert ? 'xray' : 'front' };
   const held = new Set<'push' | 'pull' | 'left' | 'right' | 'fluoro'>();
   let puffPending = false;
   let source: WireSource | null = null;
 
   // ---- view
-  const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire.`);
+  // AR (A7): the controller drives through the same step as a gamepad (window animation frames pause in an
+  // immersive session), and the HUD's words float beside the model.
+  let arStep: (pad: PadSnapshot | null) => void = () => undefined;
+  const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire. Drag to turn it.`, {
+    onFrame: (pad) => arStep(pad),
+    panel: () => [...casePanel.querySelectorAll('.hud-row')].map((r) => (r.textContent ?? '').replace(/\s+/g, ' ').trim()),
+  });
   const startNode = graph.entries.get(plan.entryId);
   const targetNode = graph.targets.get(plan.targetId);
   const overview = routeOverview(c, startNode, plan.edges);
@@ -223,7 +232,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const banner = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-banner' });
   /** The fallback notice stays up for the rest of the drive (DESIGN.md: notices never stop the drive). */
   const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch), notice, banner);
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -318,14 +327,17 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
 
   let lastPad: PadSnapshot | null = null;
   let raf = 0;
-  const tick = (): void => {
-    const gp = typeof navigator.getGamepads === 'function' ? [...navigator.getGamepads()].find((g) => g) : null;
-    const pad: PadSnapshot | null = gp ? { axes: [...gp.axes], buttons: gp.buttons.map((b) => b.value) } : null;
+  const step = (pad: PadSnapshot | null): void => {
     if (padPuff(lastPad, pad)) triggerPuff();
     lastPad = pad;
     const frame = controlFrame(held, pad, puffPending);
     puffPending = false;
     source?.control(frame);
+  };
+  arStep = step;
+  const tick = (): void => {
+    const gp = typeof navigator.getGamepads === 'function' ? [...navigator.getGamepads()].find((g) => g) : null;
+    step(gp ? { axes: [...gp.axes], buttons: gp.buttons.map((b) => b.value) } : null);
     raf = requestAnimationFrame(tick);
   };
 
@@ -341,7 +353,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     unsubscribe = [];
     const log = await running.stop().catch(() => null);
     if (!log) return false;
-    saveDrive(key, { plan, log });
+    saveDrive(key, { plan, log: capFluoroAtTarget(log) }); // fluoro after the target is not counted, as on the HUD
     sync();
     return true;
   }
@@ -353,6 +365,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     source = null;
     live.state = null;
     live.fluoroUsedS = 0;
+    live.reached = false;
     live.lastT = null;
     fellBackTo = null;
     notice.textContent = '';
@@ -366,7 +379,9 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     source = next;
     unsubscribe.push(
       next.onState((s) => {
-        if (live.lastT !== null && s.fluoro) live.fluoroUsedS += Math.max(0, s.t - live.lastT);
+        // Fluoro counts up to the state that reaches the target, then stops (the saved log is capped the same way).
+        if (live.lastT !== null && s.fluoro && !live.reached) live.fluoroUsedS += Math.max(0, s.t - live.lastT);
+        live.reached ||= s.atTarget;
         live.lastT = s.t;
         live.state = s;
         sync();

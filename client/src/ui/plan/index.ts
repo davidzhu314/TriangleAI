@@ -33,9 +33,14 @@ const graphFor = (c: LoadedCase): RouteGraph => {
 
 /** The view of the screen currently shown, disposed when the screen re-renders or the route changes. */
 let liveView: PlanView | null = null;
+/** The view is kept across redraws of the same case, so the 3D camera stays where the player turned it. */
+let liveCase: LoadedCase | null = null;
+let pickNow: (node: string) => void = () => undefined;
+let panelLines: string[] = [];
 export function disposePlanView(): void {
   liveView?.dispose();
   liveView = null;
+  liveCase = null;
 }
 
 function presetOf(id: WirePresetId): WirePreset {
@@ -202,12 +207,25 @@ function draw(sc: Screen): void {
   });
 
   // ---- view
-  disposePlanView();
-  const view = createPlanView(c, (node) => {
+  pickNow = (node) => {
     const next = extendTo(graph, sc.state, node);
     if (next) set(next);
-  });
-  liveView = view;
+  };
+  // The AR cost panel (A7): the same rows as the readout, in words, from the cost vector.
+  panelLines = [
+    'Route cost',
+    ...COST_ROWS.map((row) => {
+      const f = formatCost(row, route?.cost);
+      return `${row.label}: ${f.value === null ? '—' : `${f.value}${f.unit ? ` ${f.unit}` : ''}`}`;
+    }),
+    ...(warnings[0] ? [warnings[0].text] : []),
+  ];
+  if (!liveView || liveCase !== c) {
+    disposePlanView();
+    liveView = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines });
+    liveCase = c;
+  }
+  const view = liveView;
   view.update({ routeEdges: s.edges, pickable: steps.map((x) => x.node), entryNode: graph.entries.get(s.entryId), targetNode: graph.targets.get(s.targetId) });
   const well = h('section', { class: 'plan-well', 'aria-label': 'Case view' }, view.element);
 

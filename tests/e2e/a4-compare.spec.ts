@@ -89,6 +89,10 @@ test('Compare shows the overlay and a table equal to optimize() and routeFor', a
   const targetId = frontierTarget();
   const presetId = engine.WIRE_PRESETS[0]!.id;
   await planAndCompare(page, presetId, targetId);
+  // The 3D overlay is the default view; the flat drawing is one click away and carries the same routes.
+  await expect(page.getByTestId('overlay').locator('.plan-view')).toHaveAttribute('data-scene', 'ready');
+  await expect(page.getByTestId('overlay').locator('canvas')).toBeVisible();
+  await page.getByTestId('overlay').getByRole('button', { name: 'Flat' }).click();
   await expect(page.getByTestId('overlay').locator('.plan-view-svg')).toBeVisible();
   await expect(page.getByTestId('overlay').locator('.plan-view-svg .route-trace')).not.toHaveAttribute('points', '');
 
