@@ -49,10 +49,20 @@
   overflow-y: auto;
 }
 
-.hud-overview {
+/* Top right: the route overview, with Cathy's box under it */
+.hud-right {
   position: absolute;
   top: var(--space-5);
   right: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  max-height: calc(100% - 2 * var(--space-5));
+  overflow-y: auto;
+}
+
+.hud-overview {
   width: calc((calc(var(--size-palette) + var(--space-16))) * 0.65); /* 35% smaller than before */
 }
 
@@ -350,9 +360,15 @@
     overflow: visible;
   }
 
-  .hud-overview {
+  .hud-right {
     position: static;
     order: 4;
+    align-items: stretch;
+    max-height: none;
+  }
+
+  .hud-overview {
+    position: static;
     width: auto;
   }
 
@@ -410,7 +426,7 @@
   display: none;
 }
 
-/* Cathy's box on Drive: under the 3D / Flat switch, not over the arteries */
+/* Cathy's box on Drive: under the route overview, not over the arteries */
 .hud-cathy:empty {
   display: none;
 }

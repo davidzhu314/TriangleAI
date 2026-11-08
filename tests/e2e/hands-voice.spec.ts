@@ -471,15 +471,16 @@ async function openDrive(page: Page, side: 'left' | 'right' = 'left'): Promise<v
   await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
 }
 
-test('Drive: Cathy sits under the 3D / Flat switch, and "Hey Cathy, toggle fluoro" (misheard too) switches fluoro on, off, and off by itself after 10 s', async ({ page }) => {
+test('Drive: Cathy sits under the route overview, and "Hey Cathy, toggle fluoro" (misheard too) switches fluoro on, off, and off by itself after 10 s', async ({ page }) => {
   test.setTimeout(120_000);
   await stubSpeech(page);
   await openDrive(page);
   const box = page.getByTestId('cathy-box');
-  await expect(page.locator('.hud-top').getByTestId('cathy-box')).toBeVisible();
-  const flat = await page.locator('.hud-top-row').getByRole('button', { name: '3D' }).boundingBox();
+  await expect(page.locator('.hud-right').getByTestId('cathy-box')).toBeVisible();
+  const overview = await page.locator('.hud-overview').boundingBox();
   const cathy = await box.boundingBox();
-  expect(cathy!.y).toBeGreaterThan(flat!.y + flat!.height - 1);
+  expect(cathy!.y).toBeGreaterThan(overview!.y + overview!.height - 1);
+  expect(Math.abs(cathy!.x + cathy!.width - (overview!.x + overview!.width))).toBeLessThan(2); // right edges line up
 
   await voiceOn(page);
   const badge = page.getByTestId('voice-fluoro-badge');

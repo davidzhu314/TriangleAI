@@ -369,7 +369,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
     return driveCheckLine({ log, optimized, weights, case: c }, null).text;
   };
-  // Cathy's box sits under the 3D / Flat switch, clear of the arteries
+  // Cathy's box sits under the route overview (top right), clear of the arteries
   const cathySlot = h('div', { class: 'hud-cathy', 'data-testid': 'drive-cathy-slot' });
   const voiceFluoroBadge = h('span', { class: 'pill pill-warning voice-fluoro-badge', hidden: true, role: 'status', 'data-testid': 'voice-fluoro-badge' }, 'Fluoro on (voice)');
   const hands = createHandsVoice({
@@ -407,7 +407,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return lines.join(' ') || null;
     },
   });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), cathySlot, notice, banner);
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -423,7 +423,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   );
   const actions = h('div', { class: 'hud-actions' }, restart, exit, finish);
 
-  const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), overview.el, actions);
+  const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), h('div', { class: 'hud-right' }, overview.el, cathySlot), actions);
   const body = h('div', { class: 'drive' }, h('h1', { class: 'visually-hidden' }, `Drive: ${c.title}`), stage);
   renderShell(root, { crumbs: [{ label: 'Library', href: href.library() }, { label: c.title, href: href.brief(key) }, { label: 'Drive' }], layout: 'focus', body }, null);
 
