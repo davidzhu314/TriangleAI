@@ -99,7 +99,7 @@
     "L_mm": 13.998004897,
     "overlapping_zones": [],
     "proximity_clearance_mm": null,
-    "r_min_mm": 12.6954,
+    "r_min_mm": 12.2794,
     "theta_max_deg": 18.553876744,
     "theta_sum_deg": 44.640267104
    },
@@ -131,7 +131,7 @@
     "L_mm": 101.034436668,
     "overlapping_zones": [],
     "proximity_clearance_mm": null,
-    "r_min_mm": 3.75,
+    "r_min_mm": 3.3,
     "theta_max_deg": 6.280501519,
     "theta_sum_deg": 22.403009841
    },
@@ -155,7 +155,7 @@
     "L_mm": 204.434392976,
     "overlapping_zones": [],
     "proximity_clearance_mm": null,
-    "r_min_mm": 3.75,
+    "r_min_mm": 3.3,
     "theta_max_deg": 7.204292942,
     "theta_sum_deg": 53.304307248
    },
@@ -179,7 +179,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,
@@ -201,7 +201,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,
@@ -237,7 +237,7 @@
     "L_mm": 7.999732494,
     "overlapping_zones": [],
     "proximity_clearance_mm": 65.242760345,
-    "r_min_mm": 12.6251,
+    "r_min_mm": 12.2114,
     "theta_max_deg": 6.384558582,
     "theta_sum_deg": 12.769117163
    },
@@ -269,7 +269,7 @@
     "L_mm": 214.304446553,
     "overlapping_zones": [],
     "proximity_clearance_mm": 368.600584477,
-    "r_min_mm": 3.75,
+    "r_min_mm": 3.3,
     "theta_max_deg": 21.041169627,
     "theta_sum_deg": 246.375970872
    },
@@ -295,7 +295,7 @@
     "L_mm": 281.605359271,
     "overlapping_zones": [],
     "proximity_clearance_mm": 368.600584477,
-    "r_min_mm": 3.75,
+    "r_min_mm": 3.3,
     "theta_max_deg": 120.087239429,
     "theta_sum_deg": 591.731649011
    },
@@ -319,7 +319,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,
@@ -341,7 +341,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,
@@ -363,7 +363,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,
@@ -385,7 +385,7 @@
     ],
     "heavy_crossings": 0,
     "proximity_penalty": 0.0,
-    "r_min_mm": 3.5,
+    "r_min_mm": 3.3,
     "reversed": [
      true,
      false,

@@ -8,8 +8,8 @@
  *   does not point toward the planned branch, stop and roll toward it (the tip lags the hub, so it waits for the tip);
  *   give up aiming after AIM_GIVE_UP_S and push anyway.
  * - Off the plan counts only once the simulation flags a wrong branch (the tip outside every planned vessel).
- * - If the tip went into a branch off the plan, pull back until it is on the plan again, then try a quarter turn more.
- * - If pushing has made no progress for STUCK_S, pull back a little and try a quarter turn more.
+ * - If the tip went into a branch off the plan, pull back until it is on the plan again, then try an eighth of a turn more (alternating sides, widening).
+ * - If pushing has made no progress for STUCK_S, pull back a little and try an eighth of a turn more.
  * - Otherwise push.
  */
 import type { Vec3 } from '../contracts';
@@ -19,7 +19,7 @@ import { shapedTipAim, stepChain, type ChainControl, type ChainModel, type Chain
 const AIM_RAD = 0.5;
 const STUCK_S = 1.5;
 /** How far ahead of the tip a planned junction makes the driver aim, metres. */
-const JUNCTION_AHEAD_M = 0.02;
+const JUNCTION_AHEAD_M = 0.01;
 /** Longest the driver rolls to aim at one junction before it pushes anyway, seconds. */
 const AIM_GIVE_UP_S = 4;
 const BACK_M = 0.012;
@@ -57,7 +57,12 @@ export class ChainAutopilot {
   private readonly junctions: number[];
 
   constructor(private readonly model: ChainModel) {
-    this.junctions = model.plan.slice(1).map((id) => model.planStart.get(id)!.start);
+    // Aim only where the plan turns into another vessel. Where it carries on along the same vessel past a side branch
+    // (the arch past the LCCA), rolling toward the vessel's own curve points the tip into that branch; a push slides past.
+    this.junctions = model.plan
+      .slice(1)
+      .filter((_, i) => model.planVessels[i + 1] !== model.planVessels[i])
+      .map((id) => model.planStart.get(id)!.start);
   }
 
   /** The control for the next step. */
@@ -84,7 +89,7 @@ export class ChainAutopilot {
 
     if (offPlan || state.t - this.bestAt > STUCK_S) {
       this.tries++;
-      this.mode = { kind: 'back', until: state.s - BACK_M, thenRoll: (Math.PI / 2) * (this.tries % 2 ? 1 : -1) * Math.ceil(this.tries / 2) };
+      this.mode = { kind: 'back', until: state.s - BACK_M, thenRoll: (Math.PI / 4) * (this.tries % 2 ? 1 : -1) * Math.ceil(this.tries / 2) };
       this.bestS = state.s - BACK_M;
       return { push: -1, rotate: 0, device: 'wire' };
     }
