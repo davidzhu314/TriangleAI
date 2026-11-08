@@ -153,7 +153,7 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
   const status = h('p', { class: 'hv-status', 'data-testid': 'hands-status' });
   const cameraNote = h('p', { class: 'hv-note' }, 'Camera on. Frames stay on this device.');
   const selfView = h('div', { class: 'hv-self', hidden: true, 'data-testid': 'hands-self-view' }, video, status, cameraNote);
-  const micNotice = h('p', { class: 'pill pill-warning hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
+  const micNotice = h('p', { class: 'hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
   const caption = h('div', { class: 'hv-caption', role: 'status', 'aria-live': 'polite', 'data-testid': 'voice-caption' });
   // Cathy's text stays in the view box (bottom-left, clear of the arteries at the default framing); the webcam
   // self-view sits in the page's bottom-right corner instead, so it never covers the arteries. On Drive it rises

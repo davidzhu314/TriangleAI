@@ -81,9 +81,31 @@ body:has(.drive-stage) .hv-self {
   color: var(--color-text-muted);
 }
 
+/* The live-mic notice: a quiet line with a small recording dot, not a warning (it informs; nothing is wrong). */
 .hv-mic {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
   margin: 0;
+  padding: var(--space-1) var(--space-3);
+  max-width: 28rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
   white-space: normal;
+}
+
+.hv-mic::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  background: var(--color-brand);
+  transform: translateY(-0.05rem);
 }
 
 .hv-caption:empty {
