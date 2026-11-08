@@ -50,7 +50,7 @@ export function railAutopilot(model: RailModel, state: RailState, dt: number, fl
     const cands = (model.adjacency.get(node) ?? []).filter((id) => id !== last);
     const dirs = cands.map((id) => railEdgeDirection(model, id, node));
     const want = cands.indexOf(next);
-    target = (want >= 0 ? steerRoll(t, model.preset.tipAngleDeg, dirs, want) : null) ?? bestRoll(t, railEdgeDirection(model, next, node));
+    target = (want >= 0 ? steerRoll(t, model.preset.tipAngleDeg, dirs, want, model.branchEntryDeg) : null) ?? bestRoll(t, railEdgeDirection(model, next, node));
     model.cache.set(key, target);
   }
   const err = model.preset.tipAngleDeg === 0 ? 0 : wrap(target - state.rollRad);

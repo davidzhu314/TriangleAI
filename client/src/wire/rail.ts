@@ -35,7 +35,7 @@ import {
   type WirePresetId,
 } from '../contracts';
 import { angleBetween, cumulativeArclength, joinRoute, norm, pointAt, sub, windowedTurning, type Point3 } from '../optimize/measures';
-import { BRANCH_ENTRY_DEG, headingAt, leavingDirection, pickBranch, rollFrame, tipDirection } from '../optimize/steerability';
+import { BRANCH_ENTRY_DEG, branchEntryDeg, headingAt, leavingDirection, pickBranch, rollFrame, tipDirection } from '../optimize/steerability';
 import { getPreset } from '../optimize/presets';
 
 // ---------------------------------------------------------------- constants (illustrative)
@@ -80,6 +80,8 @@ export interface RailModel {
   targetId: string;
   targetNode: string;
   preset: WirePreset;
+  /** The §5.3 branch-entry tolerance for this case, degrees (35° on beginner cases). */
+  branchEntryDeg: number;
   plan: readonly string[];
   edges: ReadonlyMap<string, LoadedEdge>;
   adjacency: ReadonlyMap<string, readonly string[]>;
@@ -110,6 +112,7 @@ export function createRailModel(c: LoadedCase, entryId: string, targetId: string
     targetId,
     targetNode: target.node,
     preset: getPreset(presetId),
+    branchEntryDeg: branchEntryDeg(c.difficulty),
     plan: [...plan],
     edges,
     adjacency,
@@ -186,7 +189,7 @@ function edgeDirection(o: OrientedEdge): Point3 {
 
 export interface BranchChoice {
   edge: string;
-  /** 'pointed' when the tip aimed within 25°, 'continued' when it took the straightest way. */
+  /** 'pointed' when the tip aimed within the branch-entry tolerance, 'continued' when it took the straightest way. */
   how: 'pointed' | 'continued';
   /** Deflection from the incoming heading into the chosen edge, degrees (the windowed turn). */
   turnDeg: number;
@@ -201,7 +204,7 @@ export function chooseBranch(model: RailModel, walked: readonly WalkStep[], roll
   if (cands.length === 0) return null;
   const t = headingBefore(g, g.lengthM);
   const dirs = cands.map(edgeDirection);
-  const { index, how } = pickBranch(t, model.preset.tipAngleDeg, rollRad, dirs)!;
+  const { index, how } = pickBranch(t, model.preset.tipAngleDeg, rollRad, dirs, model.branchEntryDeg)!;
   return { edge: cands[index]!.id, how, turnDeg: angleBetween(t, dirs[index]!) * DEG };
 }
 

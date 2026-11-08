@@ -3,7 +3,7 @@
  *
  * The rule: at a branch point, the tip direction is the heading over the last 5 mm, bent by the
  * preset's tip angle and rolled by φ. The tip enters the branch closest to that direction if it is
- * within 25°; otherwise it continues the straightest way (the branch closest to the heading).
+ * within the case's branch-entry tolerance (25°, 35° on beginner cases: branch-entry.ts); otherwise it continues the straightest way (the branch closest to the heading).
  * `pickBranch` is that rule; wire/rail.ts calls it on every branch point it reaches, and
  * `steerableAt` calls it for each branch point of a planned route with the roll the autopilot would
  * set, so a route `steerableAt` accepts is one the rail autopilot drives without a wrong branch.
@@ -18,8 +18,9 @@ import { orientRoute } from './measure-route';
 import { angleBetween, cross, cumulativeArclength, joinRoute, norm, pointAt, sub, type Point3 } from './measures';
 import { getPreset } from './presets';
 
-/** Spec §5.3: a branch is entered when the tip points within this of it. */
-export const BRANCH_ENTRY_DEG = 25;
+import { BRANCH_ENTRY_DEG } from './branch-entry';
+
+export { BRANCH_ENTRY_BEGINNER_DEG, BRANCH_ENTRY_DEG, branchEntryDeg } from './branch-entry';
 /** Window for headings and branch directions, mm (the 5 mm the measures use). */
 export const STEER_WINDOW_MM = 5;
 
@@ -78,12 +79,12 @@ export interface BranchPick {
 }
 
 /** The §5.3 branch-entry rule over candidate directions (ties go to the lower index). Null with none. */
-export function pickBranch(t: Point3, tipAngleDeg: number, rollRad: number, dirs: readonly Point3[]): BranchPick | null {
+export function pickBranch(t: Point3, tipAngleDeg: number, rollRad: number, dirs: readonly Point3[], toleranceDeg = BRANCH_ENTRY_DEG): BranchPick | null {
   if (dirs.length === 0) return null;
   const tip = tipDirection(t, tipAngleDeg, rollRad);
   let best = 0;
   for (let i = 1; i < dirs.length; i++) if (angleBetween(tip, dirs[i]!) < angleBetween(tip, dirs[best]!) - EPS) best = i;
-  if (angleBetween(tip, dirs[best]!) * DEG <= BRANCH_ENTRY_DEG) return { index: best, how: 'pointed' };
+  if (angleBetween(tip, dirs[best]!) * DEG <= toleranceDeg) return { index: best, how: 'pointed' };
   best = 0;
   for (let i = 1; i < dirs.length; i++) if (angleBetween(t, dirs[i]!) < angleBetween(t, dirs[best]!) - EPS) best = i;
   return { index: best, how: 'continued' };
@@ -98,15 +99,15 @@ export const ROLL_SEARCH_STEP_DEG = 1;
  * farthest from every other branch (rolling the tip away, so the wire continues the straightest
  * way). Ties go to the smaller roll. Null when no roll enters `want`.
  */
-export function steerRoll(t: Point3, tipAngleDeg: number, dirs: readonly Point3[], want: number): number | null {
-  if (tipAngleDeg === 0) return pickBranch(t, 0, 0, dirs)?.index === want ? 0 : null;
+export function steerRoll(t: Point3, tipAngleDeg: number, dirs: readonly Point3[], want: number, toleranceDeg = BRANCH_ENTRY_DEG): number | null {
+  if (tipAngleDeg === 0) return pickBranch(t, 0, 0, dirs, toleranceDeg)?.index === want ? 0 : null;
   const aim = bestRoll(t, dirs[want]!);
-  if (pickBranch(t, tipAngleDeg, aim, dirs)?.index === want) return aim;
+  if (pickBranch(t, tipAngleDeg, aim, dirs, toleranceDeg)?.index === want) return aim;
   let best: number | null = null;
   let bestClear = -Infinity;
   for (let k = 0; k * ROLL_SEARCH_STEP_DEG < 360; k++) {
     const roll = (k * ROLL_SEARCH_STEP_DEG) / DEG;
-    if (pickBranch(t, tipAngleDeg, roll, dirs)?.index !== want) continue;
+    if (pickBranch(t, tipAngleDeg, roll, dirs, toleranceDeg)?.index !== want) continue;
     const tip = tipDirection(t, tipAngleDeg, roll);
     let clear = Infinity;
     for (let i = 0; i < dirs.length; i++) if (i !== want) clear = Math.min(clear, angleBetween(tip, dirs[i]!));
@@ -136,6 +137,8 @@ export interface SteerFailure {
 export interface Steerability {
   ok: boolean;
   failures: SteerFailure[];
+  /** The branch-entry tolerance it was checked with, degrees. */
+  toleranceDeg?: number;
 }
 
 const orientedPoints = (pointsMm: readonly Point3[], reversed: boolean): Point3[] => (reversed ? [...pointsMm].reverse() : [...pointsMm]);
@@ -147,6 +150,7 @@ const orientedPoints = (pointsMm: readonly Point3[], reversed: boolean): Point3[
  */
 export function steerableAt(graph: RouteGraph, path: readonly string[], presetId: WirePresetId, startNode?: string): Steerability {
   const tipDeg = getPreset(presetId).tipAngleDeg;
+  const tol = graph.branchEntryDeg ?? BRANCH_ENTRY_DEG;
   const route = orientRoute(graph, path, startNode === undefined ? {} : { startNode });
   const failures: SteerFailure[] = [];
   const walked: Point3[][] = [];
@@ -164,10 +168,10 @@ export function steerableAt(graph: RouteGraph, path: readonly string[], presetId
       return leavingDirection(orientedPoints(e.pointsMm, e.from !== node), STEER_WINDOW_MM);
     });
     const want = cands.indexOf(next);
-    if (steerRoll(t, tipDeg, dirs, want) === null) {
-      const pick = pickBranch(t, tipDeg, tipDeg === 0 ? 0 : bestRoll(t, dirs[want]!), dirs)!;
+    if (steerRoll(t, tipDeg, dirs, want, tol) === null) {
+      const pick = pickBranch(t, tipDeg, tipDeg === 0 ? 0 : bestRoll(t, dirs[want]!), dirs, tol)!;
       failures.push({ node, edge: next, takeoffDeg: angleBetween(t, dirs[want]!) * DEG, tipDeg, entered: cands[pick.index]! });
     }
   }
-  return { ok: failures.length === 0, failures };
+  return { ok: failures.length === 0, failures, toleranceDeg: tol };
 }

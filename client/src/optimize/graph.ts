@@ -7,6 +7,7 @@
  * Results are reported in metres and degrees, as the contracts use.
  */
 
+import { branchEntryDeg } from './branch-entry';
 import type { CaseRiskZone, LoadedCase, LoadedEdge, LoadedRiskZone, RiskTier } from '../contracts';
 import {
   lengthMm,
@@ -62,6 +63,8 @@ export interface RouteGraph {
   entries: ReadonlyMap<string, string>;
   /** Target id → node id, in case order. */
   targets: ReadonlyMap<string, string>;
+  /** The §5.3 branch-entry tolerance for this case, degrees (branchEntryDeg); 25° when absent. */
+  branchEntryDeg?: number;
 }
 
 const toMm = (e: LoadedEdge): Point3[] => e.points.map((p) => [p[0] * 1000, p[1] * 1000, p[2] * 1000] as Point3);
@@ -113,6 +116,7 @@ export function buildGraph(c: LoadedCase): RouteGraph {
 
   return {
     caseId: c.id,
+    branchEntryDeg: branchEntryDeg(c.difficulty),
     adjacency,
     edges,
     zones: c.riskZones.map((z) => ({ id: z.id, tier: z.tier, kind: z.kind, edge: z.edge })),
