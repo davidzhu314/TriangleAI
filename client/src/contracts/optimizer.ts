@@ -71,7 +71,17 @@ export type ConstraintViolation =
   | { kind: 'too_narrow'; edge: string; /** 2 × r_min, m. */ diameterM: number; /** Device diameter + clearance, m. */ requiredM: number }
   | { kind: 'turn_too_sharp'; edge: string; turnDeg: number; maxTurnDeg: number }
   | { kind: 'forbidden_zone'; edge: string; zone: string }
-  | { kind: 'arch_never_reached'; presetId: WirePresetId; target: string };
+  | { kind: 'arch_never_reached'; presetId: WirePresetId; target: string }
+  | {
+      kind: 'cannot_steer';
+      edge: string;
+      /** Deflection into the edge at its branch point, degrees. */
+      takeoffDeg: number;
+      /** The preset's tip angle, degrees. */
+      tipDeg: number;
+      /** §5.3 branch-entry tolerance, degrees (25 today). */
+      toleranceDeg: number;
+    };
 
 // ---------------------------------------------------------------- routes
 
