@@ -225,14 +225,9 @@ describe('5. point and pinch, mirroring, and which hand drives', () => {
     expect(b.pointer!.x).toBeCloseTo(a.pointer!.x, 9);
   });
 
-  it('either hand can drive; with both in the gun, the dominant hand wins', () => {
-    expect(run(createGestureMachine(CFG), 12, () => gun(0, 0, { handedness: 'Left' })).at(-1)!.status).toBe('gun');
+  it('only the dominant hand drives; a left-dominant player uses the left hand', () => {
+    expect(run(createGestureMachine(CFG), 12, () => gun(0, 0, { handedness: 'Left' })).at(-1)!.status).toBe('none');
     expect(run(createGestureMachine({ dominant: 'Left', mirrored: false }), 12, () => gun(0, 0, { handedness: 'Left' })).at(-1)!.status).toBe('gun');
-    const m = createGestureMachine(CFG);
-    let both!: GestureOutput;
-    for (let i = 0; i < 12; i++) both = m.step(frame(i * FRAME_MS, gun(0.1, 0, { handedness: 'Right' }), gun(0.8, 0, { handedness: 'Left' })));
-    expect(both.control).toEqual(both.hands.Right.control);
-    expect(both.hands.Left.status).toBe('gun');
   });
 
   it('is deterministic: the same frames give the same outputs', () => {
@@ -243,8 +238,7 @@ describe('5. point and pinch, mirroring, and which hand drives', () => {
 
 describe('mergeControl (gesture → the wire)', () => {
   const kb = { push: 0, rotate: 0, fluoro: true, contrastPuff: false };
-  const idle = { status: 'none' as const, control: null, pointer: null, select: false, pan: null, debug: {} };
-  const g = (control: GestureOutput['control']): GestureOutput => ({ ...idle, status: control ? 'gun' : 'none', control, hands: { Left: idle, Right: idle } });
+  const g = (control: GestureOutput['control']): GestureOutput => ({ status: control ? 'gun' : 'none', control, pointer: null, select: false, debug: {} });
 
   it('uses the gesture on idle keyboard axes; the keyboard wins on any axis it moves', () => {
     expect(mergeControl(g({ push: 0.5, rotate: -0.3 }), kb)).toEqual({ push: 0.5, rotate: -0.3, fluoro: true, contrastPuff: false });

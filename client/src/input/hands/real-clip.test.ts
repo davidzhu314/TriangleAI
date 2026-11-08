@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { createGestureMachine } from './machine';
-import type { GestureConfig, GestureOutput, HandFrame, HandOutput } from './types';
+import type { GestureConfig, GestureOutput, HandFrame } from './types';
 
 const FIXTURE = join(import.meta.dirname, '../../../../tests/fixtures/hands/right-gun-twist-point-pinch.json.gz');
 
@@ -27,13 +27,9 @@ const clip = JSON.parse(gunzipSync(readFileSync(FIXTURE)).toString('utf8')) as C
 const t0 = clip.frames[0]!.tMs;
 const secs = (tMs: number) => (tMs - t0) / 1000;
 
-/** The recorded hand's own output (both hands are tracked; the tuning this pins is the right hand's), and the combined output. */
-function replay(): { t: number; out: HandOutput; both: GestureOutput }[] {
+function replay(): { t: number; out: GestureOutput }[] {
   const m = createGestureMachine({ dominant: clip.dominant, mirrored: clip.mirrored });
-  return clip.frames.map((f) => {
-    const both = m.step(f);
-    return { t: secs(f.tMs), out: both.hands[clip.dominant], both };
-  });
+  return clip.frames.map((f) => ({ t: secs(f.tMs), out: m.step(f) }));
 }
 
 /** Status runs of at least `minS` seconds, as [status, start s, end s]. */
@@ -68,13 +64,6 @@ describe('real clip: right hand, gun then point and pinch', () => {
     const point = runs(r).filter(([s]) => s === 'point');
     expect(point).toHaveLength(1);
     expect(point[0]![2] - point[0]![1]).toBeGreaterThan(20);
-  });
-
-  it('with both hands tracked, the combined output follows the recorded hand whenever it drives or points', () => {
-    for (const { out, both } of r) {
-      if (out.status === 'gun') expect(both.control).toEqual(out.control);
-      if (out.status === 'point') expect(both.pointer).toEqual(out.pointer);
-    }
   });
 
   it('selects exactly once per pinch: eight pinches, eight selects', () => {

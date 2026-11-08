@@ -39,26 +39,6 @@ export const POINT: Readonly<{ enter: PointLimits; stay: PointLimits }> = {
   stay: { indexCurlMax: 0.6, othersCurlMin: 0.3 },
 };
 
-export interface PanLimits {
-  /** Index, middle and ring flexion must be at most this (extended, like three fingers on a trackpad). */
-  fingersCurlMax: number;
-  /** Pinky flexion must be above this (folded), so an open hand isn't a pan. */
-  pinkyCurlMin: number;
-}
-
-/**
- * The pan ("trackpad") pose: index, middle and ring out, pinky folded; the thumb is free. Moving the hand
- * moves the view. Limits mirror the point pose's; untuned on a real hand yet (DECISIONS.md, "Pan gesture").
- */
-export const PAN: Readonly<{ enter: PanLimits; stay: PanLimits }> = {
-  enter: { fingersCurlMax: 0.45, pinkyCurlMin: 0.45 },
-  stay: { fingersCurlMax: 0.6, pinkyCurlMin: 0.3 },
-};
-
-/** Pan: view movement per unit of hand movement (both in screen widths), and a per-frame dead zone. */
-export const PAN_GAIN = 1.5;
-export const PAN_DEADZONE = 0.002;
-
 /**
  * Push and pull from curl (mean of index and middle flexion). Relaxed "straight" fingers read about
  * 0.2 on a real webcam, so full push starts just above that:
@@ -98,5 +78,4 @@ export const ONE_EURO = {
   curl: { minCutoff: 1.5, beta: 0.5, dCutoff: 1 },
   twist: { minCutoff: 1.5, beta: 0.02, dCutoff: 1 },
   pointer: { minCutoff: 1, beta: 5, dCutoff: 1 },
-  pan: { minCutoff: 1, beta: 5, dCutoff: 1 },
 } as const;
