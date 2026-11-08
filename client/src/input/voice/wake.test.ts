@@ -170,3 +170,22 @@ describe('Cathy, reset view', () => {
     expect(heard.map((m) => m.action)).toEqual(['zoom_out', 'undo', 'reset_view']);
   });
 });
+
+describe('Cathy, hide (the vessel names) and show labels', () => {
+  it('"Hey Cathy, hide" and its phrasings hide the labels; "show labels" brings them back; nothing runs without the wake word', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, hide', 'hey kathy hide the names', 'Cathy, hide labels', 'Hey Cathy, labels off']) rec.onResult?.(say(t));
+    for (const t of ['Hey Cathy, show labels', 'hey cathy show the names', 'Hey Cathy, unhide']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['hide_labels', 'hide_labels', 'hide_labels', 'hide_labels', 'show_labels', 'show_labels', 'show_labels']);
+    rec.onResult?.(say('hide'));
+    expect(heard).toHaveLength(7);
+  });
+
+  it('never confused with show options, wider or reset view', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, show options', 'Hey Cathy, wider', 'Hey Cathy, reset view', 'Hey Cathy, hide']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['assist_options', 'zoom_out', 'reset_view', 'hide_labels']);
+  });
+});

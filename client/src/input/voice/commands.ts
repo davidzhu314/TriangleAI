@@ -7,13 +7,26 @@
  * Phrasings are written already normalised: lowercase, no punctuation, digits as words.
  */
 
-export type VoiceAction = 'zoom_in' | 'zoom_out' | 'reset_view' | 'assist_best_next' | 'assist_options' | 'assist_review' | 'undo';
+export type VoiceAction =
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'reset_view'
+  | 'hide_labels'
+  | 'show_labels'
+  | 'assist_best_next'
+  | 'assist_options'
+  | 'assist_review'
+  | 'undo';
 
 export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = {
   zoom_in: ['zoom in', 'closer', 'move closer', 'get closer', 'zoom inn'],
   zoom_out: ['zoom out', 'wider', 'back out', 'zoom further', 'wide view'],
   /** Put the 3D or flat view back where it opened, like the Reset view button (undoes zoom, pan and turns). */
   reset_view: ['reset view', 'reset the view', 'reset camera', 'reset the camera', 'recenter', 'recenter the view', 'center the view', 'reset few', 'recent view'],
+  /** Hide the vessel names (the anatomy layer's labels), like unticking Labels. */
+  hide_labels: ['hide', 'hide labels', 'hide the labels', 'hide names', 'hide the names', 'hide artery names', 'hide the artery names', 'labels off', 'names off'],
+  /** Show them again. */
+  show_labels: ['show labels', 'show the labels', 'show names', 'show the names', 'show artery names', 'show the artery names', 'labels on', 'names on', 'unhide'],
   assist_best_next: ['best next artery', 'where next', 'which way', 'best path', 'next best'],
   assist_options: ['what are my options', 'show options', 'options', 'show me the paths'],
   assist_review: ['how am i doing', 'what am i doing wrong', 'analyze', 'check my drive', 'any mistakes'],
