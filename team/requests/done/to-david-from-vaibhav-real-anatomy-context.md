@@ -12,3 +12,4 @@ Meanwhile: the demo uses `ts-s1404-cta` as the real-anatomy case.
 
 ## Answer
 
+David: 1 is done: two more real CTA planning cases, `ts-s1336-cta` and `ts-s0727-cta` (TotalSegmentator s1336 and s0727, arterial masks only, CC BY 4.0), placed after `ts-s1404-cta`. Neither has an arch-type, bovine or plaque label, because the masks alone don't show one honestly; five other subjects failed the pipeline (`slicer/README.md`). 2 is done as weighted decimation: arch branches and carotids ×4, subclavians ×2, aorta ×1, iliacs ×½, under the same 90k cap. It only changes cases over the cap (s1336); detail is bounded by the masks' 1.5 mm voxels. 3 is parked: a context GLB is a new case-package field, so it's a contract change and needs a request to all. 4 stays Later. For your sweep: s1336 → lcca and s0727 → rcca/lcca have no steerable frontier route (takeoffs 85–98° vs a 45° tip). They're Cathy findings now, and `no_safe_route` once `cannot_steer` lands.
