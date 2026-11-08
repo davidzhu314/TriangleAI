@@ -5,7 +5,7 @@ Optional controls for Catherine:
 - **Voice commands:** push-to-talk (default) or an opt-in always-listen mode woken by "Hey Cathy".
 - **The engine's assistant answers**, which voice asks for.
 
-Everything here is pure logic plus two thin wrappers. Nothing in the app imports it yet, and nothing here opens the camera or microphone on its own. Every action keeps its keyboard path (spec §7.3). Describe these as hands-free and voice controls, never as real catheter handling (spec §9.4).
+Everything here is pure logic plus two thin wrappers. Only the screens (`client/src/ui/`) import it (the purity test enforces that), and nothing here opens the camera or microphone on its own. Every action keeps its keyboard path (spec §7.3). Describe these as hands-free and voice controls, never as real catheter handling (spec §9.4).
 
 ## Status
 

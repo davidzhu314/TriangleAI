@@ -1,9 +1,9 @@
 /**
  * Optional hands-free and voice input for Catherine. Import from here.
  *
- * Nothing in the app imports this yet, and nothing here opens the camera or microphone: the caller
- * feeds HandFrames (from MediaPipe, once David adds it) and calls createBrowserRecognizer only after
- * the user turns voice on. See ./README.md for the hookup guide.
+ * Only the screens (client/src/ui/) import this, and nothing here opens the camera or microphone: the
+ * caller feeds HandFrames (from MediaPipe) and calls createBrowserRecognizer only after the user turns
+ * voice on. See ./README.md for the hookup guide.
  */
 
 export { createGestureMachine, type GestureMachine } from './hands/machine';

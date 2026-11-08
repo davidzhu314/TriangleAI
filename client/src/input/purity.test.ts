@@ -32,9 +32,13 @@ describe('input folder purity', () => {
     if (!rel.endsWith('speech.ts')) expect(src).not.toMatch(/\b(window|globalThis|navigator|document)\s*(\.|\?\.|\[)/);
   });
 
-  it('nothing in the app imports the input folder yet', () => {
-    // resolve each relative import, so a screen's own ./input module (e.g. ui/drive/input.ts) isn't mistaken for this folder
-    const outside = files(SRC).filter((f) => !f.startsWith(HERE) && !f.endsWith('.test.ts') && !f.endsWith('.testutil.ts'));
+  it('only the screens (client/src/ui/) import the input folder; the engine, render and case code never do', () => {
+    // The hookup (hands and voice before the demo, DECISIONS.md 2026-11-08) wires it into ui/plan, ui/drive and
+    // ui/hands-voice. Resolve each relative import, so a screen's own ./input module isn't mistaken for this folder.
+    const UI = join(SRC, 'ui');
+    const outside = files(SRC).filter(
+      (f) => !f.startsWith(HERE) && !f.startsWith(UI + sep) && !f.endsWith('.test.ts') && !f.endsWith('.testutil.ts'),
+    );
     for (const f of outside) {
       for (const m of readFileSync(f, 'utf8').matchAll(/from ['"](\.[^'"]+)['"]/g)) {
         const target = resolve(dirname(f), m[1]!);
