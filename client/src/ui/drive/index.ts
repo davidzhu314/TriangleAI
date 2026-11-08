@@ -23,6 +23,7 @@ import { entry, loadBundled, loadedCase, saveDrive, savedPlan, type SavedPlan } 
 import './drive.css';
 import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
+import { wireChoice, wireUrl, type WireChoice } from './wire-switch';
 import { mergeControl } from '../../input';
 import { createHandsVoice } from '../hands-voice';
 
@@ -232,6 +233,20 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return b;
     }),
   );
+  // Rail (default) or the chain physics simulation: flips the ?wire=chain switch for the trainee and reloads; the
+  // planned route is kept (saved per tab).
+  const wireNow = wireChoice(location.search);
+  const wireSwitch = h(
+    'div',
+    { class: 'segmented', role: 'group', 'aria-label': 'Wire', 'data-testid': 'wire-switch' },
+    ...(['rail', 'chain'] as const).map((w: WireChoice) => {
+      const b = h('button', { type: 'button', class: 'segment', 'aria-pressed': String(wireNow === w), 'data-wire': w }, w === 'rail' ? 'Rail' : 'Physics (beta)');
+      b.addEventListener('click', () => {
+        if (w !== wireNow) location.assign(wireUrl(location.href, w));
+      });
+      return b;
+    }),
+  );
   const banner = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-banner' });
   /** The fallback notice stays up for the rest of the drive (DESIGN.md: notices never stop the drive). */
   const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
@@ -266,7 +281,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return lines.join(' ') || null;
     },
   });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar, hands.controls), notice, banner);
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
