@@ -73,6 +73,8 @@ export interface CaseScene {
   setBackground(colorToken: string | null): void;
   /** Raycast the handles from normalised device coordinates (or a ray, in AR). */
   pick(ray: THREE.Raycaster): string | null;
+  /** Where each branch handle is on the canvas, in CSS pixels from its top left (for automated tests). */
+  handlesOnScreen(): { node: string; x: number; y: number }[];
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -373,6 +375,13 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     },
     setBackground(colorToken) {
       scene.background = colorToken ? color(colorToken) : null;
+    },
+    handlesOnScreen() {
+      const r = canvas.getBoundingClientRect();
+      return handles.children.map((h) => {
+        const v = h.getWorldPosition(new THREE.Vector3()).project(camera);
+        return { node: h.userData['node'] as string, x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
+      });
     },
     pick(ray) {
       const hit = ray.intersectObjects(handles.children, false)[0];

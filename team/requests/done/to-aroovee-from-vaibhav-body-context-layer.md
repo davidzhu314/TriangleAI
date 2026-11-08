@@ -27,3 +27,5 @@ Meanwhile: nothing changes until David's files land.
 
 ## Answer
 
+
+Aroovee: Done on branch aroovee/body-context: the case's context.glb ("bone", "heart") is a 'context' kind in the one anatomy layer, placed exactly by mesh.toWorld, quiet and depth-tested behind the vessels, never picked, with a "Body" switch (off by default, remembered, hidden in X-ray) only on cases that have the file; tested against a fixture until David's files land.

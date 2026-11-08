@@ -96,6 +96,13 @@
   --color-anatomy-artery: #a8584e;
   --color-anatomy-vein: #4f6e99;
   --opacity-anatomy: 0.35;          /* the opacity slider's starting point */
+
+  /* Body context (the case's own context.glb: bone and heart from the same scan). Quiet background for scale and
+     orientation: warm greys, far fainter than the vessels, and drawn behind them. */
+  --color-body-bone: #b9b2a7;
+  --color-body-heart: #b07f7a;
+  --opacity-body-bone: 0.1;
+  --opacity-body-heart: 0.18;
   --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
   /* Type: Inter, measured. Display sizes over 32px dropped: app titles stay at or under 32. */
@@ -230,6 +237,8 @@
     --color-scene-ghost: #4fb4c8;
     --color-anatomy-artery: #d98a80;
     --color-anatomy-vein: #8aa6cf;
+    --color-body-bone: #8f897f;
+    --color-body-heart: #9a6f6a;
     --color-marker-entry: #f4f2f1;
     --color-marker-target: #4fb4c8;
 

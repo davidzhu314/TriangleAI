@@ -12,6 +12,7 @@ import { buildGraph, routeFor, type RouteGraph } from '../../optimize';
 import { ILLUSTRATIVE_CONSTANTS } from '../../score';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
 import { labelled, type IconName } from '../icons';
@@ -136,7 +137,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire. Drag to turn it.`, {
     onFrame: (pad) => arStep(pad),
     panel: () => [...casePanel.querySelectorAll('.hud-row')].map((r) => (r.textContent ?? '').replace(/\s+/g, ' ').trim()),
-  });
+  }, anatomyFor(entry(key), c));
   const startNode = graph.entries.get(plan.entryId);
   const targetNode = graph.targets.get(plan.targetId);
   const overview = routeOverview(c, startNode, plan.edges);
