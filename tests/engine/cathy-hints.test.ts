@@ -22,12 +22,12 @@ import {
   unlockedCaseIds,
   type ProgressRecord,
 } from '../../client/src/score';
-import type { Frontier, LoadedCase } from '../../client/src/contracts';
+import type { CaseResult, Frontier, LoadedCase } from '../../client/src/contracts';
 import { autoDrive, G1_CASES, loadBundled } from './engine.testutil';
 
 describe('hints never change scores or progress', async () => {
   const cases: LoadedCase[] = await Promise.all(G1_CASES.map((id) => loadBundled(id)));
-  const results = [];
+  const results: CaseResult[] = [];
   for (const c of cases) {
     const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: c.targets[0]!.id }) as Frontier;
     const best = bestFrontierRoute(f, DEFAULT_WEIGHTS)!;
