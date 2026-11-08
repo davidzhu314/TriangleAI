@@ -248,3 +248,11 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Not part of the case package:** it isn't in `case.json`, `index.json`, the schema or the loader, and the engine and the validator never read it. That is why this needs no contract change, unlike a package field (the earlier item-3 answer).
   - **Reproducible:** `slicer/export_context.py` re-exports it byte-identical from the committed `slicer/cases/<id>/context.seg.nrrd`.
   - **Aligned:** on each case the heart centroid is 10–21 mm from the aortic root.
+- 2026-11-08 · David · **The demo's Drive beat leads with rail.** It drives `type-iii` on rail, the way both rehearsals and A8 ran it. Physics isn't shown: it runs only on CathSim phantoms, it was never rehearsed, and the live site is rail-only. This supersedes D1's "Demo leads with physics" for the demo only; the physics process and `select.ts` are unchanged. David changed DEMO.md's Drive fallback line and its "open choice" note in Aroovee's place, with her OK.
+- 2026-11-08 · David · **S5 reached on 2026-11-08, main at 392dbad.** PLAN.md's S5 test:
+  - **A8:** the A8 Playwright test is green on rail against the production build (7/7, twice), and the full Playwright suite passes (61 passed, 1 fixme).
+  - **Inspector:** a fresh Taste v2.1.5 `inspect.mjs --app` run at 1440, 768 and 390 px, light theme, on Library, Case brief, Plan, Compare, Drive and Results, finds 0 FAIL. Dark theme was last checked at the A8 gate (`metrics/aroovee/A8/gate.md`).
+  - **Milestones:** V7, A8, D7, A7, G1 and G2 are merged.
+  - S5 also settles "after the demo" for PR #22: it stays a draft until the demo has happened.
+- 2026-11-08 · David · **Merge freeze on main from 2026-11-08 until the demo is over.** Vercel deploys every merge to https://threadsim.vercel.app. During the freeze only demo fixes merge, each with CI green and David's OK. Everything else waits, including the body-context PR #68.
+- 2026-11-08 · David · **AR stays an unverified bonus.** The A7 code stays, but no demo beat uses AR and nobody presents it until it has been verified on a Quest 3. It shows only where immersive-ar is supported.
