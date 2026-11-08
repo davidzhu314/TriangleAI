@@ -77,6 +77,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
     scene.setRoute('ghost', xray ? null : scene.routePoints(s.plan.startNode, s.plan.edges), { colorToken: '--color-scene-ghost', opacityToken: '--opacity-scene-ghost' });
     scene.setRoute('wire', wireShown && s.wire.length > 1 ? s.wire : null, { colorToken: xray ? '--color-xray-ink' : '--color-scene-wire', heavy: true });
     scene.setPoint('tip', wireShown ? s.tip : null, xray ? '--color-xray-ink' : '--color-scene-ghost');
+    dual.anatomy()?.suppress(xray); // X-ray shows only the silhouette, wire and contrast
     dual.follow(s.tip); // the whole tree from the entry, then the close-up once the tip reaches the arch
     scene.setMarkers(s.entryNode, s.targetNode);
     scene.showMarkers(!xray);
