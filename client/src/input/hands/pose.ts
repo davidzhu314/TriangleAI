@@ -202,3 +202,10 @@ export function pinchRatio(image: readonly Landmark[]): number {
 }
 
 export type Vec = V;
+
+/** The pinch point: midway between the thumb tip and the index tip, on IMAGE landmarks (user's view). */
+export function pinchPoint(image: readonly Landmark[]): { x: number; y: number } {
+  const a = image[LM.THUMB_TIP]!;
+  const b = image[LM.INDEX_TIP]!;
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}

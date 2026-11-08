@@ -43,9 +43,10 @@ export interface HandOutput {
   select: boolean;
   /**
    * This frame's view movement, trackpad-style, in screen widths (x right, y down, user's view): move the
-   * view (or page) by it. Null unless panning; 0, 0 on the first frame of a pan.
+   * view (or page) by it. Null unless panning; 0, 0 on the first frame of a pan. `roll` (pinch-grab only):
+   * this frame's twist of the pinching hand, in half-turns (1 = 180°), positive clockwise as seen.
    */
-  pan: { dx: number; dy: number } | null;
+  pan: { dx: number; dy: number; roll?: number } | null;
   debug: { curl?: number; twistDeg?: number; pinch?: number };
 }
 
@@ -62,8 +63,8 @@ export interface GestureOutput {
   pointer: { x: number; y: number } | null;
   /** True on the single frame a pinch-select fires. */
   select: boolean;
-  /** View movement this frame (see HandOutput.pan); null unless a hand is panning. */
-  pan: { dx: number; dy: number } | null;
+  /** View movement this frame (see HandOutput.pan); null unless a hand is panning. Pinch-grab rolls add up. */
+  pan: { dx: number; dy: number; roll?: number } | null;
   debug: { curl?: number; twistDeg?: number; pinch?: number };
   /** Each hand on its own. */
   hands: { Left: HandOutput; Right: HandOutput };
