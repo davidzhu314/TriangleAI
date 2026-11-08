@@ -1,0 +1,353 @@
+/* Drive screen. Every value is a token; the only raw numbers are the tablet and phone widths
+   (DESIGN.md: Responsive Behavior). The view fills the stage; HUD cards float over it with an edge, no shadow. */
+.drive-stage {
+  position: relative;
+  height: calc(100dvh - var(--size-topbar) - var(--size-sheet-inset) - var(--size-sheet-padding) * 2);
+  min-height: calc(var(--size-readout) * 2);
+  background: var(--color-scene-ground);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.drive-canvas {
+  position: absolute;
+  inset: 0;
+  padding: var(--space-8) calc(var(--size-palette) + var(--space-16)) var(--space-8);
+  transition: background-color var(--duration-base) var(--ease-standard);
+}
+
+.drive-stage:has(.drive-view[data-mode='xray']) .drive-canvas {
+  background: var(--color-xray-bg);
+}
+
+/* ---------------------------------------------------------------- HUD cards */
+.hud-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.hud-title {
+  margin: 0;
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.hud-left {
+  position: absolute;
+  top: var(--space-5);
+  bottom: var(--space-5);
+  left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  width: calc(var(--size-palette) + var(--space-16));
+  overflow-y: auto;
+}
+
+.hud-overview {
+  position: absolute;
+  top: var(--space-5);
+  right: var(--space-5);
+  width: calc(var(--size-palette) + var(--space-16));
+}
+
+.hud-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+
+.hud-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-top: var(--border-width) solid var(--color-rule);
+}
+
+.hud-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.hud-row-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.hud-row dt {
+  color: var(--color-text);
+}
+
+.hud-row dd {
+  margin: 0;
+  color: var(--color-heading);
+  text-align: right;
+}
+
+.hud-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+/* Meters: a track as long as the budget (or twice the force threshold), the fill the true ratio. */
+.meter {
+  position: relative;
+  height: var(--space-2);
+  background: var(--color-surface-active);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--fill, 0) * 100%);
+  background: var(--color-brand);
+  transition: width var(--duration-fast) linear;
+}
+
+.meter-over .meter-fill {
+  background: var(--color-negative);
+}
+
+.meter-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--underline-width);
+  background: var(--color-heading);
+}
+
+/* ---------------------------------------------------------------- controls legend */
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--size-control);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-rule);
+  color: var(--color-heading);
+}
+
+.control-keys {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.kbd {
+  flex: none;
+  min-width: var(--size-control);
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-field);
+  color: var(--color-heading);
+  font-family: inherit;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-lead);
+  text-align: center;
+}
+
+.key-button {
+  min-height: var(--size-control);
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.key-button:hover {
+  border-color: var(--color-text-muted);
+}
+
+.key-button[aria-pressed='true'] {
+  background: var(--color-brand-tint);
+  border-color: var(--color-brand);
+  color: var(--color-brand-strong);
+}
+
+/* ---------------------------------------------------------------- top: label, view switch, banner */
+.hud-top {
+  position: absolute;
+  top: var(--space-5);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  width: max-content;
+  max-width: calc(100% - (var(--size-palette) + var(--space-16) + var(--space-5) * 2) * 2);
+  transform: translateX(-50%);
+}
+
+.hud-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.drive-mode {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.segment {
+  min-height: var(--size-control);
+  padding-inline: var(--space-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-field);
+  color: var(--color-text);
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.segment[aria-pressed='true'] {
+  background: var(--color-surface-active);
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.drive-banner {
+  max-width: 100%;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  text-align: center;
+}
+
+.drive-banner:empty {
+  display: none;
+}
+
+.drive-banner-warning {
+  background: var(--color-pill-warning-bg);
+  color: var(--color-pill-warning-ink);
+  border: var(--border-width) solid var(--color-pill-warning-border);
+}
+
+.drive-banner-negative {
+  background: var(--color-pill-negative-bg);
+  color: var(--color-pill-negative-ink);
+}
+
+.drive-banner-neutral {
+  background: var(--color-surface);
+  color: var(--color-heading);
+  border: var(--border-width) solid var(--color-border);
+}
+
+/* ---------------------------------------------------------------- route overview, actions */
+.overview-svg {
+  height: calc(var(--space-16) * 2.5);
+  background: var(--color-scene-ground);
+  border-radius: var(--radius-control);
+}
+
+.overview-svg .route-trace,
+.overview-svg .wire-line {
+  stroke-width: var(--stroke-route);
+}
+
+.hud-actions {
+  position: absolute;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.hud-actions .btn-secondary {
+  background: var(--color-surface);
+}
+
+/* Tablet and phone: the view on top, then the HUD cards in the flow. */
+@media (max-width: 1100px) {
+  .drive-stage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    height: auto;
+    min-height: 0;
+    padding: var(--space-4);
+    overflow: visible;
+  }
+
+  .drive-canvas {
+    position: relative;
+    inset: auto;
+    order: 2;
+    height: var(--size-readout);
+    padding: var(--space-4);
+    border-radius: var(--radius-control);
+  }
+
+  .hud-top {
+    position: static;
+    order: 1;
+    width: auto;
+    max-width: none;
+    transform: none;
+  }
+
+  .hud-left {
+    position: static;
+    order: 3;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: auto;
+    overflow: visible;
+  }
+
+  .hud-overview {
+    position: static;
+    order: 4;
+    width: auto;
+  }
+
+  .hud-actions {
+    position: static;
+    order: 5;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 640px) {
+  .hud-left {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .key-button,
+  .segment {
+    min-height: var(--size-touch);
+    min-width: var(--size-touch);
+  }
+
+  .hud-actions .btn {
+    flex: 1;
+  }
+}
