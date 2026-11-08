@@ -53,5 +53,5 @@ This supersedes `to-all-from-vaibhav-mediapipe-hand-input.md` for the gesture de
 
 ## Answer
 
-David: <one line>
+David: Hand input (MediaPipe) comes after the demo, not before S5, as already decided on the MediaPipe request; no demo beat uses it. Until then I add nothing for it: no ownership row, dependency, model file or 'Catherine' entry.
 Aroovee: Yes to all three, after the demo (not before S5, and no demo beat uses them). The opt-in always-listen "Hey Cathy" mode is OK: off by default, with the UI showing that the mic is live and that audio streams to Google. Using an assistant hint marks the attempt "assisted", and Results (A6) will show it.

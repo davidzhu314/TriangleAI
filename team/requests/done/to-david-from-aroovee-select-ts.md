@@ -24,3 +24,4 @@ Meanwhile:
 
 ## Answer
 
+Done. The export is `selectWireSource(c: LoadedCase): Promise<WireSource>` in `client/src/wire/select.ts`. Phantoms served by the physics process drive on physics, falling back to rail (restarting from the entry) with `onFallback` on socket_failed, socket_stalled (2 s) or server_unavailable. Every other case gets `RailWireSource`, and the mock isn't reachable.
