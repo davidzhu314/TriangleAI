@@ -42,7 +42,9 @@ def test_fidelity_matches_typescript(name, case_dir, log, result):
     centerlines = json.loads((REPO / case_dir / "centerlines.json").read_text(encoding="utf-8"))
     edges = {e["id"]: e for e in centerlines["edges"]}
     polylines = [nm.ras_mm_to_yup_m(edges[eid]["points"]) for eid in log["path"]]
-    tips = [s["tip"] for s in log["samples"]]
+    # Scoring stops at the target (DECISIONS.md, "Scoring stops at the target"): tips up to the first target_reached.
+    reached = next((e["t"] for e in log["events"] if e["kind"] == "target_reached"), None)
+    tips = [s["tip"] for s in log["samples"] if reached is None or s["t"] <= reached]
     got = nm.mean_tip_distance_m(tips, polylines)
     want = result["drive"]["fidelity"]["meanDistanceM"]
     assert abs(got - want) <= MM_IN_M, (name, got, want)
