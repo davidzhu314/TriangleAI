@@ -5,7 +5,7 @@
  * nodes, so the graph is exact. Millimetres, RAS (+x patient right, +y anterior, +z superior).
  *
  * Seeded and deterministic. Teaching anatomy: shapes and sizes are plausible, not measured.
- * D6-min commits two cases (cases.ts); D6 will emit the rest of the ladder from the same function.
+ * Every bundled generated case (cases.ts) comes from this one function.
  */
 import {
   CASE_SCHEMA_ID,
@@ -48,8 +48,8 @@ export interface ArchParams {
   title: string;
   seed: number;
   arch_type: ArchType;
-  /** Shared BCA–LCCA origin. Not implemented in D6-min: must be false (DECISIONS.md). */
-  bovine: false;
+  /** Brachiocephalic trunk and left common carotid share one origin on the arch (spec §3.4). */
+  bovine: boolean;
   /** 0..1: added curvature along the branches. */
   tortuosity: number;
   /** Start and end diameters per vessel, mm; defaults below. Radii taper linearly between them. */
@@ -109,9 +109,17 @@ interface ArchShape {
 }
 const ARCH: Record<ArchType, ArchShape> = {
   I: { rise: 28, lsca: -24, lcca: -10, bca: 10, dirs: { bca: [0.62, 0.25, 0.75], lcca: [0.1, 0.05, 0.99], l_arm: [-0.85, -0.05, 0.52] } },
-  II: { rise: 40, lsca: -22, lcca: -4, bca: 18, dirs: { bca: [0.62, 0.25, 0.75], lcca: [-0.25, 0.05, 0.97], l_arm: [-0.85, -0.05, 0.52] } },
+  II: { rise: 40, lsca: -22, lcca: -4, bca: 18, dirs: { bca: [0.9, 0.2, 0.4], lcca: [0.35, 0.05, 0.94], l_arm: [-0.95, -0.1, 0.15] } },
   III: { rise: 55, lsca: -20, lcca: -12, bca: 20, dirs: { bca: [0.95, 0.2, 0.2], lcca: [-0.05, 0.05, 0.99], l_arm: [-0.95, -0.1, 0.15] } },
 };
+
+/**
+ * Bovine arch (DECISIONS.md, D6): one common origin for the brachiocephalic trunk and the left common
+ * carotid, placed this far from the apex toward the root (mm). The LCCA leaves the common origin up
+ * and to the left, so from the femoral side it is a steeper takeoff than a normal LCCA, and the tip
+ * has to be rolled away from the bigger brachiocephalic trunk beside it.
+ */
+const BOVINE = { fromApex: 2, dirs: { bca: [0.8, 0.25, 0.55] as Vec3, lcca: [0.4, 0.05, 0.92] as Vec3 }, lccaPath: [[-14, 4, 50], [-26, 6, 120]] as Vec3[] };
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (a: Vec3, k: number): Vec3 => [a[0] * k, a[1] * k, a[2] * k];
@@ -165,7 +173,6 @@ export interface GeneratedCase {
 }
 
 export function generateArch(p: ArchParams): GeneratedCase {
-  if (p.bovine) throw new Error('bovine arches are not implemented yet (D6)');
   const rng: Rng = mulberry32(p.seed);
   const diam = { ...DEFAULT_DIAMETERS_MM, ...p.diameters_mm };
   const weight = { ...DEFAULT_WEIGHT, ...p.tortuosityWeight };
@@ -207,16 +214,25 @@ export function generateArch(p: ArchParams): GeneratedCase {
   const apexIndex = aorta.findIndex((q) => q === aortaCtl[5]);
   const sApex = aortaCs[apexIndex]!;
   const L = aortaCs[aortaCs.length - 1]!;
-  const sAt = { lsca: sApex + arch.lsca, lcca: sApex + arch.lcca, bca: sApex + arch.bca };
+  const sAt = { lsca: sApex + arch.lsca, lcca: sApex + arch.lcca, bca: p.bovine ? sApex + BOVINE.fromApex : sApex + arch.bca };
   const at = (s: number) => round3(pointAt(aorta, aortaCs, s));
   node('n_aortic_bif', round3(aorta[0]!), 'branch');
   node('n_lsca_o', at(sAt.lsca), 'branch');
-  node('n_lcca_o', at(sAt.lcca), 'branch');
-  node('n_bca_o', at(sAt.bca), 'branch');
-  node('n_root', round3(aorta[aorta.length - 1]!), 'end');
-  addSplit(aorta, aortaCs, 'aorta', [0, sAt.lsca, sAt.lcca, sAt.bca, L],
-    ['n_aortic_bif', 'n_lsca_o', 'n_lcca_o', 'n_bca_o', 'n_root'],
-    ['e_aorta_desc', 'e_arch_distal', 'e_arch_proximal', 'e_aorta_asc']);
+  if (p.bovine) {
+    // One common origin: the LCCA leaves from n_bca_o, and the arch has no separate LCCA node.
+    node('n_bca_o', at(sAt.bca), 'branch');
+    node('n_root', round3(aorta[aorta.length - 1]!), 'end');
+    addSplit(aorta, aortaCs, 'aorta', [0, sAt.lsca, sAt.bca, L],
+      ['n_aortic_bif', 'n_lsca_o', 'n_bca_o', 'n_root'],
+      ['e_aorta_desc', 'e_arch_distal', 'e_aorta_asc']);
+  } else {
+    node('n_lcca_o', at(sAt.lcca), 'branch');
+    node('n_bca_o', at(sAt.bca), 'branch');
+    node('n_root', round3(aorta[aorta.length - 1]!), 'end');
+    addSplit(aorta, aortaCs, 'aorta', [0, sAt.lsca, sAt.lcca, sAt.bca, L],
+      ['n_aortic_bif', 'n_lsca_o', 'n_lcca_o', 'n_bca_o', 'n_root'],
+      ['e_aorta_desc', 'e_arch_distal', 'e_arch_proximal', 'e_aorta_asc']);
+  }
 
   // ---------------------------------------------------------------- branches
   /** Build a branch from node `fromId`; returns nothing, adds one edge to `toId`. */
@@ -237,10 +253,11 @@ export function generateArch(p: ArchParams): GeneratedCase {
 
   // Every branch draws from the generator in the same order whether or not it is a stub, so
   // adding an entry does not reshuffle the rest of the case.
-  branch({ ...BRANCHES.bca, dir: arch.dirs.bca }, 'n_bca_o', 'n_bca_bif', 'branch', 'e_bca', true);
+  branch({ ...BRANCHES.bca, dir: p.bovine ? BOVINE.dirs.bca : arch.dirs.bca }, 'n_bca_o', 'n_bca_bif', 'branch', 'e_bca', true);
   branch(BRANCHES.rcca, 'n_bca_bif', 'n_rcca', p.targets.includes('rcca') ? 'target' : 'end', 'e_rcca', true);
   branch(BRANCHES.r_arm, 'n_bca_bif', has('rad_r') ? 'n_rad_r' : 'n_r_arm_end', has('rad_r') ? 'entry' : 'end', 'e_r_arm', has('rad_r'));
-  branch({ ...BRANCHES.lcca, dir: arch.dirs.lcca }, 'n_lcca_o', 'n_lcca', p.targets.includes('lcca') ? 'target' : 'end', 'e_lcca', true);
+  const lcca = p.bovine ? { ...BRANCHES.lcca, dir: BOVINE.dirs.lcca, path: BOVINE.lccaPath } : { ...BRANCHES.lcca, dir: arch.dirs.lcca };
+  branch(lcca, p.bovine ? 'n_bca_o' : 'n_lcca_o', 'n_lcca', p.targets.includes('lcca') ? 'target' : 'end', 'e_lcca', true);
   branch({ ...BRANCHES.l_arm, dir: arch.dirs.l_arm }, 'n_lsca_o', has('rad_l') ? 'n_rad_l' : 'n_l_arm_end', has('rad_l') ? 'entry' : 'end', 'e_l_arm', has('rad_l'));
   branch(BRANCHES.r_iliac, 'n_aortic_bif', has('fem_r') ? 'n_fem_r' : 'n_r_iliac_end', has('fem_r') ? 'entry' : 'end', 'e_r_iliac', has('fem_r'));
   branch(BRANCHES.l_iliac, 'n_aortic_bif', has('fem_l') ? 'n_fem_l' : 'n_l_iliac_end', has('fem_l') ? 'entry' : 'end', 'e_l_iliac', has('fem_l'));
