@@ -23,7 +23,7 @@ export { isSafe, LARGE_GRAPH_EDGES, optimizeCase, RouteEnumerator, routeFor, rou
 export { dominates, frontierLabels, LABEL_MEASURE, paretoFrontier } from './frontier';
 export { planAssist, type BranchOption, type PlanAssist, type PlanAssistInput } from './assist';
 export { steerableAt, type Steerability, type SteerFailure } from './steerability';
-export { createRanker, measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from './rank';
+export { createRanker, DEFAULT_WEIGHTS, defaultWeights, measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from './rank';
 export { DFS_PATH_CAP, simplePaths, YEN_K, yenKShortest, type GraphPath } from './paths';
 
 const cache = new WeakMap<LoadedCase, { graph: RouteGraph; enumerator: RouteEnumerator }>();

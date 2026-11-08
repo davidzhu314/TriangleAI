@@ -438,11 +438,19 @@ describe('scoreCase', () => {
     expect(() => scoreCase({ log, optimized: optimizeFor('right_branch'), weights: W, case: c })).toThrow(/target/);
   });
 
-  it('feedback puts the plan line before the drive lines, lowest component first', () => {
-    const r = (JSON.parse(readFileSync(join(LOGS, 'score-prolapse-fixture-y.json'), 'utf8')) as { result: CaseResult }).result;
-    const refs = r.feedback.map((l) => l.formulaRef);
-    expect(refs[0]).toBe('plan.regret');
-    expect(refs.indexOf('drive.fidelity')).toBeLessThan(refs.indexOf('drive.errors'));
+  it('feedback leads with something to change: a "best plan" line goes after the drive lines that took points off', () => {
+    const load = (f: string) => (JSON.parse(readFileSync(join(LOGS, f), 'utf8')) as { result: CaseResult }).result;
+    const pro = load('score-prolapse-fixture-y.json').feedback.map((l) => l.template);
+    expect(pro[0]).toBe('drive.fidelity_drift'); // the lowest drive component, not praise
+    expect(pro.indexOf('plan.best')).toBeGreaterThan(pro.indexOf('drive.back_out'));
+    expect(pro.indexOf('drive.fidelity_drift')).toBeLessThan(pro.indexOf('drive.wrong_branch')); // lowest component first
+    expect(pro.at(-1)).toBe('drive.radiation_within'); // neutral notes stay last
+    // a star lost to the budget is something to change: it leads
+    expect(load('score-over-budget-fixture-y.json').feedback[0]!.template).toBe('result.over_budget');
+    // a clean drive has nothing to change, so the plan line leads
+    expect(load('score-clean-fixture-y.json').feedback[0]!.template).toBe('plan.best');
+    // a plan check that cost points (here: infeasible) still leads
+    expect(load('rail-golden-diamond-j.result.json').feedback[0]!.template).toBe('plan.turn_too_sharp');
     expect(buildFeedback).toBeTypeOf('function');
   });
 
