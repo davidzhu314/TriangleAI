@@ -40,27 +40,23 @@ export const POINT: Readonly<{ enter: PointLimits; stay: PointLimits }> = {
 };
 
 export interface PanLimits {
-  /** Index and middle flexion must be at most this (straight, the two arms of the V). */
-  fingersCurlMax: number;
-  /** Ring and pinky flexion must be above this (folded), so an open hand isn't a pan. */
-  othersCurlMin: number;
-  /** Thumb tip to index MCP, ÷ palm size, must be above this (thumb out, as in the gun). */
-  thumbUpMin: number;
-  /** Index and middle proximal phalanges must be at least this far apart, degrees: the V. */
-  vGapMinDeg: number;
+  /** Index, middle, ring and pinky flexion must all be above this: a fist. */
+  fingersCurlMin: number;
+  /** Thumb tip to index MCP, ÷ palm size, must be at most this: the thumb tucked, not up as in the gun. */
+  thumbUpMax: number;
 }
 
 /**
- * The pan pose, "thumb + V": thumb out, index and middle straight and spread apart in a V, ring and pinky folded
- * (Aroovee's request: three fingers out was awkward). Moving the hand moves (and in 3D turns) the view.
- * The gun is the same hand with index and middle TOGETHER, so the two are told apart by the gap between them:
- * the gun starts at a gap of at most GUN.enter.barrelGapMaxDeg (30°) and keeps up to GUN.stay (55°, a twisting
- * real hand opens to ~53°), so the V must start well above that (65°). A relaxed peace sign is often 30–45°:
- * the on-screen words say "spread them wide". Illustrative and untuned on a real hand (DECISIONS.md, "Pan: thumb + V").
+ * The pan pose, "grab and drag": a fist, thumb tucked. Move the fist and the view follows (in 3D it turns).
+ * Vaibhav's call after trying the V: the easiest shape to make, and far from the point (index out).
+ * The gun pulling also curls the fingers, so the THUMB tells them apart: the gun starts with the thumb up
+ * (GUN.enter.thumbUpMin 0.4) and an engaged gun keeps its pull while the thumb stays above GUN.stay (0.2);
+ * a fist pan starts only with the thumb tucked (at most 0.35; a synthetic fist reads 0.13, a gun 0.96).
+ * Illustrative and untuned on a real hand (DECISIONS.md, "Pan: a fist, thumb tucked").
  */
 export const PAN: Readonly<{ enter: PanLimits; stay: PanLimits }> = {
-  enter: { fingersCurlMax: 0.45, othersCurlMin: 0.45, thumbUpMin: 0.4, vGapMinDeg: 65 },
-  stay: { fingersCurlMax: 0.6, othersCurlMin: 0.3, thumbUpMin: 0.2, vGapMinDeg: 45 },
+  enter: { fingersCurlMin: 0.6, thumbUpMax: 0.35 },
+  stay: { fingersCurlMin: 0.45, thumbUpMax: 0.5 },
 };
 
 /** Pan: view movement per unit of hand movement (both in screen widths), and a per-frame dead zone. */

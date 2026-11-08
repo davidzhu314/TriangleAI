@@ -100,9 +100,13 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
   const selfView = h('div', { class: 'hv-self', hidden: true, 'data-testid': 'hands-self-view' }, video, status, cameraNote);
   const micNotice = h('p', { class: 'pill pill-warning hv-mic', hidden: true, role: 'status', 'data-testid': 'mic-live' }, 'Microphone on: Chrome sends this audio to Google to recognise speech. Say “Hey Cathy, …”.');
   const caption = h('div', { class: 'hv-caption', role: 'status', 'aria-live': 'polite', 'data-testid': 'voice-caption' });
-  const panel = h('div', { class: 'hv-panel' }, selfView, micNotice, caption);
+  // Cathy's text stays in the view box (bottom-left, clear of the arteries at the default framing); the webcam
+  // self-view sits in the page's bottom-right corner instead, so it never covers the arteries. On Drive it rises
+  // above the Restart / Exit / Finish buttons.
+  const panel = h('div', { class: 'hv-panel' }, micNotice, caption);
   const pointer = h('div', { class: 'hv-pointer', hidden: true, 'aria-hidden': 'true' });
   host.append(panel, pointer);
+  document.body.append(selfView);
 
   const show = (g: GestureOutput | null): void => {
     latest = g;
@@ -205,6 +209,7 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
       recognizer.abort?.();
       if (window.__threadsimHands) delete window.__threadsimHands;
       panel.remove();
+      selfView.remove();
       pointer.remove();
       controls.remove();
     },

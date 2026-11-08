@@ -261,8 +261,8 @@ test('pointing shows the pointer dot, and pinches pass through as picks on Plan'
 });
 
 test('the pan gesture moves the view, on Plan, Compare and Drive', async ({ page }) => {
-  // Three fingers out, pinky folded: a pan. Hold still to engage, then sweep right.
-  const panHand = (x: number) => synth.syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.5 } });
+  // A fist, thumb tucked: a pan (grab and drag). Hold still to engage, then sweep right.
+  const panHand = (x: number) => synth.syntheticHand({ flex: { index: 1, middle: 1, ring: 1, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.5 } });
   const frames = Array.from({ length: 50 }, (_, i) => synth.frame(i * synth.FRAME_MS, panHand(0.3 + (i > 12 ? (i - 12) * 0.01 : 0))));
   const sweep = async (view: string): Promise<void> => {
     const flat = page.locator(`${view} .plan-view-svg`).first();
@@ -288,7 +288,7 @@ test('the pan gesture moves the view, on Plan, Compare and Drive', async ({ page
 });
 
 test('in 3D the pan gesture turns the case on three axes (two hands roll it), and Reset view undoes it', async ({ page }) => {
-  const panHand = (side: 'Left' | 'Right', x: number, y: number) => synth.syntheticHand({ handedness: side, flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y } });
+  const panHand = (side: 'Left' | 'Right', x: number, y: number) => synth.syntheticHand({ handedness: side, flex: { index: 1, middle: 1, ring: 1, pinky: 1 }, thumb: 'folded', pos: { x, y } });
   const feed = async (frames: unknown[]): Promise<void> => {
     for (const f of frames) await page.evaluate((frame) => window.__threadsimHands!.feed(frame as never), f);
   };
@@ -349,7 +349,7 @@ test('"Hey Cathy, reset view" puts a zoomed and turned 3D view back where it ope
   await voiceOn(page);
   await say(page, 'hey cathy zoom in');
   await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom in');
-  const panHand = (x: number) => synth.syntheticHand({ handedness: 'Right', flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.4 } });
+  const panHand = (x: number) => synth.syntheticHand({ handedness: 'Right', flex: { index: 1, middle: 1, ring: 1, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.4 } });
   for (let i = 0; i < 50; i++) await page.evaluate((f) => window.__threadsimHands!.feed(f as never), synth.frame(i * synth.FRAME_MS, panHand(0.3 + (i > 12 ? (i - 12) * 0.008 : 0))));
   await expect(canvas).toHaveAttribute('data-turned', 'true');
   expect(far(await settled(), opened)).toBeGreaterThan(20);
