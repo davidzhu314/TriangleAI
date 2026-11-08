@@ -247,3 +247,17 @@ body:has(.drive-stage) .hv-self {
 .hv-controls[hidden] {
   display: none;
 }
+
+/* Cathy's footer: the honesty note and her Sound (speak aloud) switch */
+.cathy-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+}
+.cathy-foot .cathy-note {
+  flex: 1 1 auto;
+}
+.cathy-sound {
+  flex: 0 0 auto;
+}

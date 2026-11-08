@@ -1,6 +1,6 @@
-/* ThreadSim design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
+/* Cathy design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
    "measured" = taken from the reference site in DECISIONS.md. "derived" = one tone step from a measured value.
-   "ours" = chosen for ThreadSim. "spec" = fixed by docs/ThreadSim_Build_Specification.md. The dark theme is at the end of this file. */
+   "ours" = chosen for Cathy. "spec" = fixed by docs/ThreadSim_Build_Specification.md. The dark theme is at the end of this file. */
 :root {
   color-scheme: light dark;
 
