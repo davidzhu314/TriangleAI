@@ -87,6 +87,12 @@ export function violationLine(v: ConstraintViolation, presetId: Route['presetId'
       return feedbackLine('plan.forbidden_zone', { zone: n.zone(v.zone) }, 'plan.feasible');
     case 'arch_never_reached':
       return feedbackLine('plan.arch_never_reached', { preset: getPreset(v.presetId).name }, 'plan.feasible');
+    case 'cannot_steer':
+      return feedbackLine(
+        'plan.cannot_steer',
+        { takeoff_deg: round(v.takeoffDeg, 0), vessel: n.vesselOfEdge(v.edge), preset, tip_deg: round(v.tipDeg, 0) },
+        'plan.feasible',
+      );
     default: {
       // A violation kind added to the contract after this was written (e.g. cannot_steer before its own
       // template lands): still explained, never dropped, so a contract bump never breaks the build.
