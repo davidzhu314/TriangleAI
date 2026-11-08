@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SpeechAlternative, VoiceMatch } from './match';
-import type { Recognizer } from './ptt';
+import type { Recognizer } from './recognizer';
 import { createWakeListener, startsWithWake, type WakeState } from './wake';
 
 const say = (...transcripts: string[]): SpeechAlternative[] => transcripts.map((transcript, i) => ({ transcript, confidence: 0.9 - i * 0.1 }));
@@ -118,5 +118,37 @@ describe('always-listen mode, woken by "Hey Cathy"', () => {
     const wake = createWakeListener(rec, () => undefined);
     wake.start();
     expect([wake.state, rec.started]).toEqual(['off', 0]);
+  });
+});
+
+describe('Cathy, undo (the last step)', () => {
+  it('"Hey Cathy, undo" and its phrasings run undo; without the wake word nothing runs', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, undo', 'hey kathy undo that', 'Cathy, go back a step', 'hey cathy take that back', 'Hey Cathy, undo the last step']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['undo', 'undo', 'undo', 'undo', 'undo']);
+    rec.onResult?.(say('undo'));
+    expect(heard).toHaveLength(5);
+  });
+
+  it('undo is never confused with zoom out, and "Hey Cathy" then "undo" works as two utterances', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    rec.onResult?.(say('Hey Cathy, zoom out'));
+    rec.onResult?.(say('Hey Cathy, back out'));
+    rec.onResult?.(say('Hey Cathy'));
+    rec.onResult?.(say('undo'));
+    expect(heard.map((m) => m.action)).toEqual(['zoom_out', 'zoom_out', 'undo']);
+  });
+
+  it('keeps listening across sessions until stopped (always on, no push-to-talk)', () => {
+    const { rec, wake } = setup();
+    wake.start();
+    rec.onEnd?.();
+    rec.onEnd?.();
+    expect(rec.started).toBe(3);
+    wake.stop();
+    rec.onEnd?.();
+    expect(rec.started).toBe(3);
   });
 });

@@ -3,11 +3,11 @@
  * in Chrome). Never throws, never runs at import time, and nothing in the app calls it yet.
  *
  * Privacy: in Chrome, recognition sends the audio to Google's servers while a session is open, so it
- * needs internet. Push-to-talk keeps a session open only while the talk control is held.
+ * needs internet. The wake listener (./wake) restarts each session when it ends, so voice stays on until stopped.
  */
 
 import type { SpeechAlternative } from './match';
-import type { Recognizer } from './ptt';
+import type { Recognizer } from './recognizer';
 
 /** The part of the Web Speech API used here (not in TypeScript's DOM lib everywhere). */
 interface WebSpeechRecognition {
