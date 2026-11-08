@@ -15,7 +15,10 @@
  */
 import type { LoadedCase } from '../../contracts';
 import { createBrowserRecognizer, createBrowserSpeaker, createWakeListener, matchCommand, resolveVesselTarget, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
+import { answer as llmAnswer, resolveIntent } from '../../input/voice/cathy-llm';
+import { noAnswerLine, type CathyFacts } from '../../score';
 import { h } from '../dom';
+import { CATHY_AI_NOTE, cathyAiOn, cathyLlmOptions } from './cathy-ai';
 import { readSettings, SETTINGS_EVENT, updateSettings, type Settings } from '../settings-store';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
 import './hands-voice.css';
@@ -128,6 +131,11 @@ export interface HandsVoiceOptions {
   onVoice: (action: VoiceAction, match?: VoiceMatch) => string | null | Promise<string | null>;
   /** Which commands this screen answers; others get "not on this screen". */
   actions: readonly VoiceAction[];
+  /**
+   * The engine's facts for this screen now (cathyFacts), for Cathy's AI wording; omitted or null means template lines
+   * only. Only asked for when AI wording is on.
+   */
+  facts?: () => Promise<CathyFacts | null>;
 }
 
 export interface HandsVoice {
@@ -144,7 +152,7 @@ declare global {
   }
 }
 
-export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, actions }: HandsVoiceOptions): HandsVoice {
+export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, actions, facts }: HandsVoiceOptions): HandsVoice {
   let tracker: HandTracker | null = null;
   let latest: GestureOutput | null = null;
   let latestAt = 0;
@@ -183,9 +191,20 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     if (!on) speaker.stop();
   };
   sound.addEventListener('click', () => updateSettings({ speak: !speakOn }));
-  const onSettings = (e: Event): void => showSound((e as CustomEvent<Settings>).detail.speak);
+  const onSettings = (e: Event): void => {
+    showSound((e as CustomEvent<Settings>).detail.speak);
+    showNote();
+  };
   window.addEventListener(SETTINGS_EVENT, onSettings);
   const cathyOut = h('div', { class: 'cathy-out', role: 'status', 'aria-live': 'polite', 'data-testid': 'cathy-output' });
+  // The privacy line while AI wording is on; the plain note otherwise.
+  const cathyNote = h('p', { class: 'cathy-note', 'data-testid': 'cathy-note' });
+  const showNote = (): void => {
+    const on = cathyAiOn();
+    cathyNote.textContent = on ? CATHY_AI_NOTE : 'Answers come from the route engine, not an AI model.';
+    cathyNote.dataset['ai'] = String(on);
+  };
+  showNote();
   cathyOut.append(h('p', { class: 'cathy-hint' }, prefs.voice ? 'Pick a question, type one, or turn Voice on and say “Hey Cathy, …”.' : 'Pick a question or type one.'));
   /**
    * Run an action through the screen and show the exchange in the box. With `quiet`, an action that succeeds without
@@ -201,8 +220,46 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     }
     const text = await onVoice(action, match);
     if (!text && quiet) return;
+    // AI wording (G5): a question's answer is worded from the engine's facts, grounded, else the template line.
+    if (text && QUESTIONS.includes(action) && cathyAiOn() && facts) {
+      const f = await facts();
+      if (f) {
+        const a = await llmAnswer(match?.heard ?? asked, f, { template: 'screen', text, values: {}, formulaRef: 'rank.weighted' }, cathyLlmOptions());
+        showAnswer(into, youAsked, a.text, a.source === 'llm');
+        return;
+      }
+    }
     into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text ?? 'Done.'));
     say(text ?? 'Done.');
+  };
+  /** Show an answer in the box; one worded by Claude says so under it. */
+  const showAnswer = (into: HTMLElement, youAsked: HTMLElement, text: string, worded: boolean): void => {
+    const answerEl = h('p', { class: 'hv-answer', 'data-testid': 'voice-answer', 'data-source': worded ? 'llm' : 'template' }, text);
+    if (worded) into.replaceChildren(youAsked, answerEl, h('p', { class: 'cathy-source', 'data-testid': 'cathy-source' }, "Worded by Claude from the route engine's facts."));
+    else into.replaceChildren(youAsked, answerEl);
+    say(text);
+  };
+  /**
+   * Words the matcher didn't recognise, with AI wording on: Claude reads them as one of this screen's commands (then
+   * the screen answers), or as a question (then it's answered from the engine's facts). False when AI wording is
+   * off or Claude reads nothing, so the caller says what it said before.
+   */
+  const askFree = async (words: string, into: HTMLElement): Promise<boolean> => {
+    if (!cathyAiOn()) return false;
+    const opts = cathyLlmOptions();
+    const r = await resolveIntent({ action: null, heard: words } as VoiceMatch, opts);
+    if (r.intent !== 'none' && r.intent !== 'question' && actions.includes(r.intent)) {
+      await respond(r.intent, words, into, false);
+      return true;
+    }
+    if (r.intent === 'question' && facts) {
+      const f = await facts();
+      if (!f) return false;
+      const a = await llmAnswer(words, f, noAnswerLine(), opts);
+      showAnswer(into, h('p', { class: 'cathy-asked' }, words), a.text, a.source === 'llm');
+      return true;
+    }
+    return false;
   };
   let cathyBox: HTMLElement | null = null;
   if (questions.length) {
@@ -217,7 +274,7 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     );
     const field = h('input', { type: 'text', class: 'cathy-field', placeholder: 'Ask Cathy…', 'aria-label': 'Ask Cathy a question', autocomplete: 'off', 'data-testid': 'cathy-field' }) as HTMLInputElement;
     const form = h('form', { class: 'cathy-form' }, field, h('button', { type: 'submit', class: 'btn btn-secondary btn-small' }, 'Ask'));
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const typed = field.value.trim();
       if (!typed) return;
@@ -225,6 +282,7 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
       const m = matchCommand([{ transcript: typed, confidence: 1 }]);
       const action = m.action ?? typedQuestion(typed, questions);
       if (action) void respond(action, typed, cathyOut, false, m.action ? m : undefined);
+      else if (await askFree(typed, cathyOut)) return;
       else {
         const line = `I can answer: ${questions.map((a) => `“${ACTION_WORDS[a]}”`).join(', ')}.`;
         cathyOut.replaceChildren(h('p', { class: 'cathy-asked' }, typed), h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, line));
@@ -234,7 +292,7 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     // Typing in the box must not drive the wire or trigger the screen's other shortcuts.
     field.addEventListener('keydown', (e) => e.stopPropagation());
     field.addEventListener('keyup', (e) => e.stopPropagation());
-    const body = h('div', { class: 'cathy-body' }, buttons, form, cathyOut, h('div', { class: 'cathy-foot' }, h('p', { class: 'cathy-note' }, 'Answers come from the route engine, not an AI model.'), sound));
+    const body = h('div', { class: 'cathy-body' }, buttons, form, cathyOut, h('div', { class: 'cathy-foot' }, cathyNote, sound));
     const toggle = h('button', { type: 'button', class: 'cathy-toggle', 'aria-expanded': 'true', 'data-testid': 'cathy-toggle' }, 'Cathy');
     const setOpen = (open: boolean): void => {
       body.hidden = !open;
@@ -301,7 +359,10 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     const heard = h('p', { class: 'hv-heard' }, m.action ? `Heard: “${m.heard}” → ${words}` : `Heard: “${m.heard}”. No command matched.`);
     caption.replaceChildren(heard);
     host.dataset['voiceAction'] = m.action ?? 'none';
-    if (!m.action) return;
+    if (!m.action) {
+      if (cathyBox) await askFree(m.heard, cathyOut);
+      return;
+    }
     // With Cathy's box on this screen, every answer goes there; the caption keeps what was heard.
     if (cathyBox) {
       await respond(m.action, `“${m.heard}”`, cathyOut, true, m);

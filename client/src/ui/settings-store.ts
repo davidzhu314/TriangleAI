@@ -14,6 +14,8 @@ export interface Settings {
   voice: boolean;
   /** Cathy reads her answers aloud (speech synthesis); the caption shows them either way. */
   speak: boolean;
+  /** Cathy's AI wording (Claude, through /api/cathy): off by default; facts always come from the engine. */
+  cathyAi: boolean;
   theme: ThemeChoice;
   /** Which sections of the command list on the Settings screen are shown. */
   showGestures: boolean;
@@ -21,7 +23,7 @@ export interface Settings {
   showKeys: boolean;
 }
 
-export const DEFAULT_SETTINGS: Readonly<Settings> = { hands: true, voice: true, speak: true, theme: 'system', showGestures: true, showVoice: true, showKeys: true };
+export const DEFAULT_SETTINGS: Readonly<Settings> = { hands: true, voice: true, speak: true, cathyAi: false, theme: 'system', showGestures: true, showVoice: true, showKeys: true };
 
 export const SETTINGS_KEY = 'threadsim.settings.v1';
 
@@ -40,7 +42,7 @@ export function parseSettings(raw: string | null): Settings {
     // corrupt: defaults
   }
   const out: Settings = { ...DEFAULT_SETTINGS };
-  for (const k of ['hands', 'voice', 'speak', 'showGestures', 'showVoice', 'showKeys'] as const) if (typeof stored[k] === 'boolean') out[k] = stored[k];
+  for (const k of ['hands', 'voice', 'speak', 'cathyAi', 'showGestures', 'showVoice', 'showKeys'] as const) if (typeof stored[k] === 'boolean') out[k] = stored[k];
   if (THEMES.includes(stored['theme'] as ThemeChoice)) out.theme = stored['theme'] as ThemeChoice;
   return out;
 }

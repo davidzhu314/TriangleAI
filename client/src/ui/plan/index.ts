@@ -7,7 +7,7 @@
 import type { LoadedCase, Route, WirePreset, WirePresetId } from '../../contracts';
 import './plan.css';
 import { buildGraph, defaultWeights, optimize, planAssist, WIRE_PRESETS, type RouteGraph } from '../../optimize';
-import { planAssistLine } from '../../score';
+import { cathyFacts, planAssistLine, type CathyFacts } from '../../score';
 import { planCheckLine } from '../../score/live';
 import { planMarks } from '../../score/plan-marks';
 import { measureRoute } from '../../optimize/measure-route';
@@ -78,6 +78,26 @@ async function checkLine(c: LoadedCase, graph: RouteGraph, s: RouteState): Promi
   }
   const marks = planMarks({ routeSoFar: s.edges, measures, optimized, entryId: s.entryId, presetId: s.presetId, graph });
   return planCheckLine(marks, assist, c, s.targetId).text;
+}
+
+/**
+ * The engine's facts on Plan now, for Cathy's AI wording (G5): the same pieces the "best next" and "is this right"
+ * answers use (planAssist, planMarks, the route's measures), plus their template lines. Engine only.
+ */
+async function planFacts(c: LoadedCase, graph: RouteGraph, s: RouteState): Promise<CathyFacts> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  let measures = null;
+  try {
+    const startNode = graph.entries.get(s.entryId);
+    measures = s.edges.length > 0 ? measureRoute(graph, s.edges, startNode === undefined ? {} : { startNode }) : null;
+  } catch {
+    measures = null;
+  }
+  const marks = planMarks({ routeSoFar: s.edges, measures, optimized, entryId: s.entryId, presetId: s.presetId, graph });
+  const lines = [planAssistLine(assist, c, s.targetId, 'best'), planAssistLine(assist, c, s.targetId, 'options'), planCheckLine(marks, assist, c, s.targetId)];
+  return cathyFacts({ screen: 'plan', case: c, targetId: s.targetId, entryId: s.entryId, presetId: s.presetId, weights, optimized, lines, routeSoFar: s.edges, measures, assist, marks });
 }
 
 function presetOf(id: WirePresetId): WirePreset {
@@ -287,6 +307,7 @@ function draw(sc: Screen): void {
     liveCase = c;
     // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
     liveHands = createHandsVoice({
+      facts: () => planFacts(c, graph, sc.state),
       host: created.element,
       actions: ['zoom_in', 'zoom_out', 'zoom_to', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'assist_check', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
