@@ -11,11 +11,11 @@ Everything here is pure logic plus two thin wrappers. Only the screens (`client/
 
 | | |
 | --- | --- |
-| Code | PR #22 (`lane/vaibhav-input`), synced with main after S5 (contracts v2), CI green. Tuned on a real webcam clip. Merges after the demo, once David lifts the merge freeze (DECISIONS.md, 2026-11-08). |
-| Team request | `team/requests/to-all-from-vaibhav-hands-voice-assist.md` |
-| Aroovee | Yes to all three features, **after the demo** (no demo beat uses them). Always-listen is OK, off by default, with the UI showing the live mic and that audio streams to Google. A hint marks the attempt "assisted", shown on Results (A6). |
-| David | **After the demo** (not before S5; S5 was reached on 2026-11-08). He adds the CLAUDE.md ownership row for `client/src/input/` and `tests/fixtures/hands/` when #22 merges, then the pinned `@mediapipe/tasks-vision` dependency, the bundled `hand_landmarker.task` model and its THIRD_PARTY.md entry. |
-| MediaPipe | `@mediapipe/tasks-vision` isn't installed yet. This folder declares the landmark types itself and never imports MediaPipe. |
+| Code | PR #22 (`lane/vaibhav-input`), merged into `integration/hands-voice` (draft PR #73) for the demo: hands and voice enter the demo after all (DECISIONS.md 2026-11-08, option A, cut-off 06:00 EST). Tuned on a real webcam clip. |
+| Team request | `team/requests/to-all-from-vaibhav-hands-voice-assist.md`; reversed for the demo by `team/requests/to-all-from-aroovee-hands-voice-before-demo.md` |
+| Aroovee | Hooked up on `integration/hands-voice`: camera and self-view, gestures into Drive, pinch on Plan, push-to-talk with caption and live-mic notice, and a DEMO.md step. Always-listen ("Hey Cathy") isn't hooked up yet. A hint marks the attempt "assisted", shown on Results (A6). |
+| David | Approved option A (one scoped merge exception to the freeze, cut-off 06:00 EST). Added the CLAUDE.md row for `client/src/input/` and `tests/fixtures/hands/`, the pinned `@mediapipe/tasks-vision`, the bundled model and its THIRD_PARTY.md entry. |
+| MediaPipe | `@mediapipe/tasks-vision` 1.2.2 (pinned) and `client/public/models/hand_landmarker.task`, added by David on `integration/hands-voice`. This folder still declares the landmark types itself and never imports MediaPipe; Aroovee's `ui/hands-voice/` does. |
 | Assistant answers | Already on main (PR #21): `client/src/optimize/assist.ts`, `client/src/score/live.ts`. |
 
 ## Files

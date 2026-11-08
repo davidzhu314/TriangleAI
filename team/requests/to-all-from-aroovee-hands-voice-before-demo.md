@@ -29,5 +29,5 @@ Meanwhile: the demo path on main is unchanged. If any lane says no, the branch j
 ## Answer
 
 David: Approved: option A, as an integration branch with one scoped merge exception, cut-off 06:00 EST (his message tonight; DECISIONS.md 2026-11-08).
-Vaibhav: <one line>
+Vaibhav: Yes. #22 is synced with main and merged into `integration/hands-voice`, and the purity test now lets `client/src/ui/` import `client/src/input/` while still blocking the engine, render and case code. Pass the case graph to `planAssist` so Cathy names only steerable routes. `driveAssist` already answers on a partial log; the missing piece is reading the rail log mid-drive, which I'm adding to `RailWireSource`.
 Gibran: <one line>
