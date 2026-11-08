@@ -6,11 +6,18 @@
  *   during a contrast puff, fading over --duration-contrast-fade (1.5 s, spec §5.5).
  * - Difficulty ladder: "dim" lowers the front view (intermediate); the screen hides it for expert cases.
  *
- * 2D today (the shared front drawing); a three.js scene implements the same interface once `three` is added.
+ * Two faces (dual-view.ts): the three.js scene by default and the 2D front drawing as the flat alternative and
+ * WebGL fallback. In 3D the X-ray look is the same scene re-coloured from the X-ray tokens: the silhouette's opacity
+ * runs from --opacity-xray-contrast to zero over --duration-contrast-fade after a puff. The element's data-wire and
+ * data-contrast attributes report what the 3D view shows, for tests and assistive checks. In AR (A7) the
+ * controller drives like a gamepad and the HUD floats beside the model.
  */
 import type { LoadedCase, Vec3 } from '../contracts';
 import { drawCase, svgEl, toPoints } from './case-svg';
+import type { ArHooks } from './ar';
+import { createDualView, type DualView } from './dual-view';
 import { drawMarkers } from './plan-view';
+import { tokenMs, tokenNumber } from './tokens';
 import './render.css';
 
 export type DriveViewMode = 'front' | 'xray';
@@ -31,27 +38,68 @@ export interface DriveViewState {
 
 export interface DriveView {
   readonly element: HTMLElement;
+  /** The 3D/Flat switch and the AR entry, for the screen to place in its HUD. */
+  readonly toolbar: HTMLElement | null;
   update(state: DriveViewState): void;
   /** Start a contrast puff: the X-ray silhouette shows, then fades. */
   puff(): void;
   dispose(): void;
 }
 
-export function createDriveView(c: LoadedCase, label: string): DriveView {
+export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): DriveView {
   const d = drawCase(c, label, 'drive-hatch');
   const ghost = svgEl('polyline', { points: '', class: 'ghost-trail' });
   const wire = svgEl('polyline', { points: '', class: 'wire-line' });
   const tip = svgEl('circle', { cx: 0, cy: 0, r: d.handle * 0.9, class: 'wire-tip' });
   const markers = svgEl('g', { class: 'markers' });
   d.svg.append(ghost, wire, tip, markers);
-  const element = document.createElement('div');
-  element.className = 'drive-view';
-  element.append(d.svg);
+  const dual: DualView = createDualView(c, label, d.svg, 'drive-view', ar, (scene) => {
+    scene.onFrame(fadeFrame);
+    if (last) draw3d(last);
+  });
+  const element = dual.element;
+  const toolbar = dual.toolbar;
+  toolbar.remove();
   let fade: number | undefined;
+  let last: DriveViewState | null = null;
+  // The 3D silhouette's opacity during and after a puff (X-ray only).
+  let contrast = 0;
+  let fadeLeftMs = 0;
+
+  const draw3d = (s: DriveViewState): void => {
+    const scene = dual.scene();
+    if (!scene) return;
+    const xray = s.mode === 'xray';
+    const wireShown = !xray || s.fluoro;
+    scene.setBackground(xray ? '--color-xray-bg' : null);
+    const front = tokenNumber('--opacity-scene-vessel');
+    scene.setVessels(xray ? { colorToken: '--color-xray-ink', opacity: contrast, zones: false } : { colorToken: '--color-scene-vessel', opacity: s.dim ? front * front : front, zones: !s.dim });
+    scene.setRoute('ghost', xray ? null : scene.routePoints(s.plan.startNode, s.plan.edges), { colorToken: '--color-scene-ghost', opacityToken: '--opacity-scene-ghost' });
+    scene.setRoute('wire', wireShown && s.wire.length > 1 ? s.wire : null, { colorToken: xray ? '--color-xray-ink' : '--color-scene-wire', heavy: true });
+    scene.setPoint('tip', wireShown ? s.tip : null, xray ? '--color-xray-ink' : '--color-scene-ghost');
+    scene.setMarkers(s.entryNode, s.targetNode);
+    scene.showMarkers(!xray);
+    element.dataset['wire'] = wireShown && s.wire.length > 1 ? 'shown' : 'hidden';
+    element.dataset['contrast'] = contrast.toFixed(2);
+  };
+  function fadeFrame(dt: number): void {
+    const scene = dual.scene();
+    if (fadeLeftMs <= 0 || !last || !scene) return;
+    const total = tokenMs('--duration-contrast-fade');
+    fadeLeftMs = Math.max(0, fadeLeftMs - dt);
+    contrast = tokenNumber('--opacity-xray-contrast') * (fadeLeftMs / total);
+    if (last.mode === 'xray') {
+      scene.setVessels({ colorToken: '--color-xray-ink', opacity: contrast, zones: false });
+      element.dataset['contrast'] = contrast.toFixed(2);
+    }
+  }
 
   return {
     element,
+    toolbar,
     update(s) {
+      last = s;
+      draw3d(s);
       element.dataset['mode'] = s.mode;
       element.classList.toggle('drive-dim', s.dim && s.mode === 'front');
       element.classList.toggle('fluoro-on', s.fluoro);
@@ -66,6 +114,9 @@ export function createDriveView(c: LoadedCase, label: string): DriveView {
       drawMarkers(d, markers, s.entryNode, s.targetNode);
     },
     puff() {
+      contrast = tokenNumber('--opacity-xray-contrast');
+      fadeLeftMs = tokenMs('--duration-contrast-fade');
+      if (last) draw3d(last);
       window.clearTimeout(fade);
       element.classList.remove('contrast-fading');
       element.classList.add('contrast-on');
@@ -77,7 +128,8 @@ export function createDriveView(c: LoadedCase, label: string): DriveView {
     },
     dispose() {
       window.clearTimeout(fade);
-      element.remove();
+      toolbar.remove();
+      dual.dispose();
     },
   };
 }

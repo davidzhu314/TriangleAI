@@ -157,7 +157,7 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 
 **Routes** differ by colour, line pattern and label (spec §7.3). The player: `--color-route-player`, the heavier stroke, solid. Frontier routes: `--color-route-1` to `-4` with `--dash-route-1` to `-4`. Every route carries a text label on screen, and labels come from the optimizer's contract fields. Heavy and proximity risk, and frontier routes 3 and 4, fall to about 4.4:1 on a well, so label them in ink rather than in their own colour there.
 
-**Plan view and narrowest point.** The narrowest point shows as a **radius** (`narrowestRadiusM`, mm), as on Results; its tooltip says a wire preset compares the diameter. Until three.js lands, the Plan view is a flat front view in SVG (`client/src/render/plan-view.ts`): vessel bands use `--color-scene-vessel` at `--opacity-scene-vessel` on `--color-scene-ground`, risk zones use their tier's mark, and the route trace is `--color-route-player` at `--stroke-route-player`.
+**Plan view and narrowest point.** The narrowest point shows as a **radius** (`narrowestRadiusM`, mm), as on Results; its tooltip says a wire preset compares the diameter. The Plan view opens in 3D (`client/src/render/scene3d.ts`: the case mesh, orbit, clickable branch points). Its flat face is the 2D front view in SVG (`client/src/render/plan-view.ts`): vessel bands use `--color-scene-vessel` at `--opacity-scene-vessel` on `--color-scene-ground`, risk zones use their tier's mark, and the route trace is `--color-route-player` at `--stroke-route-player`.
 
 **3D and X-ray.** three.js materials read `--color-scene-*`, `--color-marker-*` and the `--opacity-scene-*` values with `getComputedStyle`; never write a colour into a material. X-ray uses only `--color-xray-bg`, `--color-xray-ink` and `--opacity-xray-contrast`, and neutral grey is required by spec §5.5, not a style choice. The contrast fade is `--duration-contrast-fade`.
 
@@ -260,10 +260,9 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 
 ## Known Gaps
 
-- The dark theme is checked on the specimen pages only until A2 puts it on real screens, and its scene values need the same look against real meshes in A3.
-- **The 3D scene waits on three.js** (requested from David). Scene tokens hold in the 2D front view in both themes, but haven't been seen on a real translucent mesh yet. That's the first place a scene token could still change.
-- Drive's composition is decided here but unbuilt.
-- The X-ray colours are tested only in the 2D specimen until A5.
+- **The 3D scene is built** (three.js, `client/src/render/scene3d.ts`). Plan, Compare and Drive open in 3D, with the flat 2D drawing one click away ("3D | Flat", remembered per browser) and as the fallback without WebGL. The scene tokens and the X-ray tokens are now on the real translucent mesh in both themes. three.js loads only when a case view opens.
+- **AR (A7) is built but unverified on a headset.** "Enter AR" shows only where immersive-ar is supported. It places the case at 50% scale (1:1 on a button), grab moves it, both hands scale and turn it, select picks a branch, the cost panel and the HUD float beside it, and the controller drives. The 72 fps target and the 14 ms simplified-mesh switch are coded and unit-tested, but have not been measured on a Quest 3.
+- The Results replay view stays 2D: it is small, and its job is the path over the best route, which reads best flat.
 - Taste Skill is pinned at v2.1.5 (`DECISIONS.md`). The `npx skills add` line in the lane file installs 2.5.0, which has no `draw.mjs --app`, `lint.mjs` or `inspect.mjs`.
 
 ## Files

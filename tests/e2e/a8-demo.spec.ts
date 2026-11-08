@@ -320,6 +320,9 @@ test('fixture-y: Plan → Compare → Drive → Results', async () => {
   await page.getByTestId('compare').click();
   await page.getByTestId('start-drive').click();
   await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
+  // This drive needs a timed rotation. The flat view keeps the page light, so key holds keep their timing in the
+  // headless browser, where the 3D scene is drawn in software.
+  await page.getByRole('button', { name: 'Flat' }).click();
   await driveToTarget(await keyRecipes(c, best.entryId, 'left_branch', best.presetId, best.edges));
   await page.getByTestId('finish-drive').click();
   await expectResults(c, 'fixture-y');

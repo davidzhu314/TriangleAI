@@ -20,9 +20,12 @@ import './compare.css';
 import { finding, groupRanks, groupRoutes, overlaySelection, startingWeights, visibleMeasures, type RouteGroup } from './model';
 
 let liveView: CompareView | null = null;
+/** Kept across redraws of the same case (every slider move redraws): the 3D camera stays put. */
+let liveCase: LoadedCase | null = null;
 export function disposeCompareView(): void {
   liveView?.dispose();
   liveView = null;
+  liveCase = null;
 }
 
 const graphs = new WeakMap<LoadedCase, RouteGraph>();
@@ -87,9 +90,12 @@ function draw(sc: Screen): void {
   const redraw = (): void => draw(sc);
 
   // ---- overlay, the largest block
-  disposeCompareView();
-  const view = createCompareView(c);
-  liveView = view;
+  if (!liveView || liveCase !== c) {
+    disposeCompareView();
+    liveView = createCompareView(c);
+    liveCase = c;
+  }
+  const view = liveView;
   const entryNode = graph.entries.get(plan.entryId);
   view.update({
     lines: overlay.map(({ group, slot }) => ({ id: group.id, slot, startNode: graph.entries.get(group.entryId), edges: group.edges })),

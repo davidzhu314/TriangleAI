@@ -9,7 +9,7 @@
   flex-direction: column;
   gap: var(--space-2);
   width: var(--size-palette);
-  margin: var(--space-2) 0;
+  margin: 0;
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface-inverse);
   color: var(--color-text-inverse);
@@ -39,4 +39,12 @@
 
 .tutorial-reopen {
   align-self: flex-start;
+}
+
+.tutorial-note[data-side='below'] {
+  margin-top: var(--space-2);
+}
+
+.tutorial-note[data-side='above'] {
+  margin-top: calc(var(--space-2) * -1);
 }
