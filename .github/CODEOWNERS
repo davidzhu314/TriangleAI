@@ -22,7 +22,6 @@
 /client/src/score/            @Vaibhav-K32
 /client/src/wire/rail*        @Vaibhav-K32
 /client/src/wire/mock-source.ts @Vaibhav-K32
-/tests/crosscheck/            @Vaibhav-K32
 /tests/fixtures/synthetic/    @Vaibhav-K32
 /tests/fixtures/logs/         @Vaibhav-K32
 /metrics/vaibhav/             @Vaibhav-K32
@@ -35,3 +34,9 @@
 /tests/e2e/                   @aroovee-nandakumar
 /team/DEMO.md                 @aroovee-nandakumar
 /metrics/aroovee/             @aroovee-nandakumar
+
+/tests/engine/                @CitricIce
+/tests/fixtures/engine/       @CitricIce
+/tests/crosscheck/            @CitricIce
+/team/rehearsal/              @CitricIce
+/metrics/gibran/              @CitricIce
