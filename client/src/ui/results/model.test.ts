@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadCase } from '../../case';
-import type { CaseResult, EventLog, LoadedCase, Weights } from '../../contracts';
+import type { CaseResult, EventLog, FeedbackLine, LoadedCase, Weights } from '../../contracts';
 import { optimize } from '../../optimize';
 import { replayTimeline, scoreAttempt, type ProgressRecord } from '../../score';
 import type { SavedDrive } from '../store';
@@ -53,6 +53,20 @@ describe('the finding', () => {
     const notReached: CaseResult = { ...capped, feedback: [{ template: 'drive.not_reached', text: 'x', values: {}, formulaRef: 'drive.fidelity' }, ...capped.feedback] };
     expect(leadAction(notReached)).toBe('retry');
     expect(leadAction({ ...g, feedback: [] })).toBe('retry');
+  });
+
+  it('the best route always retries: on the plan.best line, and on a score that prints as 100 of 100', () => {
+    const g = golden('clean').result;
+    const best: FeedbackLine = { template: 'plan.best', text: 'x', values: {}, formulaRef: 'plan.regret' };
+    // The floating-point leftover Gibran found (before #41): praise must never sit beside "Revise the plan".
+    expect(leadAction({ ...g, plan: { ...g.plan, score: 99.99999999999997, decidedBy: 'regret' }, feedback: [best] })).toBe('retry');
+    // plan.best wins even if a later engine change took points off.
+    expect(leadAction({ ...g, plan: { ...g.plan, score: 92, decidedBy: 'regret' }, feedback: [best] })).toBe('retry');
+    // Another plan line on a score that prints as 100: no revision beside "100 of 100".
+    const regret: FeedbackLine = { template: 'plan.regret', text: 'x', values: {}, formulaRef: 'plan.regret' };
+    expect(leadAction({ ...g, plan: { ...g.plan, score: 99.6, decidedBy: 'regret' }, feedback: [regret] })).toBe('retry');
+    // One that prints as 99 still sends you back to the plan.
+    expect(leadAction({ ...g, plan: { ...g.plan, score: 99.4, decidedBy: 'regret' }, feedback: [regret] })).toBe('revise');
   });
 });
 

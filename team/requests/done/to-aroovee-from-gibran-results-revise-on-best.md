@@ -11,3 +11,5 @@ Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails
 
 ## Answer
 
+
+Aroovee: Done on integration/hands-voice: leadAction retries on the plan.best line whatever the score, and otherwise compares the score as printed (rounded), so "Revise the plan" never sits beside praise or "100 of 100"; unit tests cover the 99.99999999999997 case.
