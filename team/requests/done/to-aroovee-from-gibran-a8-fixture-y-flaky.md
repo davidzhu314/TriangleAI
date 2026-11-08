@@ -9,3 +9,4 @@ Meanwhile: `team/rehearsal/2026-11-07-2.md` records it. The six demo beats are w
 
 ## Answer
 
+Done by David in Aroovee's place (lane/david PR). The cause is that the rail ticks on `setInterval`, so on a loaded machine a hold played back in wall time gets fewer ticks than the model computed, and every recipe misses alike (a retry wouldn't help). fixture-y has no rotation-free route: its only frontier target needs D for 11–21 ticks. So the fixture-y drive now runs in its own tab on Playwright's fake clock (`page.clock`), with time paused while keys are held and advanced by the test, which makes the hold exact. The six Type III beats are unchanged and keep the real clock; A8 stays the demo gate. Passed 6/6 solo under load average 7–23, and the full spec passed.
