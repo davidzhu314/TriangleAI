@@ -1,11 +1,16 @@
 # Status — Gibran (Teammate 4)
 
-Contracts version: 1 (checked on main b6c240a, 2026-11-07)
-Now: G4 answer grounding done (the part that can start before #22); stopped for my human
-Done: G0 onboarding; G1 engine checks on `type-iii` and `low-tort`; CI fix after #41 (#44); G2 rehearsal 1; G4 part 1, Cathy answer grounding and hints (all 2026-11-07)
-Blocked: nothing. G3 (real-hand clips) and G4's voice corpus, push-to-talk timing and Cathy rehearsal beat wait for PR #22 and Aroovee's hookup, after the demo. The G4 section isn't in `team/lanes/gibran.md` yet (Vaibhav drafted it)
+Contracts version: 1 (checked on main 0112303, 2026-11-07)
+Now: G2 rehearsal 2 and G4 steering check done; stopped for my human
+Done:
+- G0 onboarding;
+- G1 engine checks on `type-iii` and `low-tort`;
+- the CI fix after #41 (#44);
+- G2 rehearsal 1 and rehearsal 2 (all run-1 issues fixed, `team/rehearsal/2026-11-07-2.md`);
+- G4 part 1: Cathy answer grounding and hints, plus the "best is always steerable" check (all 2026-11-07).
+Blocked: nothing. After the demo, G3 (real-hand clips) and G4's voice corpus, push-to-talk timing and Cathy rehearsal beat wait for PR #22 and Aroovee's hookup. The G4 section isn't in `team/lanes/gibran.md` yet (Vaibhav drafted it).
 Waiting on:
-- **Aroovee:** rehearsal 1 findings (`to-aroovee-from-gibran-rehearsal-1.md`). The scripted Compare beat ends in plan 0 of 100, fluoro keeps counting after the target, plus Compare layout and stale DEMO.md facts. The earlier `to-aroovee-from-gibran-results-revise-on-best.md` is optional since #41.
-- **Vaibhav:** Cathy's best route on ts-s1404-cta → lcca can't be steered (`to-vaibhav-from-gibran-cathy-unsteerable-best.md`); the v7-summary rows (`to-vaibhav-from-gibran-v7-summary-rows.md`). `to-vaibhav-from-gibran-best-route-plan-score.md` was resolved by #41 and only needs his answer.
-Next handoff: rehearsal 2, once Aroovee answers, and on physics if David's server is running on the demo laptop. It also needs a human-timed run.
-Last session: 2026-11-07 — G4 part 1: `tests/engine/cathy-grounding.test.ts` (63 tests, 1402 spoken lines over all 8 bundled cases, 54 drives, 40 wrong-branch "pull back" checks) and `tests/engine/cathy-hints.test.ts`; `metrics/gibran/cathy-qa.md`; one request to Vaibhav.
+- **Aroovee:** the A8 fixture-y test is flaky (`to-aroovee-from-gibran-a8-fixture-y-flaky.md`, low priority; the six demo beats pass). `to-aroovee-from-gibran-results-revise-on-best.md` is optional.
+- **A human:** a timed run of `team/rehearsal/checklist.md` on the demo laptop, and a physics run if David's server is up there.
+Next handoff: rehearsal 3 (human-timed, demo laptop), then G3/G4 voice and hands after #22.
+Last session: 2026-11-07 — the checklist updated to the fixed build; rehearsal 2 passed on every demo beat (plan 100, 3 stars, fluoro stops at the target); `cathy-grounding.test.ts` checks `planAssist` with `graph` (319 plan states, best always steerable; "try another wire or entry" always has a steerable answer); one request to Aroovee.

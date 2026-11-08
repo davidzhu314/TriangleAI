@@ -73,10 +73,11 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
     const wireShown = !xray || s.fluoro;
     scene.setBackground(xray ? '--color-xray-bg' : null);
     const front = tokenNumber('--opacity-scene-vessel');
-    scene.setVessels(xray ? { colorToken: '--color-xray-ink', opacity: contrast, zones: false } : { colorToken: '--color-scene-vessel', opacity: s.dim ? front * front : front, zones: !s.dim });
+    scene.setVessels(xray ? { colorToken: '--color-xray-ink', opacity: contrast, zones: false, wall: false } : { colorToken: '--color-scene-vessel', opacity: s.dim ? front * front : front, zones: !s.dim });
     scene.setRoute('ghost', xray ? null : scene.routePoints(s.plan.startNode, s.plan.edges), { colorToken: '--color-scene-ghost', opacityToken: '--opacity-scene-ghost' });
     scene.setRoute('wire', wireShown && s.wire.length > 1 ? s.wire : null, { colorToken: xray ? '--color-xray-ink' : '--color-scene-wire', heavy: true });
     scene.setPoint('tip', wireShown ? s.tip : null, xray ? '--color-xray-ink' : '--color-scene-ghost');
+    dual.follow(s.tip); // the whole tree from the entry, then the close-up once the tip reaches the arch
     scene.setMarkers(s.entryNode, s.targetNode);
     scene.showMarkers(!xray);
     element.dataset['wire'] = wireShown && s.wire.length > 1 ? 'shown' : 'hidden';
@@ -89,7 +90,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
     fadeLeftMs = Math.max(0, fadeLeftMs - dt);
     contrast = tokenNumber('--opacity-xray-contrast') * (fadeLeftMs / total);
     if (last.mode === 'xray') {
-      scene.setVessels({ colorToken: '--color-xray-ink', opacity: contrast, zones: false });
+      scene.setVessels({ colorToken: '--color-xray-ink', opacity: contrast, zones: false, wall: false });
       element.dataset['contrast'] = contrast.toFixed(2);
     }
   }

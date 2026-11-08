@@ -11,3 +11,4 @@ Meanwhile: nothing changes; the 3D view works as built.
 
 ## Answer
 
+Done by David in Aroovee's place (lane/david PR). 1: the walls now shade as tubes: front faces only, denser and darker toward the silhouette (a fresnel term), low ambient (0.9) and a key light that turns with the camera (2.2). The colour and base opacity are still `--color-scene-vessel` / `--opacity-scene-vessel` (no new colour token), and X-ray keeps its flat silhouette. 2: there's a "Close-up | Whole tree" switch. The close-up is computed from the case graph: each target back to its takeoff and the branch before it, so the arch and carotids. Compare opens on the close-up; Plan and Drive open on the whole tree and ease in once the route or wire tip reaches the arch. 3: parked: body context needs a new case-package field, which is a contract change (contracts stay at v1), and waits on a request to all.

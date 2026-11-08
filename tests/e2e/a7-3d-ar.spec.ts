@@ -54,6 +54,39 @@ test('Drive in 3D: X-ray shows the wire only with fluoro, and the puff fades ove
   await expect.poll(async () => Number(await view.getAttribute('data-contrast')), { timeout: fadeMs * 4 }).toBe(0);
 });
 
+test('Framing: Compare opens on the arch close-up; Plan starts whole and closes in as the route reaches the arch', async ({ page }) => {
+  const t3 = (edges: string[]) => ({ 'type-iii': { entryId: 'fem_r', targetId: 'rcca', presetId: 'soft_angled', edges } });
+  await page.addInitScript((p) => sessionStorage.setItem('threadsim.plans.v1', JSON.stringify(p)), t3(['e_r_iliac', 'e_aorta_desc', 'e_arch_distal', 'e_arch_proximal', 'e_bca', 'e_rcca']));
+  await page.goto('/#/case/type-iii/compare');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await expect(view).toHaveAttribute('data-frame', 'close');
+  const camera = page.getByRole('group', { name: 'Camera' });
+  await expect(camera.getByRole('button', { name: 'Close-up' })).toHaveAttribute('aria-pressed', 'true');
+  await camera.getByRole('button', { name: 'Whole tree' }).click();
+  await expect(view).toHaveAttribute('data-frame', 'whole');
+  await expect(camera.getByRole('button', { name: 'Whole tree' })).toHaveAttribute('aria-pressed', 'true');
+  // The flat drawing has no camera: the switch hides with it.
+  await page.getByRole('button', { name: 'Flat' }).click();
+  await expect(camera).toBeHidden();
+  await page.getByRole('button', { name: '3D' }).click();
+  await expect(camera).toBeVisible();
+
+  // Plan: the saved route already ends at the right carotid, inside the close-up.
+  await page.goto('/#/case/type-iii/plan');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-frame', 'close');
+});
+
+test('Framing: a Plan with no route yet opens on the whole tree; fixture-y has no close-up switch', async ({ page }) => {
+  await page.goto('/#/case/type-iii/plan');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-frame', 'whole');
+  await page.goto('/#/case/fixture-y/plan');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');
+  await expect(page.getByRole('group', { name: 'Camera' })).toHaveCount(0);
+});
+
 test('AR: no "Enter AR" where immersive-ar is unsupported', async ({ page }) => {
   await page.goto('/#/case/fixture-y/plan');
   await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');

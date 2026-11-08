@@ -14,7 +14,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedCase, RiskTier, Vec3 } from '../contracts';
 
-import { token, tokenNumber } from './tokens';
+import { centre, closeUpBox, extent, inside, type Box } from './framing';
+import { token, tokenMs, tokenNumber } from './tokens';
 const color = (name: string): THREE.Color => {
   const v = token(name);
   return v ? new THREE.Color(v) : new THREE.Color();
@@ -56,8 +57,17 @@ export interface CaseScene {
   setPoint(name: string, at: Vec3 | null, colorToken?: string): void;
   /** Clickable handles at nodes; a click (or an AR select) calls onPick with the node id. */
   setHandles(nodeIds: readonly string[], onPick: (nodeId: string) => void): void;
-  /** Vessel look: colour and opacity tokens, or explicit values for the X-ray fade. */
-  setVessels(look: { colorToken: string; opacity: number; zones: boolean }): void;
+  /**
+   * Vessel look: colour and opacity tokens, or explicit values for the X-ray fade. `wall` (default true) shades the
+   * walls so they read as tubes: denser at the silhouette, front faces only. The X-ray look turns it off.
+   */
+  setVessels(look: { colorToken: string; opacity: number; zones: boolean; wall?: boolean }): void;
+  /** The arch-and-target close-up (framing.ts), or null when the case is small enough to show whole. */
+  readonly closeUp: Box | null;
+  /** Point the camera at the close-up or the whole tree, easing over --duration-slow (instant with reduced motion). */
+  frame(kind: 'close' | 'whole'): void;
+  /** Whether a point (metres) is inside the close-up. */
+  inCloseUp(p: Vec3): boolean;
   /** Swap between the full mesh and the simplified tubes (AR frame budget). */
   setSimplified(on: boolean): void;
   setBackground(colorToken: string | null): void;
@@ -82,9 +92,11 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
   const content = new THREE.Group();
   content.name = 'case';
   scene.add(content);
-  scene.add(new THREE.HemisphereLight(undefined, undefined, 2.2)); // white light: the tokens colour the materials
-  const sun = new THREE.DirectionalLight(undefined, 1.2);
-  sun.position.set(0.3, 1, 1);
+  // White light only: the tokens colour the materials. Low ambient and a key light that moves with the camera, so the
+  // vessel walls shade as round tubes from any side; a soft light from above keeps the top of the arch lit.
+  scene.add(new THREE.HemisphereLight(undefined, undefined, 0.9));
+  const sun = new THREE.DirectionalLight(undefined, 0.6);
+  sun.position.set(0.3, 1, 0.4);
   scene.add(sun);
 
   // ---- bounds and camera
@@ -98,13 +110,45 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
   const fit = (size / 2 / Math.tan(THREE.MathUtils.degToRad(35 / 2))) * 1.35;
   camera.position.set(center.x, center.y, center.z + fit);
   camera.lookAt(center);
+  const key = new THREE.DirectionalLight(undefined, 2.2);
+  key.position.set(0.35, 0.5, 1);
+  key.target.position.set(0, 0, -1);
+  camera.add(key, key.target);
+  scene.add(camera);
   const controls = new OrbitControls(camera, canvas);
   controls.target.copy(center);
   controls.enableDamping = true;
   controls.update();
 
+  // ---- framing: the arch-and-target close-up or the whole tree, keeping the direction the user has orbited to
+  const closeUp = closeUpBox(c);
+  let tween: { from: [THREE.Vector3, THREE.Vector3]; to: [THREE.Vector3, THREE.Vector3]; t: number; ms: number } | null = null;
+  const framePose = (kind: 'close' | 'whole'): [THREE.Vector3, THREE.Vector3] => {
+    const box = kind === 'close' ? closeUp : null;
+    const at = box ? new THREE.Vector3(...centre(box)) : center.clone();
+    const span = box ? extent(box) : size;
+    const dist = (span / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.35;
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    return [at, at.clone().add(dir.multiplyScalar(dist))];
+  };
+  const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // ---- vessels: the GLB mesh, with the simplified tubes kept for fallback and AR
-  const vesselMaterial = new THREE.MeshStandardMaterial({ transparent: true, depthWrite: false, roughness: 0.6, side: THREE.DoubleSide });
+  // One translucent wall per vessel: front faces only (no doubled back wall), and denser toward the silhouette (a
+  // fresnel term), so a vessel reads as a tube rather than a flat grey band. Colour and base opacity stay tokens.
+  const wall = { value: 1 };
+  const vesselMaterial = new THREE.MeshStandardMaterial({ transparent: true, depthWrite: false, roughness: 0.45, side: THREE.FrontSide });
+  vesselMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms['uWall'] = wall;
+    shader.fragmentShader = `uniform float uWall;\n${shader.fragmentShader}`.replace(
+      '#include <opaque_fragment>',
+      `float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+      float edge = rim * rim * uWall;
+      diffuseColor.a = mix(diffuseColor.a, min(1.0, diffuseColor.a * 2.6), edge);
+      outgoingLight *= 1.0 - 0.3 * edge;
+      #include <opaque_fragment>`,
+    );
+  };
   const full = new THREE.Group();
   const simple = new THREE.Group();
   const meanR = (r: readonly number[]): number => r.reduce((a, b) => a + b, 0) / Math.max(1, r.length);
@@ -304,7 +348,20 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
         handles.add(m);
       }
     },
+    closeUp,
+    frame(kind) {
+      const to = framePose(kind);
+      const ms = reducedMotion() ? 0 : tokenMs('--duration-slow');
+      tween = { from: [controls.target.clone(), camera.position.clone()], to, t: 0, ms };
+      canvas.dataset['frame'] = kind;
+    },
+    inCloseUp(p) {
+      return !!closeUp && inside(closeUp, p);
+    },
     setVessels(look) {
+      const shaded = look.wall ?? true;
+      wall.value = shaded ? 1 : 0;
+      vesselMaterial.side = shaded ? THREE.FrontSide : THREE.DoubleSide;
       vesselMaterial.color.copy(color(look.colorToken));
       vesselMaterial.opacity = look.opacity;
       vesselMaterial.visible = look.opacity > 0;
@@ -389,6 +446,13 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     const dt = now - last;
     last = now;
     for (const cb of frameCallbacks) cb(dt);
+    if (tween && !renderer.xr.isPresenting) {
+      tween.t = tween.ms > 0 ? Math.min(1, tween.t + dt / tween.ms) : 1;
+      const k = 1 - (1 - tween.t) ** 3; // ease out
+      controls.target.lerpVectors(tween.from[0], tween.to[0], k);
+      camera.position.lerpVectors(tween.from[1], tween.to[1], k);
+      if (tween.t >= 1) tween = null;
+    }
     if (!renderer.xr.isPresenting) controls.update();
     renderer.render(scene, camera);
   });
