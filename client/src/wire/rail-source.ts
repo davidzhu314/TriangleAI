@@ -90,6 +90,14 @@ export class RailWireSource implements WireSource {
     this.emit();
   }
 
+  /**
+   * The drive so far, as a copy: what Cathy's mid-drive answers need (`driveAssist` takes a partial log).
+   * Null before start and after stop. Copying a few thousand samples is fine for a voice command, not per frame.
+   */
+  logSoFar(): EventLog | null {
+    return this.log ? structuredClone(this.log) : null;
+  }
+
   async stop(): Promise<EventLog> {
     this.halt();
     if (!this.log) throw new Error('RailWireSource.stop: not started');
@@ -167,4 +175,13 @@ export function replayRail(request: WireStartRequest, inputs: readonly ControlIn
     sample();
   }
   return log;
+}
+
+/**
+ * The drive so far from any wire source that can give it (the rail wire can; a source without `logSoFar`
+ * gives null, and the screen answers without Cathy's drive lines). For voice and assistant hookups.
+ */
+export function wireLogSoFar(source: unknown): EventLog | null {
+  const f = (source as { logSoFar?: unknown } | null)?.logSoFar;
+  return typeof f === 'function' ? ((f as () => EventLog | null).call(source) ?? null) : null;
 }
