@@ -169,3 +169,15 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **First state:** it gets 10 s, because building a CathSim drive takes up to 3.5 s; the 2 s stall rule starts once states flow.
   - **Events:** physics-mode events come from the tip position: `wrong_branch` once the tip leaves the planned lumen into another edge, and `back_out`, `force_spike` (rail's threshold) and `target_reached`. Prolapse is not detected in physics mode.
   - **Replay and mock:** replay is not offered (no recorded runs). Its file format, for when real runs exist, is a JSON array of physics `state` messages. The V1 mock wire is not reachable from select.ts.
+- 2026-11-07 · David · **D6 generator ladder.** Four new generated cases come from the same `generateArch`, all at seed 1 except one. In ladder order:
+  - `type-i-plaque` (Type I, tier 0): a heavy left iliac plaque, so the left groin is off the frontier, plus narrower iliacs.
+  - `type-ii` (tier 1): a descending aortic aneurysm as a proximity zone.
+  - `type-ii-tortuous` (tier 1, seed 14, tortuosity 0.8 with ×1.5 on the iliacs): 95–97° iliac turns, so only the soft angled wire comes from the groin. The iliacs are narrow.
+  - `bovine` (tier 3, a Type II arch).
+  
+  **How the variations work:**
+  - **Bovine:** one common brachiocephalic and left carotid origin, 2 mm past the apex. The LCCA leaves it with a 64.6° takeoff from the groin, against 49.7° on `type-ii`, and the right radial route is a 149° hairpin. There is no `n_lcca_o` node and no `e_arch_proximal` edge.
+  - **Type II takeoffs:** retuned the way D6-min retuned Types I and III, so every frontier route passes `steerableAt`. The brachiocephalic origin sits 7.4 mm below the top of the arch: between Type I (1.9) and Type III (10.7).
+  - **Unchanged:** `low-tort` and `type-iii` are byte-identical, and the 120° turn stays in type-iii's right iliac.
+  - **Tier 4** (whole-body) has no case; it waits for D3b/D3c.
+  - All shapes, sizes, ages and zones are illustrative teaching anatomy.
