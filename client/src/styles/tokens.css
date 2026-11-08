@@ -55,7 +55,7 @@
   --opacity-risk-zone: 0.35;       /* risk volumes in the 3D scene */
 
   /* Routes. Each differs by colour, line pattern and label (spec §7.3). Dash values are in stroke widths' viewBox units. */
-  --color-route-player: #2f5584;       /* the trainee's route: steel blue, apart from the red risk zones */
+  --color-route-player: #6a3d9a;       /* the trainee's route: purple, apart from the oxblood arteries, blue veins and red risk zones */
   --color-route-1: #2e2d2d;
   --color-route-2: #a8326e;
   --color-route-3: #8a6a00;
@@ -80,7 +80,7 @@
   --color-scene-vessel: #8f8b89;
   --opacity-scene-vessel: 0.35;
   --color-scene-wire: #1f1e1e;
-  --color-scene-ghost: #2f5584;
+  --color-scene-ghost: #6a3d9a;
   --opacity-scene-ghost: 0.45;
   --color-marker-entry: #2e2d2d;
   --color-marker-target: #8e2433;
@@ -220,7 +220,7 @@
     --color-risk-heavy: #e89d3a;
     --color-risk-proximity: #d4b84a;
 
-    --color-route-player: #8fb0db;       /* steel blue, lifted */
+    --color-route-player: #b79de3;       /* purple, lifted */
     --color-route-1: #f4f2f1;
     --color-route-2: #e77fb0;
     --color-route-3: #d4b84a;
@@ -236,7 +236,7 @@
     --color-scene-vessel: #b5b1ae;
     --opacity-scene-vessel: 0.4;
     --color-scene-wire: #f4f2f1;
-    --color-scene-ghost: #8fb0db;
+    --color-scene-ghost: #b79de3;
     --color-anatomy-artery: #e08591;
     --color-anatomy-vein: #8fb0db;
     --color-vein: #8fb0db;
@@ -296,7 +296,7 @@
   --color-risk-heavy: #e89d3a;
   --color-risk-proximity: #d4b84a;
 
-  --color-route-player: #8fb0db;       /* steel blue, lifted */
+  --color-route-player: #b79de3;       /* purple, lifted */
   --color-route-1: #f4f2f1;
   --color-route-2: #e77fb0;
   --color-route-3: #d4b84a;
@@ -312,7 +312,7 @@
   --color-scene-vessel: #b5b1ae;
   --opacity-scene-vessel: 0.4;
   --color-scene-wire: #f4f2f1;
-  --color-scene-ghost: #8fb0db;
+  --color-scene-ghost: #b79de3;
   --color-anatomy-artery: #e08591;
   --color-anatomy-vein: #8fb0db;
   --color-vein: #8fb0db;

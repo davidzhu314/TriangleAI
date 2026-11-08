@@ -140,10 +140,11 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 | Ink | `#1b2a44` navy | unchanged neutral light ink | headings, figures, the one filled button (`--color-primary`) |
 | Text | `#3e4656` navy-grey, muted `#5f6673` | unchanged | running text, labels |
 | Oxblood (artery) | `#8e2433`, tint `#f6e7e9` | `#e08591`, tint `#3b2125` | `--color-brand`: the accent, the suggested case, focus, artery drawings; never a button fill |
-| Steel blue (vein) | `#2f5584`, tint `#e6edf6` | `#8fb0db`, tint `#1e2a38` | `--color-vein`, `--color-link`, the player's route (`--color-route-player`), the Library's picture tiles |
+| Steel blue (vein) | `#2f5584`, tint `#e6edf6` | `#8fb0db`, tint `#1e2a38` | `--color-vein`, `--color-link`, the Library's picture tiles |
+| Purple (the route) | `#6a3d9a` | `#b79de3` | `--color-route-player` and `--color-scene-ghost`: the trainee's route on Plan, Compare, Results and the planned route on Drive. Neither artery nor vein, so it never reads as part of the anatomy. A deliberate exception to the taste rule against violet, at Aroovee's request. |
 | Danger | `#c4242a` | unchanged | forbidden zones and errors: brighter and redder than oxblood, so the accent never reads as a warning |
 
-The player's route moved from teal to steel blue, so on Plan it stays apart from the red risk zones. The dark theme stays true neutral: only the accents are lifted.
+The player's route moved from teal to purple (steel blue for an hour first): apart from the red risk zones, the oxblood arteries and the blue veins. The dark theme stays true neutral: only the accents are lifted.
 
 
 | Role | Token | Use it for | Never for |
