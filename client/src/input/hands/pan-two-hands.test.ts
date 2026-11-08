@@ -10,7 +10,8 @@ import { FRAME_MS, frame, gun, point, syntheticHand, type HandSpec } from './syn
 import type { GestureConfig, GestureOutput, HandObservation } from './types';
 
 const CFG: GestureConfig = { dominant: 'Right', mirrored: false };
-const pan = (extra: HandSpec = {}): HandObservation => syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', ...extra });
+/** Grab and drag: a fist, thumb tucked. */
+const pan = (extra: HandSpec = {}): HandObservation => syntheticHand({ flex: { index: 1, middle: 1, ring: 1, pinky: 1 }, thumb: 'folded', ...extra });
 const ENGAGE = Math.ceil(DEBOUNCE_MS / FRAME_MS) + 2;
 
 function run(n: number, hands: (i: number) => HandObservation[], m = createGestureMachine(CFG)): GestureOutput[] {
@@ -18,7 +19,7 @@ function run(n: number, hands: (i: number) => HandObservation[], m = createGestu
 }
 
 describe('pan pose', () => {
-  it('three fingers out and the pinky folded is a pan, and only a pan', () => {
+  it('a fist with the thumb tucked is a pan, and only a pan', () => {
     const w = pan().world;
     expect(panChecks(w).filter((c) => !c.ok)).toEqual([]);
     expect(isPan(w)).toBe(true);
@@ -26,10 +27,19 @@ describe('pan pose', () => {
     expect(isPoint(w)).toBe(false);
   });
 
-  it('is not a pan with the ring folded (the gun), the middle folded (the point) or the whole hand open', () => {
-    expect(isPan(gun().world)).toBe(false);
+  it('is not a pan with the thumb up (the gun pulling), the index out (the point), or the hand open', () => {
+    expect(isPan(gun(0.85, 0).world)).toBe(false); // the gun, fully pulled: curled fingers, thumb up
+    expect(isPan(gun(0.1, 0).world)).toBe(false);
+    expect(isPan(syntheticHand({ flex: { index: 1, middle: 1, ring: 1, pinky: 1 }, thumb: 'out' }).world)).toBe(false);
     expect(isPan(point().world)).toBe(false);
     expect(isPan(syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 0 }, thumb: 'out' }).world)).toBe(false);
+  });
+
+  it('an engaged gun pulled into a fist (thumb up) stays the gun, pulling', () => {
+    const out = run(ENGAGE + 40, (i) => [gun(i < ENGAGE ? 0.1 : 0.85, 0)]);
+    expect(out.every((o) => o.status !== 'pan')).toBe(true);
+    expect(out.at(-1)!.status).toBe('gun');
+    expect(out.at(-1)!.control!.push).toBeLessThan(0); // pulling
   });
 });
 

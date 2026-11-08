@@ -134,7 +134,11 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   const note = document.createElement('p');
   note.className = 'anatomy-note';
   const noteText = (): string =>
-    config.placeholder
+    config.unavailable
+      ? config.unavailable
+      : config.note
+        ? config.note
+        : config.placeholder
       ? 'Placeholder model, fitted to this case. Not anatomy.'
       : context
         ? hasVeins
@@ -169,7 +173,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   });
 
   const ensureLayer = (): void => {
-    if (layer || loading) return;
+    if (layer || loading || config.unavailable) return;
     status.textContent = 'Loading the model…';
     loading = import('./anatomy-layer').then((m) => {
       layer = m.createAnatomyLayer(scene, config, host);

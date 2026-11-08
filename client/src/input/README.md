@@ -1,7 +1,7 @@
 # client/src/input: hands-free and voice input (owner: Vaibhav, pending the CLAUDE.md row)
 
 Optional controls for Catherine:
-- **MediaPipe hand gestures, with either or both hands:** push, pull and rotate the wire; point and pinch to pick a branch; three fingers out to pan the view like a trackpad.
+- **MediaPipe hand gestures, with either or both hands:** push, pull and rotate the wire; point and pinch to pick a branch; a fist (thumb tucked) to grab and drag the view.
 - **Voice commands:** once voice is on it's always listening, and a command runs only after "Hey Cathy". There's no push-to-talk.
 - **The engine's assistant answers**, which voice asks for.
 
@@ -46,7 +46,7 @@ Everything here is pure logic plus two thin wrappers. Only the screens (`client/
 | Twist the hand (clockwise, as you see it, is positive) | Rotate; ±10° dead zone, full rate at ±45° |
 | **Point pose:** index out; middle, ring and pinky folded (thumb free) | Moves the pointer |
 | Pinch: thumb tip to index tip while pointing | Selects the hovered branch, **once per pinch**; open the thumb before the next |
-| **Pan pose:** index, middle and ring out; pinky folded (thumb free) | Pans the view like a trackpad: the hand's movement × 1.5, with a small dead zone. Untuned on a real hand yet |
+| **Pan pose ("grab and drag"):** a fist, all four fingers curled, thumb tucked | Pans the view like a trackpad (and turns it in 3D): the hand's movement × 1.5, with a small dead zone. Told apart from the gun pulling (also curled) by the thumb: tucked for the pan, up for the gun. Untuned on a real hand yet |
 
 **Both hands at once.** Each hand has its own machine (`createHandMachine`), so either hand can drive, point or pan, and they can do different things together: one hand drives while the other pans or points. `GestureOutput` combines them: `control` and `pointer` come from the dominant hand when it's engaged, else the other hand; `select` fires if either hand pinches; `pan` is the mean of the hands panning; `status` follows the dominant hand when it's engaged. Each hand's own output is in `g.hands.Left` and `g.hands.Right`. `dominant` only decides who wins when both hands do the same thing.
 
@@ -71,7 +71,7 @@ const g = hands.step({ tMs: video.currentTime * 1000, hands: toHandObservations(
 ```
 
 - **`toHandObservations`:** map MediaPipe's `landmarks[i]`, `worldLandmarks[i]` and `handedness[i][0]` (`categoryName`, `score`) to `HandObservation`.
-- **Drive screen:** `wire.control(mergeControl(g, keyboardInput))`. Push and rotate come from the hand, any keyboard axis you press wins, and fluoro and contrast stay on Space and C.
+- **Drive screen:** `wire.control(mergeControl(g, keyboardInput))`. In chain mode, to make twist set the wire's turn **angle** instead of a spin rate: create `const follow = createHubFollow()` once, then each frame `wire.control(mergeControl(g, keyboardInput, follow.rotate(g, wireState?.tipPose?.hubRollRad)))`. Turning the hand 90° turns the wire 90° and stops; with no hub roll (rail) it returns null and the rate mapping stays. Push and rotate come from the hand, any keyboard axis you press wins, and fluoro and contrast stay on Space and C.
 - **Plan screen:** when `g.pointer` isn't null, it's a 0..1 screen position in the user's view (already un-mirrored). Hover with `PlanView.pickAt(x, y)`. When `g.select` is true (one frame per pinch), add the hovered branch.
 - **Pan:** when `g.pan` isn't null, move the view (or page) by `g.pan.dx`, `g.pan.dy` this frame, in screen widths in the user's view. Pans from both hands are already averaged.
 - **HandLandmarker:** run it with `numHands: 2`, so both hands are tracked.
