@@ -8,6 +8,9 @@ import type { LoadedCase, Route, WirePreset, WirePresetId } from '../../contract
 import './plan.css';
 import { buildGraph, defaultWeights, optimize, planAssist, WIRE_PRESETS, type RouteGraph } from '../../optimize';
 import { planAssistLine } from '../../score';
+import { planCheckLine } from '../../score/live';
+import { planMarks } from '../../score/plan-marks';
+import { measureRoute } from '../../optimize/measure-route';
 import type { VoiceAction } from '../../input';
 import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { createPlanView, type PlanView } from '../../render/plan-view';
@@ -59,6 +62,22 @@ async function assistLine(c: LoadedCase, graph: RouteGraph, s: RouteState, ask: 
   const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
   const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
   return planAssistLine(assist, c, s.targetId, ask).text;
+}
+
+/** "Is this right" (G5): the route's first problem edge (planMarks), else the best way on. Engine only. */
+async function checkLine(c: LoadedCase, graph: RouteGraph, s: RouteState): Promise<string> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  let measures = null;
+  try {
+    const startNode = graph.entries.get(s.entryId);
+    measures = s.edges.length > 0 ? measureRoute(graph, s.edges, startNode === undefined ? {} : { startNode }) : null;
+  } catch {
+    measures = null; // a route that doesn't chain: no crossings to mark
+  }
+  const marks = planMarks({ routeSoFar: s.edges, measures, optimized, entryId: s.entryId, presetId: s.presetId, graph });
+  return planCheckLine(marks, assist, c, s.targetId).text;
 }
 
 function presetOf(id: WirePresetId): WirePreset {
@@ -242,6 +261,7 @@ function draw(sc: Screen): void {
     if (action === 'zoom_in' || action === 'zoom_out') {
       return liveView?.zoom(action === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
     }
+    if (action === 'assist_check') return checkLine(c, graph, sc.state);
     if (action === 'assist_best_next' || action === 'assist_options') return assistLine(c, graph, sc.state, action === 'assist_best_next' ? 'best' : 'options');
     if (action === 'hide_labels' || action === 'show_labels') {
       if (liveView?.bodyContext()) return 'No vessel names on this case.';
@@ -267,7 +287,7 @@ function draw(sc: Screen): void {
     // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'undo'],
+      actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'assist_check', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
       onVoice: (a) => voiceNow(a),
       onGesture: (g) => {

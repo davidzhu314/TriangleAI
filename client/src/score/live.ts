@@ -12,7 +12,9 @@ import type { FeedbackLine, LoadedCase } from '../contracts';
 import type { PlanAssist } from '../optimize/assist';
 import { Names } from './feedback';
 import { scoreCase, type ScoreInput } from './score';
+import { planMarkLine, type PlanMark } from './plan-marks';
 import { feedbackLine } from './templates';
+import { warningLine, type DriveWarning } from './warn';
 
 export interface DriveAssist {
   /** The planned edge after the tip's current one; null at the end of the plan or off plan. */
@@ -85,4 +87,30 @@ export function planAssistLine(assist: PlanAssist, c: LoadedCase, targetId: stri
   return label
     ? feedbackLine('assist.best_route', { vessel: vesselOf(best.edge), label }, 'rank.weighted')
     : feedbackLine('assist.best_route_plain', { vessel: vesselOf(best.edge) }, 'rank.weighted');
+}
+
+/**
+ * "Am I on the right path" (assist_check, G5) during a drive: the wrong-branch warning when one is active
+ * (driveWarning), else driveAssist's "pull back" line when off the plan, else where the plan goes next.
+ * Deterministic: it works with the LLM switched off.
+ */
+export function driveCheckLine(input: ScoreInput, warning: DriveWarning | null): FeedbackLine {
+  if (warning) return warningLine(warning, input.case);
+  const a = driveAssist(input);
+  const n = new Names(input.case);
+  if (a.offPlan) return a.lines[0]!; // assist.pull_back
+  if (a.nextEdge) return feedbackLine('assist.on_plan', { vessel: n.vesselOfEdge(a.nextEdge) }, 'rank.weighted');
+  if (a.lines[0]?.template === 'assist.at_target') return a.lines[0];
+  return feedbackLine('assist.on_plan_last', { target: n.target(input.log.targetId) }, 'rank.weighted');
+}
+
+/** "Is this right" while planning: the first plan mark (planMarks) if any, else the best way on (planAssistLine). */
+export function planCheckLine(marks: readonly PlanMark[], assist: PlanAssist, c: LoadedCase, targetId: string): FeedbackLine {
+  if (marks.length > 0) return planMarkLine(marks[0]!, c);
+  return planAssistLine(assist, c, targetId, 'best');
+}
+
+/** The line for a question the engine has no answer for (and the LLM fallback when there is no template). */
+export function noAnswerLine(): FeedbackLine {
+  return feedbackLine('assist.no_answer', {}, 'rank.weighted');
 }
