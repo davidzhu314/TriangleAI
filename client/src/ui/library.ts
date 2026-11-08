@@ -48,7 +48,11 @@ const matches = (c: LoadedCase): boolean =>
 
 const STAGE_WORDS = { plan: { words: 'Left off at Plan', link: 'Resume planning', to: href.plan }, results: { words: 'Left off at Results', link: 'See results', to: href.results } } as const;
 
-/** The case's own vessels, flat, as the card's picture. Decorative: the title says which case it is. */
+/**
+ * The case's own vessels as the card's picture. Decorative: the title says which case it is. The flat drawing shows at
+ * once; the case's real mesh, lit and rendered off screen (render/case-thumb.ts, loaded only here), replaces it when
+ * ready. Without WebGL, or if the mesh can't be drawn, the flat drawing stays.
+ */
 function picture(e: CatalogEntry, c: LoadedCase): HTMLElement {
   const box = h('div', { class: 'case-card-picture', 'aria-hidden': 'true' });
   try {
@@ -60,6 +64,17 @@ function picture(e: CatalogEntry, c: LoadedCase): HTMLElement {
   } catch {
     // a case with no drawable geometry keeps the plain tile
   }
+  void import('../render/case-thumb')
+    .then((m) => m.caseThumbnail(e.key, c))
+    .then((url) => {
+      if (!url) return;
+      const img = h('img', { class: 'case-card-img', src: url, alt: '', decoding: 'async', draggable: 'false' });
+      img.addEventListener('load', () => box.classList.add('case-card-rendered'), { once: true });
+      box.append(img);
+    })
+    .catch(() => {
+      // the flat drawing stays
+    });
   return box;
 }
 
