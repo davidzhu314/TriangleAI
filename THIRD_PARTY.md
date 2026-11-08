@@ -87,3 +87,10 @@ Test and build tooling (never shipped in the app bundle):
 | `@types/node` | 22.20.5 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | dev: types |
 
 Shipped in the client build with no third-party license: the client runtime is exactly `ajv` (and its four dependencies above) and `three` (`pnpm list --prod`). The icons and empty-state art in `client/src/assets/` are drawn in-house (DESIGN.md, Iconography). The generated cases and `fixture-y` in `client/public/cases/` come from ThreadSim's own tools. The only third-party data in `client/public/` is `ts-s1404-cta`, `ts-s1336-cta` and `ts-s0727-cta` (TotalSegmentator, CC BY 4.0, above). No CathSim or other share-alike asset is under `client/`.
+Shipped in the client build with no third-party license: the client runtime is exactly `ajv` (and its four dependencies above) and `three` (`pnpm list --prod`). The icons and empty-state art in `client/src/assets/` are drawn in-house (DESIGN.md, Iconography). The generated cases and `fixture-y` in `client/public/cases/` come from ThreadSim's own tools. The only third-party data in `client/public/` is `ts-s1404-cta` (TotalSegmentator, CC BY 4.0, above). No CathSim or other share-alike asset is under `client/`.
+
+### Realistic vascular asset (Gibran, staged, not in the client build)
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| BodyParts3D / Anatomography (© DBCLS), via OrganUI Vessels `public/models/vessels.glb` | BodyParts3D 4.3 (FMA3.0); OrganUI commit `74be339badd85f1d3d93e585ed2a5a79c7679342`, GLB SHA-256 `d2dd9911…701d` | **CC BY-SA 2.1 Japan** (share-alike; commercial use allowed). OrganUI's MIT license covers its code only, not the model. Cite Mitsuhashi et al., NAR 37 (2009) D782–D785 | https://lifesciencedb.jp/bp3d/ · https://github.com/organui/vessels-3d | `assets/vascular/` only (31 structures split into 50 nodes, mm RAS, `prepare_vessels.py`). Not imported by `client/`; the license boundary is pending `team/requests/to-all-from-gibran-license-vascular-assets.md` |
