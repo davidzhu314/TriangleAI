@@ -264,6 +264,12 @@ Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover 
 - Two columns: the case's vessel map (flat, front-on, on a vein-blue panel: arteries in oxblood, risk zones, entry sites as steel-blue dots and targets as oxblood rings, each named, labels on the side of the tree their point is on) and the facts (scenario, targets, entry sites, arch, fluoro budget, risk zones by kind and severity, vessel count, source with the dataset citation behind "Dataset details", your progress).
 - Under them, "What happens next" in one row of four (Plan, Compare, Drive, Results), the checks, and Start planning.
 
+### Drive HUD (2026-11-08)
+
+- **Tip twist readout** under the top row: a small dial (needle in the route purple) and the tip's twist in degrees, 0–359, from `WireState.rollRad` (rail) or `tipPose.tipRollRad` (physics, with "Hub" beside it, since the tip lags the hub). With Hands on and the gun pose held, "Hand +23°" is the hand's twist from where the pose started.
+- **Fine twist:** Shift with A or D twists at a quarter of full speed (`FINE_TWIST`), for a narrow branch opening. The Controls card says so.
+- **Foldable cards:** "Training case" and "Controls" fold from their title (a chevron), open by default, each remembered.
+
 ### Plan declutter (2026-11-08)
 
 - The 3D views' controls are one toolbar bar: inside it buttons and segmented groups lose their own borders; a pressed state is the only tone.

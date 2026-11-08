@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STICK_DEAD_ZONE } from '../../contracts';
-import { controlFrame, deadZone, padPuff, type Held, type PadSnapshot } from './input';
+import { controlFrame, deadZone, FINE_TWIST, padPuff, type Held, type PadSnapshot } from './input';
 
 const held = (...keys: ('push' | 'pull' | 'left' | 'right' | 'fluoro')[]): Held => new Set(keys);
 const pad = (axes: number[], buttons: number[] = []): PadSnapshot => ({ axes, buttons });
@@ -43,5 +43,16 @@ describe('drive input', () => {
     expect(padPuff(up, down)).toBe(true);
     expect(padPuff(down, down)).toBe(false);
     expect(padPuff(null, up)).toBe(false);
+  });
+});
+
+describe('fine twist (Shift with A or D)', () => {
+  it('scales the keys\' twist to FINE_TWIST, leaves push and the gamepad alone', () => {
+    const held: Held = new Set(['right', 'push']);
+    expect(controlFrame(held, null, false, true)).toMatchObject({ rotate: FINE_TWIST, push: 1 });
+    expect(controlFrame(new Set(['left']), null, false, true).rotate).toBe(-FINE_TWIST);
+    expect(controlFrame(held, null, false).rotate).toBe(1);
+    const pad: PadSnapshot = { axes: [0, 0, 0.9, 0], buttons: [] };
+    expect(controlFrame(new Set(), pad, false, true).rotate).toBeCloseTo(controlFrame(new Set(), pad, false).rotate);
   });
 });

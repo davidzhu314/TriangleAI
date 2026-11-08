@@ -25,7 +25,7 @@ import './drive.css';
 import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 import { wireChoice, wireUrl, type WireChoice } from './wire-switch';
-import { GESTURE_HELP, mergeControl, VOICE_HELP, type VoiceAction } from '../../input';
+import { GESTURE_HELP, mergeControl, VOICE_HELP, type GestureOutput, type VoiceAction } from '../../input';
 import { createHandsVoice, zoomToAnswer } from '../hands-voice';
 import { wireLogSoFar } from '../../wire/rail-source';
 
@@ -147,6 +147,80 @@ function routeOverview(
   };
 }
 
+// ---------------------------------------------------------------- foldable HUD cards and the twist readout
+
+const FOLD_KEY = 'threadsim.drive.folded.v1';
+function readFolded(): Record<string, boolean> {
+  try {
+    const v: unknown = JSON.parse(localStorage.getItem(FOLD_KEY) ?? '{}');
+    return v && typeof v === 'object' ? (v as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** A HUD card whose title is a button that folds its body away; open by default, the choice remembered. */
+function foldable(id: string, card: HTMLElement, title: string, ...body: (Node | null)[]): HTMLElement {
+  const bodyEl = h('div', { class: 'hud-card-body', id: `hud-${id}-body` }, ...body);
+  const toggle = h('button', { type: 'button', class: 'hud-title hud-fold', 'aria-expanded': 'true', 'aria-controls': `hud-${id}-body`, 'data-testid': `fold-${id}` }, h('span', {}, title), h('span', { class: 'hud-fold-mark', 'aria-hidden': 'true' }));
+  const set = (open: boolean, save: boolean): void => {
+    bodyEl.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+    card.classList.toggle('hud-card-folded', !open);
+    if (!save) return;
+    try {
+      localStorage.setItem(FOLD_KEY, JSON.stringify({ ...readFolded(), [id]: !open }));
+    } catch {
+      // storage blocked: the card stays as set for this visit
+    }
+  };
+  toggle.addEventListener('click', () => set(toggle.getAttribute('aria-expanded') !== 'true', true));
+  card.append(toggle, bodyEl);
+  set(!readFolded()[id], false);
+  return card;
+}
+
+const DEG = 180 / Math.PI;
+/** Degrees 0..359 from radians, as the dial reads. */
+export const twistDegrees = (rad: number): number => (((Math.round(rad * DEG) % 360) + 360) % 360);
+
+/**
+ * The tip twist as a dial and degrees, from the wire's own state: WireState.rollRad (rail) or tipPose.tipRollRad
+ * with the hub's (physics, where the tip lags the hub). With Hands on, the gun pose's twist from neutral too.
+ */
+function twistReadout(): { element: HTMLElement; update(s: WireState | null, g: GestureOutput | null): void } {
+  const needle = svgNs('line', { x1: '12', y1: '12', x2: '12', y2: '3', class: 'twist-needle' });
+  const dial = svgNs('svg', { viewBox: '0 0 24 24', class: 'twist-dial', 'aria-hidden': 'true' });
+  dial.append(svgNs('circle', { cx: '12', cy: '12', r: '10', class: 'twist-ring' }), needle, svgNs('circle', { cx: '12', cy: '12', r: '1.6', class: 'twist-hub' }));
+  const tip = h('span', { class: 'twist-value num', 'data-testid': 'twist-tip' }, '—');
+  const hub = h('span', { class: 'twist-extra', 'data-testid': 'twist-hub', hidden: true });
+  const hand = h('span', { class: 'twist-extra', 'data-testid': 'twist-hand', hidden: true });
+  const element = h('div', { class: 'twist-readout', role: 'status', 'aria-live': 'off', 'data-testid': 'twist-readout' }, dial, h('span', { class: 'twist-label' }, 'Tip twist'), tip, hub, hand);
+  return {
+    element,
+    update(s, g) {
+      const tipRad = s?.tipPose?.tipRollRad ?? s?.rollRad;
+      element.hidden = tipRad === undefined;
+      if (tipRad === undefined) return;
+      const d = twistDegrees(tipRad);
+      tip.textContent = `${d}°`;
+      needle.setAttribute('transform', `rotate(${d} 12 12)`);
+      const hubRad = s?.tipPose?.hubRollRad;
+      hub.hidden = hubRad === undefined;
+      if (hubRad !== undefined) hub.textContent = `Hub ${twistDegrees(hubRad)}°`;
+      const handDeg = g?.status === 'gun' ? g.debug?.twistDeg : undefined;
+      hand.hidden = handDeg === undefined;
+      if (handDeg !== undefined) hand.textContent = `Hand ${handDeg >= 0 ? '+' : '−'}${Math.abs(Math.round(handDeg))}°`;
+    },
+  };
+}
+
+function svgNs<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string>): SVGElementTagNameMap[K] {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
 function noPlan(root: HTMLElement, key: string, c: LoadedCase): void {
   renderShell(
     root,
@@ -229,10 +303,10 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     threshold !== undefined ? h('span', { class: 'meter-tick', title: `${FORCE_THRESHOLD?.label}: ${threshold} ${FORCE_THRESHOLD?.unit} (illustrative)` }) : null,
   );
   const forceCell = h('dd', { class: 'num', 'data-testid': 'hud-force' }, dash('The wire has not started'), h('span', { class: 'unit' }, ' N'));
-  const casePanel = h(
-    'section',
-    { class: 'hud-card hud-case', 'aria-label': 'Case and wire' },
-    h('p', { class: 'hud-title' }, 'Training case (not a patient)'),
+  const casePanel = foldable(
+    'case',
+    h('section', { class: 'hud-card hud-case', 'aria-label': 'Case and wire' }),
+    'Training case (not a patient)',
     h(
       'dl',
       { class: 'hud-rows' },
@@ -302,12 +376,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     planOnly.length ? h('p', { class: 'hud-note' }, `On Plan, also: ${planOnly.map((a) => `“${VOICE_HELP[a].say}”`).join(', ')}.`) : null,
     h('p', { class: 'hud-note' }, 'Turn on Voice above, then start with “Hey Cathy”.'),
   );
-  const controls = h(
-    'section',
-    { class: 'hud-card hud-controls', 'aria-label': 'Controls' },
-    h('p', { class: 'hud-title' }, 'Controls'),
+  const controls = foldable(
+    'controls',
+    h('section', { class: 'hud-card hud-controls', 'aria-label': 'Controls' }),
+    'Controls',
     controlRow('push-pull', 'Push / pull', keyButton('W', 'Push', 'push'), keyButton('S', 'Pull', 'pull')),
     controlRow('rotate', 'Rotate', keyButton('A', 'Rotate left', 'left'), keyButton('D', 'Rotate right', 'right')),
+    h('p', { class: 'hud-note' }, h('span', { class: 'kbd' }, 'Shift'), ' with A or D twists slowly, for a narrow branch opening.'),
     controlRow('fluoro', 'Hold for fluoro', keyButton('Space', 'Hold for fluoro', 'fluoro')),
     controlRow('contrast-puff', 'Contrast puff', keyButton('C', 'Contrast puff', 'puff')),
     h('p', { class: 'hud-note' }, 'Hold a key, or press and hold its button. Gamepad: sticks push and rotate, right trigger for fluoro, A for contrast.'),
@@ -407,7 +482,8 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return lines.join(' ') || null;
     },
   });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), notice, banner);
+  const twist = twistReadout();
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), twist.element, notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -472,6 +548,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       forceBar.setAttribute('aria-valuenow', fmt(s.contactForceN, 2));
       forceBar.classList.toggle('meter-over', s.contactForceN > threshold);
     }
+    twist.update(s, hands.gesture());
     overview.setWire(s.wire.map((p) => `${(p[0] * 1000).toFixed(2)},${(-p[1] * 1000).toFixed(2)}`).join(' '));
     const offRoute = !plan.edges.includes(s.edge);
     if (s.atTarget) setBanner(`The wire reached the ${target}.`, 'neutral');
@@ -487,9 +564,11 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   }
 
   // ---- input
+  let fine = false;
   const onKey = (down: boolean) => (ev: KeyboardEvent): void => {
     const target = ev.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+    fine = ev.shiftKey;
     const control = KEY_BINDINGS[ev.code];
     if (!control) return;
     if (control === 'fluoro' || target?.tagName !== 'BUTTON') ev.preventDefault();
@@ -505,6 +584,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const keyup = onKey(false);
   const blur = (): void => {
     held.clear();
+    fine = false;
     sync();
   };
   window.addEventListener('keydown', keydown);
@@ -516,7 +596,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const step = (pad: PadSnapshot | null): void => {
     if (padPuff(lastPad, pad)) triggerPuff();
     lastPad = pad;
-    const keys = controlFrame(held, pad, puffPending);
+    const keys = controlFrame(held, pad, puffPending, fine);
     // "Hey Cathy, toggle fluoro": on until said again, 10 s at most, and never past the target
     if (voiceFluoroUntil !== null && (performance.now() >= voiceFluoroUntil || live.state?.atTarget)) {
       voiceFluoroUntil = null;

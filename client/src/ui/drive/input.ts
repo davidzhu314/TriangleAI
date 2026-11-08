@@ -34,10 +34,16 @@ export interface PadSnapshot {
   buttons: readonly number[];
 }
 
-/** One frame of control from held keys or buttons, an optional gamepad, and whether a puff was triggered. */
-export function controlFrame(held: Held, pad: PadSnapshot | null, puff: boolean): ControlInput {
+/** Shift with A or D twists at this share of full speed: fine aiming into a narrow branch opening. */
+export const FINE_TWIST = 0.25;
+
+/**
+ * One frame of control from held keys or buttons, an optional gamepad, and whether a puff was triggered. With
+ * `fine` (Shift held), the keys' twist runs at FINE_TWIST of full speed; the gamepad's stick is analogue already.
+ */
+export function controlFrame(held: Held, pad: PadSnapshot | null, puff: boolean, fine = false): ControlInput {
   const keysPush = (held.has('push') ? 1 : 0) - (held.has('pull') ? 1 : 0);
-  const keysRotate = (held.has('right') ? 1 : 0) - (held.has('left') ? 1 : 0);
+  const keysRotate = ((held.has('right') ? 1 : 0) - (held.has('left') ? 1 : 0)) * (fine ? FINE_TWIST : 1);
   // Standard gamepad: left stick Y is axis 1 (up is −1, so push is −axis); right stick X is axis 2.
   const padPush = pad ? -deadZone(pad.axes[1] ?? 0) : 0;
   const padRotate = pad ? deadZone(pad.axes[2] ?? 0) : 0;
