@@ -25,7 +25,7 @@ export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = 
   /** Put the 3D or flat view back where it opened, like the Reset view button (undoes zoom, pan and turns). */
   reset_view: ['reset', 'reset view', 'reset the view', 'reset camera', 'reset the camera', 'recenter', 'recenter the view', 'center the view', 'reset few', 'recent view'],
   /** Hide the vessel names (the anatomy layer's labels), like unticking Labels. */
-  hide_labels: ['hide', 'hide labels', 'hide the labels', 'hide names', 'hide the names', 'hide artery names', 'hide the artery names', 'labels off', 'names off'],
+  hide_labels: ['hide labels', 'hide the labels', 'hide', 'hide names', 'hide the names', 'hide artery names', 'hide the artery names', 'labels off', 'names off', 'hyde labels', 'hyde the labels', 'high labels', 'hi labels', 'hyde'],
   /** Show them again. */
   show_labels: ['show labels', 'show the labels', 'show names', 'show the names', 'show artery names', 'show the artery names', 'labels on', 'names on', 'unhide'],
   assist_best_next: ['best next artery', 'where next', 'which way', 'best path', 'next best'],

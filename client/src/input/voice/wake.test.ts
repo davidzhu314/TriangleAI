@@ -191,6 +191,13 @@ describe('Cathy, hide (the vessel names) and show labels', () => {
     expect(heard).toHaveLength(7);
   });
 
+  it('"Hey Cathy, hide labels" works, including as Chrome mis-hears it ("Hyde", "high", "hi")', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, hide labels', 'hey kathy hyde labels', 'Hey Cathy high labels', 'hey cathy hi labels', 'Hey Kathy Hyde']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['hide_labels', 'hide_labels', 'hide_labels', 'hide_labels', 'hide_labels']);
+  });
+
   it('never confused with show options, wider or reset view', () => {
     const { rec, heard, wake } = setup();
     wake.start();

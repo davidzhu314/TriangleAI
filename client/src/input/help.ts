@@ -18,7 +18,7 @@ export const VOICE_HELP: Readonly<Record<VoiceAction, VoiceHelp>> = {
   zoom_in: { say: 'zoom in', does: 'Zoom the view in' },
   zoom_out: { say: 'zoom out', does: 'Zoom the view out' },
   reset_view: { say: 'reset view', does: 'Put the view back where it opened' },
-  hide_labels: { say: 'hide', does: 'Hide the vessel names' },
+  hide_labels: { say: 'hide labels', does: 'Hide the vessel names' },
   show_labels: { say: 'show labels', does: 'Show the vessel names again' },
   assist_best_next: { say: 'best next artery', does: 'Where to go next' },
   assist_options: { say: 'what are my options', does: 'The ways on from here' },
