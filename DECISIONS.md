@@ -251,3 +251,15 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - S5 also settles "after the demo" for PR #22: it stays a draft until the demo has happened.
 - 2026-11-08 · David · **Merge freeze on main from 2026-11-08 until the demo is over.** Vercel deploys every merge to https://threadsim.vercel.app. During the freeze only demo fixes merge, each with CI green and David's OK. Everything else waits, including the body-context PR #68.
 - 2026-11-08 · David · **AR stays an unverified bonus.** The A7 code stays, but no demo beat uses AR and nobody presents it until it has been verified on a Quest 3. It shows only where immersive-ar is supported.
+- 2026-11-08 · David · **Chain simulation (browser physics approximation), on a branch.** The simulation half of the Drive redesign, in `client/src/wire/physics-chain*.ts`.
+  - **Model:** a serial chain of 3 mm links with two-axis spring joints, adapted from the ISMR 2026 catheter tutorial's structure (rigid links with spring-damper universal joints). No code was copied: the tutorial's repository has no license.
+  - **What it does:**
+    - a coaxial guidewire and catheter, each fed and rotated on its own;
+    - pre-shaped tips as rest bends;
+    - a sweep that keeps every link inside the lumen by the smallest deflection, so the device slides along the wall and the tip's direction picks the branch;
+    - stick-slip torsion between hub and tip;
+    - a contact-load proxy and an educational contact-risk index, which are not clinical forces;
+    - imaging as a resource: press-and-hold fluoro at 30, 15 or 7.5 frames/s, a frozen last-image-hold that goes stale, contrast as a separate resource, a static roadmap, and simulated exposure and contrast units that are not doses or millilitres.
+  - **Not modeled:** inertia, axial friction, vessel deformation, and proximal bowing with the tip held.
+  - **Approximation:** a blocked tip folds distally.
+  - **Contracts:** stay at v2. `to-all-from-david-contract-chain-sim.md` proposes v3. Nothing is wired into a screen, and main is frozen.

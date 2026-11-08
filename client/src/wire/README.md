@@ -5,6 +5,7 @@ Every wire source implements `WireSource` from `client/src/contracts/wire.ts` an
 | File | Owner | What it is |
 | --- | --- | --- |
 | `physics*` | David | `PhysicsWireSource`, WebSocket client for the localhost physics process |
+| `physics-chain*` | David | The browser chain simulation (guidewire and catheter, tip pose, wall contact, torsion) and its imaging model; `ChainWireSource`. Not offered by `select.ts` yet |
 | `replay*` | David | `ReplayWireSource`, plays real recorded runs (needs the physics process for the phantom mesh) |
 | `select.ts` | David | Picks the source per case; falls back to rail after a failed or 2 s stalled socket and fires `onFallback` |
 | `rail*` | Vaibhav | `RailWireSource`, a pure `step(state, input, dt)` core |
