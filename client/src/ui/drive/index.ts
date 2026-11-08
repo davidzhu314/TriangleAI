@@ -22,6 +22,8 @@ import { entry, loadBundled, loadedCase, saveDrive, savedPlan, type SavedPlan } 
 import './drive.css';
 import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
+import { mergeControl } from '../../input';
+import { createHandsVoice } from '../hands-voice';
 
 type SelectModule = { selectWireSource?: (c: LoadedCase) => Promise<WireSource> };
 /** Empty until David adds select.ts; Vite resolves the glob at build time, so a missing file is not an error. */
@@ -232,7 +234,14 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const banner = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-banner' });
   /** The fallback notice stays up for the rest of the drive (DESIGN.md: notices never stop the drive). */
   const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar), notice, banner);
+  // Hands-free (integration/hands-voice): the hand pushes and rotates through the same frame as the keys, and any
+  // key pressed wins (mergeControl); voice zooms. Off until the trainee turns it on.
+  const hands = createHandsVoice({
+    host: view.element,
+    actions: ['zoom_in', 'zoom_out'],
+    onVoice: (a) => (view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
+  });
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar, hands.controls), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -330,7 +339,9 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const step = (pad: PadSnapshot | null): void => {
     if (padPuff(lastPad, pad)) triggerPuff();
     lastPad = pad;
-    const frame = controlFrame(held, pad, puffPending);
+    const keys = controlFrame(held, pad, puffPending);
+    const g = hands.gesture();
+    const frame = g ? mergeControl(g, keys) : keys;
     puffPending = false;
     source?.control(frame);
   };
@@ -409,6 +420,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     window.removeEventListener('blur', blur);
     void stopAndSave(); // leaving mid-drive keeps what was driven
     unsubscribe.forEach((u) => u());
+    hands.dispose();
     view.dispose();
   };
 }

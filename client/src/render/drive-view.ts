@@ -41,6 +41,8 @@ export interface DriveView {
   /** The 3D/Flat switch and the AR entry, for the screen to place in its HUD. */
   readonly toolbar: HTMLElement | null;
   update(state: DriveViewState): void;
+  /** Zoom the 3D view; false in the flat view, which has no zoom. */
+  zoom(factor: number): boolean;
   /** Start a contrast puff: the X-ray silhouette shows, then fades. */
   puff(): void;
   dispose(): void;
@@ -99,6 +101,12 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
   return {
     element,
     toolbar,
+    zoom(factor) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      scene.zoom(factor);
+      return true;
+    },
     update(s) {
       last = s;
       draw3d(s);

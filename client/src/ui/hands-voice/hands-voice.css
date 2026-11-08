@@ -1,0 +1,114 @@
+/* Hands-free input (Plan and Drive): a small panel in the view's bottom-left corner with the mirrored self-view,
+   the hand's status, the live-mic notice and the voice caption; a pointer dot while the hand points. */
+
+.hv-controls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.hv-controls .btn[aria-pressed='true'] {
+  background: var(--color-surface-active);
+  border-color: var(--color-border-strong);
+}
+
+.hv-panel {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--size-palette);
+  pointer-events: none;
+}
+
+.hv-panel > * {
+  pointer-events: auto;
+}
+
+.hv-self {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.hv-self[hidden],
+.hv-mic[hidden],
+.hv-pointer[hidden] {
+  display: none;
+}
+
+/* The selfie view is mirrored, so the hand on screen moves the way the trainee's hand does. */
+.hv-video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transform: scaleX(-1);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-control);
+}
+
+.hv-status,
+.hv-note {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.hv-status {
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.hv-note {
+  color: var(--color-text-muted);
+}
+
+.hv-mic {
+  margin: 0;
+  white-space: normal;
+}
+
+.hv-caption:empty {
+  display: none;
+}
+
+.hv-caption {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-card);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.hv-caption p {
+  margin: 0;
+}
+
+.hv-answer {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+/* Where the pointing finger is, over the view; a pinch picks what is under it. */
+.hv-pointer {
+  position: absolute;
+  left: var(--hv-x, 50%);
+  top: var(--hv-y, 50%);
+  z-index: 3;
+  width: var(--space-4);
+  height: var(--space-4);
+  translate: -50% -50%;
+  border: var(--focus-width) solid var(--color-focus);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  pointer-events: none;
+}

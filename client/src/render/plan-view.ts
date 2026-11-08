@@ -23,6 +23,12 @@ export interface PlanViewState {
 
 export interface PlanView {
   readonly element: HTMLElement;
+  /** The view's toolbar (3D | Flat, camera, anatomy): screens may add their own controls to it. */
+  readonly toolbar: HTMLElement;
+  /** The branch-point node under a point of the view (0..1 of its width and height), in 3D or flat. */
+  pickAt(x: number, y: number): string | null;
+  /** Zoom the 3D view; false in the flat view, which has no zoom. */
+  zoom(factor: number): boolean;
   update(state: PlanViewState): void;
   dispose(): void;
 }
@@ -67,6 +73,20 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
 
   return {
     element,
+    toolbar: dual.toolbar,
+    pickAt(x, y) {
+      const scene = dual.scene();
+      if (scene && dual.kind() === '3d') return scene.pickAt(x, y);
+      const r = d.svg.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + x * r.width, r.top + y * r.height);
+      return at?.closest('[data-node]')?.getAttribute('data-node') ?? null;
+    },
+    zoom(factor) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      scene.zoom(factor);
+      return true;
+    },
     update(state) {
       route.setAttribute('points', d.routePoints(state.entryNode, state.routeEdges));
       handles.replaceChildren();
