@@ -50,3 +50,4 @@ export async function scoreAttempt(input: ScoreInput): Promise<CaseResult> {
   }
   return scoreCase(input);
 }
+export { nextBranchWindow, type BranchWindow } from './branch-window';
