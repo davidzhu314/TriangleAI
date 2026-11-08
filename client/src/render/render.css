@@ -394,3 +394,23 @@
 .hud-top-row .view-toolbar {
   padding: var(--space-1);
 }
+
+/* The catheter head's angle label (Drive): a small tag beside the tip, above the canvas, never in the way of clicks. */
+
+.tip-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  margin: -2.25rem 0 0 0.75rem;
+  padding: 0 var(--space-2);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  border: var(--border-width) solid var(--color-route-player);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-lead);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}

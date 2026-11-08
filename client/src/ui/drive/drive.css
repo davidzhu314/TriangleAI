@@ -442,3 +442,138 @@
 .voice-fluoro-badge[hidden] {
   display: none;
 }
+
+/* ---------------------------------------------------------------- foldable HUD cards (2026-11-08) */
+.hud-fold {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  text-align: left;
+  cursor: pointer;
+}
+
+.hud-fold:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* A chevron drawn from two borders: down when open, right when folded. */
+.hud-fold-mark {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.hud-fold[aria-expanded='false'] .hud-fold-mark {
+  transform: rotate(-45deg);
+}
+
+.hud-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.hud-card-body[hidden] {
+  display: none;
+}
+
+.hud-card-folded {
+  padding-block: var(--space-3);
+}
+
+/* ---------------------------------------------------------------- tip twist readout */
+.twist-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.twist-dial {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.twist-ring {
+  fill: var(--color-surface-sunken);
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.twist-needle {
+  stroke: var(--color-route-player);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.twist-hub {
+  fill: var(--color-route-player);
+}
+
+.twist-value {
+  min-width: 2.75rem;
+  color: var(--color-heading);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.twist-extra {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Setting the tip to an angle: the typed field, the target on the dial, the hand mode. */
+.twist-goal {
+  stroke: var(--color-route-player);
+  stroke-width: 1.5;
+  stroke-dasharray: 1.5 1.5;
+  opacity: 0.7;
+}
+
+.twist-set {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.twist-field {
+  width: 4.5rem;
+  min-height: var(--size-control);
+  padding-block: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.twist-field[aria-invalid='true'] {
+  border-color: var(--color-negative);
+}
+
+.twist-go,
+.twist-hand-mode {
+  min-height: var(--size-control);
+  padding-inline: var(--space-3);
+}
+
+.twist-hand-mode[aria-pressed='true'] {
+  background: var(--color-surface-active);
+  color: var(--color-heading);
+  border-color: var(--color-route-player);
+}

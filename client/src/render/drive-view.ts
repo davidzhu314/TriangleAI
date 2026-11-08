@@ -34,6 +34,8 @@ export interface DriveViewState {
   /** The catheter's points, base to its tip, when the wire source has one (chain mode); else empty or absent. */
   catheter?: readonly Vec3[];
   tip: Vec3 | null;
+  /** Words on a small label riding on the catheter head (its twist), or null for none. */
+  tipLabel?: string | null;
   fluoro: boolean;
   /** Front view dimmed (intermediate difficulty). */
   dim: boolean;
@@ -81,11 +83,43 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
   d.svg.append(ghost, wire, catheter, tip, markers);
   const dual: DualView = createDualView(c, label, d.svg, 'drive-view', ar, (scene) => {
     scene.onFrame(fadeFrame);
+    scene.onFrame(() => placeTag());
     if (last) draw3d(last);
   }, undefined, anatomy);
   const element = dual.element;
   const toolbar = dual.toolbar;
   toolbar.remove();
+  // The label on the catheter head: placed over the view at the tip's screen position, every frame in 3D (the
+  // camera follows the tip) and on each update in the flat drawing.
+  const tipTag = document.createElement('span');
+  tipTag.className = 'tip-tag';
+  tipTag.dataset['testid'] = 'tip-tag';
+  tipTag.hidden = true;
+  element.append(tipTag);
+  const placeTag = (): void => {
+    const s = last;
+    if (!s || !s.tip || !s.tipLabel) {
+      tipTag.hidden = true;
+      return;
+    }
+    tipTag.textContent = s.tipLabel;
+    const host = element.getBoundingClientRect();
+    let at: { x: number; y: number } | null = null;
+    const scene = dual.scene();
+    if (scene && dual.kind() === '3d') {
+      const canvasBox = scene.canvas.getBoundingClientRect();
+      const p = scene.screenPoint(s.tip);
+      if (p) at = { x: p.x + canvasBox.left - host.left, y: p.y + canvasBox.top - host.top };
+    } else {
+      const m = (d.svg as SVGSVGElement).getScreenCTM();
+      if (m) {
+        const pt = new DOMPoint(s.tip[0] * 1000, -s.tip[1] * 1000).matrixTransform(m);
+        at = { x: pt.x - host.left, y: pt.y - host.top };
+      }
+    }
+    tipTag.hidden = at === null || at.x < 0 || at.y < 0 || at.x > host.width || at.y > host.height;
+    if (at) tipTag.style.transform = `translate(${Math.round(at.x)}px, ${Math.round(at.y)}px)`;
+  };
   let fade: number | undefined;
   let last: DriveViewState | null = null;
   // The 3D silhouette's opacity during and after a puff (X-ray only).
@@ -166,6 +200,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
         tip.removeAttribute('hidden');
       } else tip.setAttribute('hidden', '');
       drawMarkers(d, markers, s.entryNode, s.targetNode);
+      placeTag();
     },
     puff() {
       contrast = tokenNumber('--opacity-xray-contrast');

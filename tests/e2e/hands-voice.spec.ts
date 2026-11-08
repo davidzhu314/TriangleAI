@@ -201,6 +201,39 @@ test('a recorded real hand drives the wire on Drive through the gesture machine'
   await expect.poll(cm).not.toBe(before); // the hand moved the wire
 });
 
+test('hand angle mode: the gun pose\'s twist sets the tip\'s angle at half scale, and a still hand holds it still', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('threadsim.tutorial.v1', 'dismissed');
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } }));
+  });
+  await page.goto('/#/case/fixture-y/drive');
+  await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
+  const tipDeg = async (): Promise<number> => Number((await page.getByTestId('twist-tip').innerText()).replace(/[^0-9]/g, ''));
+  let t = 0;
+  // A half-curled barrel holds (no push), so only the twist acts. Frames paced in real time in the page.
+  const hold = async (rollDeg: number, ms: number): Promise<void> => {
+    const frames = Array.from({ length: Math.round(ms / synth.FRAME_MS) }, () => synth.frame((t += synth.FRAME_MS), synth.gun(0.42, rollDeg, { cameraFrame: true })));
+    await page.evaluate(async (fs) => {
+      for (const f of fs) {
+        window.__threadsimHands!.feed(f as never);
+        await new Promise((r) => setTimeout(r, 1000 / 30));
+      }
+    }, frames);
+  };
+  await hold(0, 400); // the readout shows the hand mode once a hand is seen
+  await page.getByTestId('hand-angle-mode').click();
+  await expect(page.getByTestId('hand-angle-mode')).toHaveAttribute('aria-pressed', 'true');
+  await hold(0, 900); // engage, and the twist neutral is captured
+  const start = await tipDeg();
+  await hold(40, 2000); // twist the hand 40°: the tip should go about 20°
+  const turned = (((await tipDeg()) - start + 540) % 360) - 180;
+  expect(Math.abs(turned)).toBeGreaterThan(10);
+  expect(Math.abs(turned)).toBeLessThan(30);
+  const held = await tipDeg();
+  await hold(40, 1000); // the same hand angle: the tip stays
+  expect(Math.abs(((await tipDeg()) - held + 540) % 360 - 180)).toBeLessThanOrEqual(2);
+});
+
 for (const wire of ['rail', 'chain'] as const) {
   test(`${wire}: the gun pose pushes the wire (barrel straight), pulls it back (barrel curled), and stops when the camera does`, async ({ page }) => {
     await page.addInitScript(() =>
