@@ -27,7 +27,7 @@ describe('settings', () => {
   });
 
   it('starts from the defaults: Hands and Voice offered, the system theme, every command list shown', () => {
-    expect(readSettings()).toEqual({ hands: true, voice: true, theme: 'system', showGestures: true, showVoice: true, showKeys: true });
+    expect(readSettings()).toEqual({ hands: true, voice: true, speak: true, theme: 'system', showGestures: true, showVoice: true, showKeys: true });
   });
 
   it('keeps what was saved and ignores anything malformed', () => {
