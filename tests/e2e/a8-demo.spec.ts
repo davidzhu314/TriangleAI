@@ -257,13 +257,12 @@ test('1:00 Compare: the frontier shows its routes, and moving the safety slider 
   await expect(page).toHaveURL(/#\/case\/type-iii\/compare$/);
   const frontier = (await engine.optimize({ caseId: c.id, targetId: 'rcca' }, c)) as Frontier;
   const groups = model.groupRoutes(c, frontier);
-  const measures = model.visibleMeasures(frontier, null);
   const rank = engine.createRanker(frontier);
   const order = (w: Weights) => [...model.groupRanks(groups, rank(w)).entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id);
   const rows = () => page.getByTestId('routes-table').locator('tbody tr[tabindex]').evaluateAll((els) => els.map((e) => e.getAttribute('data-route')));
   expect(groups.length).toBeGreaterThanOrEqual(3); // DEMO.md: "three routes" holds on this seed
   await expect(page.getByTestId('routes-table').locator('tbody tr[tabindex]')).toHaveCount(groups.length);
-  const before = order(model.startingWeights(measures));
+  const before = order(model.startingWeights(frontier.candidates));
   expect(await rows()).toEqual(before);
 
   // At 1440 × 900 the sliders and the whole table, every row and column, are on screen without scrolling.
@@ -279,13 +278,13 @@ test('1:00 Compare: the frontier shows its routes, and moving the safety slider 
 
   await safety.focus();
   await page.keyboard.press('End');
-  const after = order({ ...model.startingWeights(measures), proximityPenalty: Number(await safety.inputValue()) });
+  const after = order({ ...model.startingWeights(frontier.candidates), proximityPenalty: Number(await safety.inputValue()) });
   expect(after).not.toEqual(before);
   await expect.poll(rows).toEqual(after);
 
   // DEMO.md: after the re-rank, the presenter puts the slider back to equal weights before switching, so the route
   // driven is the one that ranks first at the weights Results scores against.
-  const start = model.startingWeights(measures).proximityPenalty!;
+  const start = model.startingWeights(frontier.candidates).proximityPenalty!;
   await page.keyboard.press('Home');
   for (let i = 0; i < start; i++) await page.keyboard.press('ArrowRight');
   await expect(safety).toHaveValue(String(start));

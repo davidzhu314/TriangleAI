@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadCase } from '../../case';
 import type { Frontier, LoadedCase, NoSafeRoute, Route } from '../../contracts';
-import { buildGraph, normaliseWeights, optimize, routeFor, WIRE_PRESETS, type RouteGraph } from '../../optimize';
+import { buildGraph, defaultWeights, normaliseWeights, optimize, routeFor, WIRE_PRESETS, type RouteGraph } from '../../optimize';
 import { MEASURE_ROWS } from '../plan/cost-rows';
 import { finding, groupRanks, groupRoutes, overlaySelection, startingWeights, visibleMeasures, type RouteGroup } from './model';
 
@@ -155,12 +155,13 @@ describe('overlay, weights and measures', () => {
     expect([...ranks.values()].sort()).toEqual(groups.map((_, i) => i + 1));
   });
 
-  it('starts with equal weights on every measure shown, which the engine normalises to equal shares', () => {
-    const measures = rows();
-    const shares = normaliseWeights(startingWeights(measures));
-    const values = Object.values(shares);
-    expect(Object.keys(shares).sort()).toEqual(measures.map((m) => m.key).sort());
-    for (const v of values) expect(v).toBeCloseTo(1 / measures.length, 12);
+  it("starts the sliders at the engine's default weights: normalised, they equal defaultWeights", () => {
+    const start = startingWeights(frontier.candidates);
+    const shares = normaliseWeights(start);
+    const engine = defaultWeights(frontier.candidates);
+    expect(Object.keys(shares).sort()).toEqual(Object.keys(engine).sort());
+    for (const [k, v] of Object.entries(engine)) expect(shares[k as keyof typeof shares]).toBeCloseTo(v!, 12);
+    for (const v of Object.values(start)) expect(v).toBe(1); // whole slider steps
   });
 
   it('hides the simulated measures unless real recorded runs supplied them', () => {

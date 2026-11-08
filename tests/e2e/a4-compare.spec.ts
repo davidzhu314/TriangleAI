@@ -100,7 +100,7 @@ test('Compare shows the overlay and a table equal to optimize() and routeFor', a
   const player = engine.routeFor(graph, c.entries[0]!.id, targetId, presetId, pathTo(targetId));
   const measures = model.visibleMeasures(frontier, player);
   const groups = model.groupRoutes(c, frontier);
-  const ranks = model.groupRanks(groups, engine.createRanker(frontier)(model.startingWeights(measures)));
+  const ranks = model.groupRanks(groups, engine.createRanker(frontier)(model.startingWeights(frontier.candidates)));
   const table = page.getByTestId('routes-table');
 
   const expectRow = async (rowSel: string, cost: (typeof player)['cost']): Promise<void> => {
@@ -127,7 +127,7 @@ test('moving a weight slider gives the ranks and shares createRanker and normali
   const slider = page.locator(`input[data-measure=${moved.key}]`);
   await slider.focus();
   for (let i = 0; i < 5; i++) await page.keyboard.press('ArrowRight');
-  const weights = { ...model.startingWeights(measures), [moved.key]: Number(await slider.inputValue()) };
+  const weights = { ...model.startingWeights(frontier.candidates), [moved.key]: Number(await slider.inputValue()) };
   const shares = engine.normaliseWeights(weights);
   await expect(page.locator(`[data-share=${moved.key}]`)).toHaveText(`${Math.round(shares[moved.key]! * 100)}%`);
   const groups = model.groupRoutes(c, frontier);
