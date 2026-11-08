@@ -23,6 +23,7 @@ export const VOICE_HELP: Readonly<Record<VoiceAction, VoiceHelp>> = {
   assist_best_next: { say: 'best next artery', does: 'Where to go next' },
   assist_options: { say: 'what are my options', does: 'The ways on from here' },
   assist_review: { say: 'how am I doing', does: 'How the drive is going' },
+  assist_check: { say: 'am I on the right path', does: 'Whether you are on the plan, or about to leave it' },
   undo: { say: 'undo', does: 'Remove the last step of the route' },
 };
 

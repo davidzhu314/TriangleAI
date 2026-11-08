@@ -19,6 +19,7 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   assist_best_next: 'Best next artery',
   assist_options: 'My options',
   assist_review: 'How am I doing',
+  assist_check: 'Am I on the right path',
   undo: 'Undo last step',
   reset_view: 'Reset view',
   hide_labels: 'Hide names',

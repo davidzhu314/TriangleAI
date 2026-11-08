@@ -10,6 +10,7 @@
 import type { EventLog, LoadedCase, Route, WireFallback, WireSource, WireState } from '../../contracts';
 import { buildGraph, defaultWeights, optimize, routeFor, type RouteGraph } from '../../optimize';
 import { driveAssist, ILLUSTRATIVE_CONSTANTS } from '../../score';
+import { driveCheckLine } from '../../score/live';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
 import { anatomyFor } from '../body-context';
@@ -209,7 +210,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     h('div', { class: 'control-row' }, labelled(icon, label), h('div', { class: 'control-keys' }, keys));
   // The voice commands Drive answers (also the hands-free hookup's list below), and the help for both hands and
   // voice, from client/src/input/help.ts so the card can't drift from what the commands and gestures do.
-  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'undo'];
+  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'assist_check', 'undo'];
   const helpRow = (what: string, how: string, tag?: string): HTMLElement =>
     h('li', { class: 'help-row' }, h('span', { class: 'help-what' }, what, tag ? h('span', { class: 'help-tag' }, tag) : null), h('span', { class: 'help-how' }, how));
   const handsHelp = h(
@@ -287,6 +288,14 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
     return driveAssist({ log, optimized, weights, case: c }).lines.map((l) => l.text);
   };
+  /** "Am I on the right path" (G5): pull back when off the plan, else where the plan goes next. No live warning yet (needs the rail state). */
+  const driveCheck = async (): Promise<string | null> => {
+    const log = (source as { logSoFar?: () => EventLog | null } | null)?.logSoFar?.() ?? null;
+    if (!log) return null;
+    const optimized = await optimize({ caseId: c.id, targetId: plan.targetId }, c);
+    const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+    return driveCheckLine({ log, optimized, weights, case: c }, null).text;
+  };
   const hands = createHandsVoice({
     host: view.element,
     actions: driveVoice,
@@ -302,6 +311,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       }
       if (a === 'undo') return 'Undo works on Plan.';
       if (a === 'zoom_in' || a === 'zoom_out') return view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+      if (a === 'assist_check') return (await driveCheck()) ?? 'Start the drive first.';
       const lines = await driveLines();
       if (!lines) return 'Start the drive first.';
       if (a === 'assist_best_next') return lines[0] ?? null;

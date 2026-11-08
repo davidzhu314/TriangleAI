@@ -1,0 +1,533 @@
+{
+  "plan": {
+    "screen": "plan",
+    "case": "Type III arch, right carotid target",
+    "target": "Right common carotid",
+    "entry": "Right radial",
+    "wire": "Soft angled",
+    "routes": [
+      {
+        "rank": 1,
+        "name": "Soft angled wire through Right subclavian to radial → Right common carotid",
+        "entry": "Right radial",
+        "wire": "Soft angled",
+        "labels": [
+          "shortest",
+          "gentlest",
+          "least radiation"
+        ],
+        "measures": {
+          "route length": {
+            "value": 42.8,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 58,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 215,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 1,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 50,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 2,
+        "name": "Standard J wire through Right subclavian to radial → Right common carotid",
+        "entry": "Right radial",
+        "wire": "Standard J",
+        "labels": [
+          "shortest",
+          "gentlest",
+          "least radiation"
+        ],
+        "measures": {
+          "route length": {
+            "value": 42.8,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 58,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 215,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 1,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 50,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 3,
+        "name": "Soft angled wire through Left iliac to femoral → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left femoral",
+        "wire": "Soft angled",
+        "labels": [
+          "widest",
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 75.9,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 61,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 622,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 3.5,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 96.6,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 4,
+        "name": "Standard J wire through Left iliac to femoral → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left femoral",
+        "wire": "Standard J",
+        "labels": [
+          "widest",
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 75.9,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 61,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 622,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 3.5,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 96.6,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 5,
+        "name": "Soft angled wire through Left subclavian to radial → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left radial",
+        "wire": "Soft angled",
+        "labels": [
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 51.4,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 71,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 537,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 69.3,
+            "unit": "s"
+          }
+        }
+      }
+    ],
+    "lines": [
+      "The best route from here goes through the Right common carotid (shortest, gentlest, least radiation).",
+      "1 good ways on from here: Right common carotid.",
+      "The best route from here goes through the Right common carotid (shortest, gentlest, least radiation)."
+    ],
+    "names": [
+      "Aorta",
+      "Brachiocephalic trunk",
+      "Left common carotid",
+      "Left femoral",
+      "Left iliac to femoral",
+      "Left radial",
+      "Left subclavian to radial",
+      "Right common carotid",
+      "Right femoral",
+      "Right iliac to femoral",
+      "Right radial",
+      "Right subclavian to radial",
+      "Soft angled",
+      "Standard J",
+      "Stiff straight",
+      "Type III arch, right carotid target",
+      "the critical branch in the Right subclavian to radial"
+    ],
+    "route": {
+      "vessels": [
+        "Right subclavian to radial"
+      ],
+      "measures": {
+        "route length": {
+          "value": 31.3,
+          "unit": "cm"
+        },
+        "sharpest turn": {
+          "value": 9,
+          "unit": "degrees"
+        },
+        "total turning": {
+          "value": 111,
+          "unit": "degrees"
+        },
+        "narrowest radius": {
+          "value": 1.3,
+          "unit": "mm"
+        },
+        "heavy risk zones crossed": {
+          "value": 0,
+          "unit": "zones"
+        },
+        "closeness to risk zones": {
+          "value": 1,
+          "unit": "points"
+        },
+        "estimated fluoro time": {
+          "value": 35,
+          "unit": "s"
+        }
+      }
+    },
+    "plan": {
+      "best_next": "Right common carotid",
+      "options": [
+        "Right common carotid"
+      ],
+      "situation": null,
+      "marks": []
+    }
+  },
+  "drive": {
+    "screen": "drive",
+    "case": "Type III arch, right carotid target",
+    "target": "Right common carotid",
+    "entry": "Left radial",
+    "wire": "Soft angled",
+    "routes": [
+      {
+        "rank": 1,
+        "name": "Soft angled wire through Right subclavian to radial → Right common carotid",
+        "entry": "Right radial",
+        "wire": "Soft angled",
+        "labels": [
+          "shortest",
+          "gentlest",
+          "least radiation"
+        ],
+        "measures": {
+          "route length": {
+            "value": 42.8,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 58,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 215,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 1,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 50,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 2,
+        "name": "Standard J wire through Right subclavian to radial → Right common carotid",
+        "entry": "Right radial",
+        "wire": "Standard J",
+        "labels": [
+          "shortest",
+          "gentlest",
+          "least radiation"
+        ],
+        "measures": {
+          "route length": {
+            "value": 42.8,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 58,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 215,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 1,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 50,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 3,
+        "name": "Soft angled wire through Left iliac to femoral → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left femoral",
+        "wire": "Soft angled",
+        "labels": [
+          "widest",
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 75.9,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 61,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 622,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 3.5,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 96.6,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 4,
+        "name": "Standard J wire through Left iliac to femoral → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left femoral",
+        "wire": "Standard J",
+        "labels": [
+          "widest",
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 75.9,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 61,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 622,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 3.5,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 96.6,
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "rank": 5,
+        "name": "Soft angled wire through Left subclavian to radial → Aorta → Brachiocephalic trunk → Right common carotid",
+        "entry": "Left radial",
+        "wire": "Soft angled",
+        "labels": [
+          "farthest from risk"
+        ],
+        "measures": {
+          "route length": {
+            "value": 51.4,
+            "unit": "cm"
+          },
+          "sharpest turn": {
+            "value": 71,
+            "unit": "degrees"
+          },
+          "total turning": {
+            "value": 537,
+            "unit": "degrees"
+          },
+          "narrowest radius": {
+            "value": 1.3,
+            "unit": "mm"
+          },
+          "heavy risk zones crossed": {
+            "value": 0,
+            "unit": "zones"
+          },
+          "closeness to risk zones": {
+            "value": 0,
+            "unit": "points"
+          },
+          "estimated fluoro time": {
+            "value": 69.3,
+            "unit": "s"
+          }
+        }
+      }
+    ],
+    "lines": [
+      "Careful: the tip will go into the Aorta, not the Brachiocephalic trunk. Rotate right.",
+      "Next, head into the Brachiocephalic trunk.",
+      "Most of your penalty came from the 71° turn into the Aorta.",
+      "Peak force was 0.378 N against 0.263 N on the reference drive, and total force 0.045 N·s against 0.021 N·s."
+    ],
+    "names": [
+      "Aorta",
+      "Brachiocephalic trunk",
+      "Left common carotid",
+      "Left femoral",
+      "Left iliac to femoral",
+      "Left radial",
+      "Left subclavian to radial",
+      "Right common carotid",
+      "Right femoral",
+      "Right iliac to femoral",
+      "Right radial",
+      "Right subclavian to radial",
+      "Soft angled",
+      "Standard J",
+      "Stiff straight",
+      "Type III arch, right carotid target",
+      "the critical branch in the Right subclavian to radial"
+    ],
+    "route": {
+      "vessels": [
+        "Left subclavian to radial",
+        "Aorta",
+        "Brachiocephalic trunk",
+        "Right common carotid"
+      ],
+      "measures": null
+    },
+    "drive": {
+      "next": "Brachiocephalic trunk",
+      "off_plan": null,
+      "warning": {
+        "would_enter": "Aorta",
+        "planned": "Brachiocephalic trunk",
+        "distance_mm": 20,
+        "rotate": "right"
+      }
+    }
+  }
+}
