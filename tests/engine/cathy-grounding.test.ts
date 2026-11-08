@@ -51,7 +51,7 @@ function cut(log: EventLog, k: number): EventLog {
   return { ...log, samples, events: log.events.filter((e) => e.t <= t) };
 }
 
-const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: string[]; offFrontier: number; lines: number; drives: number; wrongBranchDrives: number } = {
+const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: string[]; offFrontier: number; lines: number; drives: number; wrongBranchDrives: number; steerChecked: number; cannotSteer: string[] } = {
   optionCount: [],
   unsteerableBest: [],
   noSafe: [],
@@ -59,6 +59,8 @@ const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: stri
   lines: 0,
   drives: 0,
   wrongBranchDrives: 0,
+  steerChecked: 0,
+  cannotSteer: [],
 };
 
 const index = JSON.parse(readFileSync(join(CASES_DIR, 'index.json'), 'utf8')) as { cases: { id: string }[] };
@@ -145,6 +147,39 @@ for (const { id } of index.cases) {
           );
       });
 
+      it(`${t.id}: with the graph, "best" is always a route the wire can steer`, () => {
+        const steerable = (r: Route) => steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok;
+        const byId = new Map([...res.routes, ...res.candidates].map((r) => [r.id, r] as const));
+        // "Try another wire or entry" always has an answer: some frontier route on this target is steerable.
+        expect(res.routes.some(steerable), `${id} → ${t.id}: no steerable frontier route`).toBe(true);
+        for (const entry of c.entries) {
+          for (const preset of PRESET_IDS) {
+            const mine = (r: Route) => r.entryId === entry.id && r.presetId === preset;
+            const prefixes = new Map<string, string[]>([['', []]]);
+            for (const r of [...res.routes.filter(mine), ...res.candidates.filter((x) => mine(x) && isSafe(x))])
+              for (let i = 1; i < r.edges.length; i++) prefixes.set(r.edges.slice(0, i).join(','), r.edges.slice(0, i));
+            for (const prefix of prefixes.values()) {
+              const a = planAssist({ optimized: res, weights: W, entryId: entry.id, presetId: preset, routeSoFar: prefix, graph: g });
+              const where = `${id} → ${t.id}, ${entry.id} · ${preset}, after [${prefix.join(', ')}]`;
+              findings.steerChecked++;
+              for (const o of a.options) expect(o.steerable, where).toBe(o.routeIds.some((rid) => steerable(byId.get(rid)!)));
+              if (a.best) {
+                expect(a.best.steerable, where).toBe(true);
+              }
+              const line = planAssistLine(a, c, t.id, 'best');
+              expectGrounded(line);
+              if (a.reason === 'cannot_steer') {
+                expect(a.best).toBeNull();
+                expect(a.options.every((o) => o.steerable === false), where).toBe(true);
+                expect(line.template).toBe('assist.cannot_steer');
+                expect(numbersIn(line.text)).toEqual([]);
+                if (prefix.length === 0) findings.cannotSteer.push(`${id} → ${t.id}, ${entry.id} · ${preset}: "${line.text}"`);
+              }
+            }
+          }
+        }
+      });
+
       it(`${t.id}: "how am I doing" is grounded on drives of every frontier route`, async () => {
         for (const r of res.routes) {
           const { log } = await autoDrive(c, t.id, r);
@@ -220,11 +255,15 @@ describe('Cathy QA summary', () => {
       '',
       ...list(findings.optionCount),
       '',
-      '### "Best next artery" on a route the rail wire can\'t steer',
+      '### "Best next artery" without the graph, on a route the rail wire can\'t steer',
       '',
-      'The assistant follows the top-ranked frontier route; the optimizer does not yet check steering (`cannot_steer` waits on a contract bump).',
+      'Without `graph`, the assistant follows the top-ranked frontier route even when the wire can\'t steer it. With `graph` (#51), the test checks that "best" is always steerable: ' + findings.steerChecked + ' plan states, all passing. Callers should pass `graph`.',
       '',
       ...list(findings.unsteerableBest),
+      '',
+      '### Where Cathy says "try another wire or entry" (with the graph, at the start of planning)',
+      '',
+      ...list(findings.cannotSteer),
       '',
       '## Not covered yet',
       '',
