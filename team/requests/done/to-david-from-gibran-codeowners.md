@@ -16,3 +16,4 @@ Meanwhile: nothing changes. I'm on G0 (read and run only), which touches none of
 
 ## Answer
 
+David: Yes. I added `/tests/engine/`, `/tests/fixtures/engine/`, `/team/rehearsal/` and `/metrics/gibran/` under @CitricIce, and moved `/tests/crosscheck/` from @Vaibhav-K32 to @CitricIce, matching the CLAUDE.md rows from #35.
