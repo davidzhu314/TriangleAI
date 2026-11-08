@@ -280,3 +280,15 @@ One line per decision: date · who · decision · why. Append only. A decision t
 - 2026-11-08 · Vaibhav · **Both hands at once.** Each hand has its own gesture machine, so either hand can drive, point or pan, and the two can do different things together (one drives while the other pans). `GestureOutput` keeps its fields and combines the hands: control and pointer from the dominant hand when engaged, else the other; select if either pinches; pan the mean of the panning hands; per-hand outputs in `hands.Left` / `hands.Right`. `dominant` now only breaks ties. The real-clip test pins the recorded right hand's own output. HandLandmarker must run with `numHands: 2`.
 - 2026-11-08 · Vaibhav · **Voice: always listening, wake word only.** Push-to-talk is removed (`voice/ptt.ts`, `createPushToTalk`). Voice is off until the player turns it on; then the microphone stays live and only speech starting with "Hey Cathy" runs a command (`createWakeListener`, already approved by David and Aroovee as an opt-in mode). The live-microphone notice is required while it's on. The `Recognizer` type moves to `voice/recognizer.ts`.
 - 2026-11-08 · Vaibhav · **Cathy, undo.** A new voice action, `undo` ("undo", "undo that", "go back a step", "take that back", "remove the last step", and the mis-hearing "undue"): on Plan it removes the last branch added, like the Undo button. Like every command, it needs "Hey Cathy" first.
+- 2026-11-08 · David · **Chain simulation (browser physics approximation), on a branch.** The simulation half of the Drive redesign, in `client/src/wire/physics-chain*.ts`.
+  - **Model:** a serial chain of 3 mm links with two-axis spring joints, adapted from the ISMR 2026 catheter tutorial's structure (rigid links with spring-damper universal joints). No code was copied: the tutorial's repository has no license.
+  - **What it does:**
+    - a coaxial guidewire and catheter, each fed and rotated on its own;
+    - pre-shaped tips as rest bends;
+    - a sweep that keeps every link inside the lumen by the smallest deflection, so the device slides along the wall and the tip's direction picks the branch;
+    - stick-slip torsion between hub and tip;
+    - a contact-load proxy and an educational contact-risk index, which are not clinical forces;
+    - imaging as a resource: press-and-hold fluoro at 30, 15 or 7.5 frames/s, a frozen last-image-hold that goes stale, contrast as a separate resource, a static roadmap, and simulated exposure and contrast units that are not doses or millilitres.
+  - **Not modeled:** inertia, axial friction, vessel deformation, and proximal bowing with the tip held.
+  - **Approximation:** a blocked tip folds distally.
+  - **Contracts:** stay at v2. `to-all-from-david-contract-chain-sim.md` proposes v3. Nothing is wired into a screen, and main is frozen.
