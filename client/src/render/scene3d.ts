@@ -88,6 +88,8 @@ export interface CaseScene {
   rotate(yaw: number, pitch: number, roll: number): void;
   /** Undo every turn of the case and put the camera back on the given framing. */
   resetView(kind: 'close' | 'whole'): void;
+  /** Where each branch handle is on the canvas, in CSS pixels from its top left (for automated tests). */
+  handlesOnScreen(): { node: string; x: number; y: number }[];
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -448,6 +450,13 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       to.setLength(Math.min(max, Math.max(min, to.length())));
       camera.position.copy(controls.target).add(to);
       controls.update();
+    },
+    handlesOnScreen() {
+      const r = canvas.getBoundingClientRect();
+      return handles.children.map((h) => {
+        const v = h.getWorldPosition(new THREE.Vector3()).project(camera);
+        return { node: h.userData['node'] as string, x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
+      });
     },
     pick(ray) {
       const hit = ray.intersectObjects(handles.children, false)[0];

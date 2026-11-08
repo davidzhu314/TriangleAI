@@ -15,6 +15,7 @@
 import type { LoadedCase, Vec3 } from '../contracts';
 import { drawCase, svgEl, toPoints } from './case-svg';
 import type { ArHooks } from './ar';
+import type { AnatomyConfig } from './anatomy-config';
 import { createDualView, type DualView } from './dual-view';
 import { drawMarkers } from './plan-view';
 import { tokenMs, tokenNumber } from './tokens';
@@ -50,7 +51,7 @@ export interface DriveView {
   dispose(): void;
 }
 
-export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): DriveView {
+export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anatomy?: Promise<AnatomyConfig | null>): DriveView {
   const d = drawCase(c, label, 'drive-hatch');
   const ghost = svgEl('polyline', { points: '', class: 'ghost-trail' });
   const wire = svgEl('polyline', { points: '', class: 'wire-line' });
@@ -60,7 +61,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
   const dual: DualView = createDualView(c, label, d.svg, 'drive-view', ar, (scene) => {
     scene.onFrame(fadeFrame);
     if (last) draw3d(last);
-  });
+  }, undefined, anatomy);
   const element = dual.element;
   const toolbar = dual.toolbar;
   toolbar.remove();

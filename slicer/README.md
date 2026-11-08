@@ -33,6 +33,17 @@ The same three steps, with `s1336` or `s0727` in place of `s1404`, and `case-met
 - **s1082, s1395, s0903:** a vessel mask does not touch its parent vessel.
 - **s0928, s0461:** a markup is beyond the 20 mm snap to a centerline end.
 
+## Body context: `context.glb` for the real CT cases
+
+```sh
+python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context   # vertebrae C7-L5, ribs, sternum, heart
+"$SLICER" --no-main-window --no-splash --python-script slicer/export_context.py -- \
+  --masks /tmp/ts-s1404-context --segmentation slicer/cases/ts-s1404-cta/context.seg.nrrd \
+  --out client/public/cases/ts-s1404-cta/context.glb
+```
+
+The first two arguments build the committed `context.seg.nrrd` (segments `bone` and `heart`). Leave out `--masks` to export again from it; the output is byte-identical. The GLB is in mm and RAS, the frame of `vessels.glb`. Nodes `bone` (34k triangles) and `heart` (8k), with extras `{kind: "context", label}`, about 0.75 MB. It is faint background only: no file of the case package names it, and the loader never reads it.
+
 ## Inputs for any case
 
 - **A segmentation:** one segment per vessel, each named by its ThreadSim vessel id (`aorta`, `bca`, `rcca`, …). Arterial segments only.

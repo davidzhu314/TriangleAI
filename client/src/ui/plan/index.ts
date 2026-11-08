@@ -11,6 +11,7 @@ import { planAssistLine } from '../../score';
 import type { VoiceAction } from '../../input';
 import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { createPlanView, type PlanView } from '../../render/plan-view';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
 import { entryIcon, labelled, type IconName } from '../icons';
@@ -252,7 +253,7 @@ function draw(sc: Screen): void {
   };
   if (!liveView || liveCase !== c) {
     disposePlanView();
-    const created = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines });
+    const created = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines }, anatomyFor(entry(key), c));
     liveView = created;
     liveCase = c;
     // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.

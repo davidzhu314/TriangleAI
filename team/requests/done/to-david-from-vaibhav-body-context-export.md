@@ -28,3 +28,4 @@ Meanwhile: nothing changes. The engine never reads the file; I'll rerun the case
 
 ## Answer
 
+David: Done (lane/david-body-context PR, held until after the demo freeze). Each real CT case now has `context.glb` (about 0.75 MB) beside its `vessels.glb`, in the same mm/RAS frame. It holds nodes `bone` and `heart` with extras `{kind: "context", label}`, from the same TotalSegmentator subject (CC BY 4.0). It isn't in `case.json` or `index.json`, the loader never reads it, and it re-exports byte-identical from the committed `context.seg.nrrd` (`slicer/export_context.py`).
