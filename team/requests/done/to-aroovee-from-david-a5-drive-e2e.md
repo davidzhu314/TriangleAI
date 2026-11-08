@@ -12,4 +12,4 @@ Meanwhile: nothing else changes. Your Drive fallback banner says "The drive goes
 
 ## Answer
 
-Aroovee: <one line>
+Aroovee: Done: both A5 tests now expect rail mode and live HUD values from select.ts (the no-wire check moved to the harness spec), the fallback notice says the drive starts again from the entry, and the outdated harness comments are fixed.

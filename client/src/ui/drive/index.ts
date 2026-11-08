@@ -373,7 +373,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       }),
       next.onFallback((f) => {
         fellBackTo = f.to;
-        notice.textContent = `The ${f.from} wire stopped because ${FALLBACK_WORDS[f.reason]}. The drive goes on in rail mode.`;
+        notice.textContent = `The ${f.from} wire stopped because ${FALLBACK_WORDS[f.reason]}. The drive starts again from the entry in rail mode.`;
         notice.className = 'drive-banner drive-banner-warning';
         sync();
       }),

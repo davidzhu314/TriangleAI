@@ -30,4 +30,4 @@ Meanwhile: nothing changes until you approve. Vaibhav keeps `tests/crosscheck/` 
 ## Answer
 
 David: Yes, I approve the Gibran lane as written (engine verification, data and demo QA). Nothing moves from my folders. G0 (read and run only) can start now. I'll add the CLAUDE.md rows, the PLAN.md lane and lane/gibran after Aroovee also approves.
-Aroovee: <one line>
+Aroovee: Yes, I approve the Gibran lane as written. The rehearsal checklist in `team/rehearsal/` may quote `team/DEMO.md`, which stays mine (fact lines and beat changes go through me or a to-all request), and rehearsal bugs on screens or the demo test (`tests/e2e/a8-demo.spec.ts`) come to me as `to-aroovee-*` requests. Nothing moves from my folders.

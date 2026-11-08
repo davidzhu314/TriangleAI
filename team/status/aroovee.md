@@ -1,9 +1,9 @@
 # Status — Aroovee (Teammate 3)
 
-Contracts version: 1 (checked on main ded30ed, 2026-11-07)
-Now: A6 done; stopped for my human to look at PR #17 (A2–A6)
-Done: A0; A1; dark theme; A2; A3 (2D view); A4; A5 (except the select.ts hookup); A6 (all 2026-11-07)
-Blocked: the plain app can't drive until select.ts lands (to David, rail-only is enough); the click-through runs through the test harness meanwhile. The 3D views wait on three.js (to David). Also open: physics case index (to David), default weights and feedback lead order (to Vaibhav)
-Waiting to swap: "wire not connected" → select.ts (connects by glob, no change needed); click-through harness → the production build once select.ts lands; 2D views → three.js scene
-Next handoff: A8 demo and gate, when my human says continue
-Last session: 2026-11-07 — Results screen: the finding from feedback[0] with its action, plan and drive scores, stars with the budget, a replay timeline with five new icons, progress recorded once, Next case. Inspector 0 FAIL, 0 WARN in light and dark with golden results.
+Contracts version: 1 (checked on main 5426c67, 2026-11-07)
+Now: A8 done, the demo test green on the production build; stopped for my human to look at PR #30
+Done: A0; A1; dark theme; A2; A3 (2D view); A4; A5 (except the select.ts hookup); A6; A8 (all 2026-11-07). PR #17 (A2–A6) merged to main
+Blocked: nothing. Open: default weights and feedback lead order (to Vaibhav). From D5, still to do: point physics-probe.ts at the physics server, and the three.js views
+Waiting to swap: 2D views → three.js scene (three is on main now)
+Next handoff: A7 (AR, stretch) only if my human says so
+Last session: 2026-11-07 — Demo test of every DEMO.md beat on Type III and fixture-y (green three times running), the inspector gate at 0 FAIL on every 2D screen in light and dark, a guided tutorial on low-tort, load under 5 s, and a 2:48 backup video (local only, 13 MB).

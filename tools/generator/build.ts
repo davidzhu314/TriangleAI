@@ -5,9 +5,10 @@
 import { writeGlb } from '../lib/glb';
 import { stableStringify } from '../lib/stable-json';
 import { generateArch, type ArchParams } from './arch';
-import { LOW_TORT, TYPE_III } from './cases';
+import { BOVINE_ARCH, LOW_TORT, TYPE_I_PLAQUE, TYPE_II, TYPE_II_TORTUOUS, TYPE_III } from './cases';
 
-export const GENERATED_CASES: readonly ArchParams[] = [LOW_TORT, TYPE_III];
+/** Ladder order (spec §6.5). */
+export const GENERATED_CASES: readonly ArchParams[] = [LOW_TORT, TYPE_I_PLAQUE, TYPE_II, TYPE_II_TORTUOUS, TYPE_III, BOVINE_ARCH];
 
 export function buildGeneratedFiles(): Record<string, string | Uint8Array> {
   const files: Record<string, string | Uint8Array> = {};

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
+import { BUNDLED_CASE_IDS } from '../../../tools/catalog';
 import { writeZip } from '../../../tools/lib/zip';
 import { RAS_MM_TO_YUP_M, type CaseLoadResult, type LoadedCase } from '../contracts';
 import { countTriangles, parseGlb, stripExtras } from './glb';
@@ -81,7 +82,7 @@ describe('loadCase on fixture-y', () => {
 
   it('lists bundled cases from index.json', async () => {
     const list = await listBundledCases('/cases/', diskFetch);
-    expect(list.map((x) => x.id)).toEqual(['low-tort', 'type-iii', 'fixture-y']);
+    expect(list.map((x) => x.id)).toEqual([...BUNDLED_CASE_IDS]);
     const fixture = list.find((x) => x.id === 'fixture-y')!;
     expect(loaded(await loadCase(fixture.source, { fetch: diskFetch })).id).toBe('fixture-y');
   });

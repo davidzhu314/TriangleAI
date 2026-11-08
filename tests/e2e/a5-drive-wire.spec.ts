@@ -127,11 +127,18 @@ test('off the planned route is said in words, and pushing into a dead end shows 
   expect(found, 'some roll should send the wire off the planned route').toBe(true);
 });
 
+test('with no wire at all, the HUD shows dashes and the screen says so; nothing is made up', async ({ page }) => {
+  await open(page, 'case=fixture-y&source=none');
+  await expect(page.getByTestId('drive-banner')).toHaveText("Driving isn't available yet in this build. The view shows your planned route.");
+  await expect(page.getByTestId('drive-mode')).toHaveText('Front view · wire not connected');
+  for (const id of ['hud-vessel', 'hud-distance', 'hud-fluoro', 'hud-force']) await expect(page.getByTestId(id)).toContainText('—');
+});
+
 for (const reason of ['socket_failed', 'socket_stalled', 'server_unavailable'] as const) {
-  test(`fallback (${reason}): the notice says why in words, and the drive goes on in rail mode`, async ({ page }) => {
+  test(`fallback (${reason}): the notice says why in words, and the drive starts again in rail mode`, async ({ page }) => {
     await open(page, `case=fixture-y&source=fallback-${reason}`);
     const words = { socket_failed: 'the connection to the physics process failed', socket_stalled: 'the physics process stopped answering', server_unavailable: "the physics process isn't running" }[reason];
-    await expect(page.getByTestId('drive-notice')).toHaveText(`The physics wire stopped because ${words}. The drive goes on in rail mode.`);
+    await expect(page.getByTestId('drive-notice')).toHaveText(`The physics wire stopped because ${words}. The drive starts again from the entry in rail mode.`);
     await page.keyboard.down('KeyW');
     const a = await tick(page, 10);
     const b = await tick(page, 20);

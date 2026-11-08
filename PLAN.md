@@ -1,6 +1,6 @@
-# ThreadSim — Three-Lane Build Plan
+# ThreadSim — Four-Lane Build Plan
 
-Nov 7, 2026 · David (Teammate 1), Vaibhav (Teammate 2), Aroovee (Teammate 3) · revised after the plan review
+Nov 7, 2026 · David (Teammate 1), Vaibhav (Teammate 2), Aroovee (Teammate 3), Gibran (Teammate 4) · revised after the plan review; Gibran's lane added Nov 7
 
 > ThreadSim is a browser decision trainer for endovascular procedures. You plan a wire route through an aortic arch, compare it with a computed frontier, drive it with simplified device mechanics, and see which choice cost you the most.
 >
@@ -10,13 +10,14 @@ The spec is `docs/ThreadSim_Build_Specification.md`. It wins on product behaviou
 
 ## How the work splits
 
-ThreadSim splits into three lanes along its data flow: David makes the anatomy and the physics, Vaibhav turns them into routes and scores, and Aroovee turns everything into what a trainee sees. Every lane works against shared contracts and mocks from the first hours, then swaps a mock for the real module when the upstream lane posts a handoff, so all three build at the same time.
+ThreadSim splits into three lanes along its data flow: David makes the anatomy and the physics, Vaibhav turns them into routes and scores, and Aroovee turns everything into what a trainee sees. Every lane works against shared contracts and mocks from the first hours, then swaps a mock for the real module when the upstream lane posts a handoff, so all three build at the same time. Gibran's lane sits beside that flow: he checks the engine on the cases the demo uses and rehearses the demo, with no engine or UI code of his own.
 
 | Teammate | Lane | Spec sections | Hands to the others |
 | --- | --- | --- | --- |
 | Teammate 1 — David | Anatomy, case data, physics; release manager | 2, 3, 5.1–5.2, 9.1–9.2 | Contracts, case packages + loader + validator, generated arches, recorded-run stats, physics and replay wire sources |
 | Teammate 2 — Vaibhav | Engine: optimizer, rail wire, scoring | 4, 5.3, 5.6, 6 | Measures, frontier, rail wire, plan and drive scores, feedback lines, progression rules |
 | Teammate 3 — Aroovee | Design system, screens, rendering, AR | 5.4–5.5, 7, 9.4 | The app itself, the design system, the demo script and its Playwright test |
+| Teammate 4 — Gibran | Engine verification, data and demo QA | 4, 5.3, 5.6, 6, 7.4, 11 | Engine checks on the demo cases, timings, a golden demo log, and rehearsal QA. Nothing moves from David's or Aroovee's folders |
 
 Folder ownership is in `CLAUDE.md`. Nobody edits another lane's folders; file a request and keep building on the mock.
 
@@ -30,6 +31,15 @@ David ──case packages, generated arches, recorded runs──▶ Vaibhav ─�
 ```
 
 No arrow runs right to left: Aroovee never hands code back, and Vaibhav depends on David only through contracts that have mocks.
+
+### Gibran's lane: G0–G3
+
+The full lane is `team/lanes/gibran.md`. Bugs Gibran finds go to the owner as a request with a failing test; he never edits `client/src/` or `package.json`.
+
+- **G0 — Onboarding** (read and run only): `pnpm test`, `pytest tests/crosscheck`, `pnpm build` and `pnpm dev` green on a fresh `main`; `team/status/gibran.md` on `main`.
+- **G1 — Engine checks on `type-iii` and `low-tort`** (S5 confidence): NumPy cross-checks, rail acceptance, timings (`metrics/gibran/d6-timing.md`), real-anatomy progression, and a golden Type III demo log that replays byte for byte.
+- **G2 — Demo rehearsal QA** (supports S5): `team/rehearsal/checklist.md` from `team/DEMO.md`, one full timed rehearsal recorded, every bug filed to its owner.
+- **G3 — Real-hand clip library** (after the demo, once PR #22 merges): at least 5 clips handed to Vaibhav as fixtures.
 
 ## Kickoff: D0a, then D0b
 
@@ -70,7 +80,7 @@ The mocks, so nobody waits on anybody:
 
 Units rule: case files stay in millimetres and RAS axes; the loader converts once to metres and Y-up, and every contract after load uses metres. Displayed numbers keep the spec's units (cm for length, mm for radius, degrees, seconds).
 
-## How the three Claude Codes talk
+## How the four Claude Codes talk
 
 The repo is the message bus. Each Claude Code reads `team/` at the start of every session and writes to it at the end of every milestone. Each file has exactly one writer, so there are no merge conflicts. The session checklist is in `CLAUDE.md`; requests are handled before any feature work.
 
@@ -81,13 +91,14 @@ threadsim/
   docs/ThreadSim_Build_Specification.docx  # original
   team/
     DEMO.md                                   # spec §7.4 with fallbacks
-    lanes/david.md vaibhav.md aroovee.md
-    status/david.md vaibhav.md aroovee.md     # each lane edits only its own
+    lanes/david.md vaibhav.md aroovee.md gibran.md
+    status/david.md vaibhav.md aroovee.md gibran.md   # each lane edits only its own
+    rehearsal/                                # Gibran: demo rehearsal checklists and results
     handoffs/<YYYY-MM-DD>-<name>-<milestone>-<slug>.md
     requests/to-<owner>-from-<you>-<slug>.md
     requests/to-all-from-<you>-contract-<slug>.md
     requests/done/
-  metrics/david/ vaibhav/ aroovee/
+  metrics/david/ vaibhav/ aroovee/ gibran/
   .github/CODEOWNERS  .github/workflows/ci.yml
 ```
 
@@ -103,7 +114,7 @@ The five sync points are merges, not meetings: each is the moment mocks are repl
 | S2 Plan works | A route is planned and compared on the generated Type III case, with real `measureRoute` and frontier | D2, D6-min, V2, V3, A2, A3, A4 | D3a, D3b, D3c |
 | S3 Drive works | Rail drive reaches the target on a frontier route | V4, A5 | D4, D5; if D5 is late, the fallback notice is tested with a mock socket failure |
 | S4 Scores work | Replaying a golden event log gives identical scores | V5, V6, A6 | D6 full ladder |
-| S5 Demo ready | Playwright runs `team/DEMO.md` green on rail; zero Taste inspector FAILs on 2D screens | V7, A8 | D7, A7 |
+| S5 Demo ready | Playwright runs `team/DEMO.md` green on rail; zero Taste inspector FAILs on 2D screens | V7, A8 | D7, A7, G1, G2 |
 
 David's D1 result, written into `DECISIONS.md` at S1, decides whether the S5 demo leads with physics or rail.
 
@@ -121,7 +132,7 @@ Never cut: Library → Brief → Plan → Compare → Drive → Results in rail 
 
 ## Design rules: Taste Skill + the Design Playbook
 
-Aroovee's Claude Code measures one reference site into `DESIGN.md` and tokens (Playbook skills 1 and 2), deals the app's layout with Taste Skill's app-screen route while keeping that palette and type, and draws every icon and chart with `/draw-svg` (Playbook skill 3). If either skill will not install within 30 minutes, she writes `DESIGN.md` and tokens by hand and continues. David and Vaibhav never pick a colour or write UI. The full design run is in `team/lanes/aroovee.md`.
+Aroovee's Claude Code measures one reference site into `DESIGN.md` and tokens (Playbook skills 1 and 2), deals the app's layout with Taste Skill's app-screen route while keeping that palette and type, and draws every icon and chart with `/draw-svg` (Playbook skill 3). If either skill will not install within 30 minutes, she writes `DESIGN.md` and tokens by hand and continues. David, Vaibhav and Gibran never pick a colour or write UI. The full design run is in `team/lanes/aroovee.md`.
 
 | Rule | Source | In ThreadSim |
 | --- | --- | --- |

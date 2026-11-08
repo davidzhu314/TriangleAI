@@ -9,6 +9,7 @@ import { entryIcon, labelled } from './icons';
 import { targetList } from './import-panel';
 import { href } from './router';
 import { honestyLine, renderShell } from './shell';
+import { isTutorialKey, reopenTutorial } from './tutorial';
 import { acceptFix, entry, loadBundled, type CatalogEntry } from './store';
 import { validationList } from './validation-list';
 
@@ -59,8 +60,16 @@ function body(e: CatalogEntry, c: LoadedCase, onFixed: () => void): HTMLElement 
     card,
     checks ? h('section', { class: 'block', 'aria-labelledby': 'checks-heading' }, h('h2', { id: 'checks-heading' }, 'Checks on this case'), checks) : null,
     h('div', { class: 'actions' }, h('a', { class: 'btn btn-primary', href: href.plan(e.key) }, 'Start planning'), h('a', { class: 'btn btn-secondary', href: href.library() }, 'Back to Library')),
+    isTutorialKey(e.key) ? tutorialButton() : null,
     honestyLine(),
   );
+}
+
+/** Reopen the guided tutorial from the tutorial case's brief (A8). */
+function tutorialButton(): HTMLButtonElement {
+  const b = h('button', { type: 'button', class: 'btn btn-secondary tutorial-reopen', 'data-testid': 'tutorial-reopen' }, 'Show the guided tutorial');
+  b.addEventListener('click', () => reopenTutorial());
+  return b;
 }
 
 export function notFound(root: HTMLElement, key: string): void {
