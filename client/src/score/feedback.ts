@@ -87,6 +87,14 @@ export function violationLine(v: ConstraintViolation, presetId: Route['presetId'
       return feedbackLine('plan.forbidden_zone', { zone: n.zone(v.zone) }, 'plan.feasible');
     case 'arch_never_reached':
       return feedbackLine('plan.arch_never_reached', { preset: getPreset(v.presetId).name }, 'plan.feasible');
+    default: {
+      // A violation kind added to the contract after this was written (e.g. cannot_steer before its own
+      // template lands): still explained, never dropped, so a contract bump never breaks the build.
+      const edge = (v as { edge?: unknown }).edge;
+      return typeof edge === 'string'
+        ? feedbackLine('plan.blocked_at', { preset, vessel: n.vesselOfEdge(edge) }, 'plan.feasible')
+        : feedbackLine('plan.blocked', { preset }, 'plan.feasible');
+    }
   }
 }
 
