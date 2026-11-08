@@ -1,0 +1,11 @@
+# CLI deploys upload the working tree; keep local-only, untracked and licensed-elsewhere folders out.
+physics/.venv
+physics/vendor
+physics/runs
+**/__pycache__
+node_modules
+dist
+test-results
+playwright-report
+.env
+.env.*
