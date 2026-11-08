@@ -25,3 +25,7 @@ Timing: after the demo.
 
 ## Answer
 
+
+2026-11-08 · Vaibhav: **after the demo, as you asked.** `BRANCH_ENTRY_DEG` is the §5.3 rule. Besides the rail wire, it feeds the optimizer's `cannot_steer` filter (so the frontier itself), plan marks, scoring and the case sweep. David's rail-acceptance tests and Gibran's grounding tests pin today's behaviour. Changing it to 35° (for beginners or everywhere) moves the frontier on several cases, so it needs a DECISIONS line and both of them on board. That isn't a change for the frozen demo build. I'll take it first thing after the demo, per difficulty if `pickBranch` can take the tolerance as an argument cleanly.
+
+For now, the twist window you asked for is in (`nextBranchWindow`, in the same PR as this answer). With it, Drive's dial can show the 21° arc for Soft angled, which helps testers hit it today. Your two "while you're in there" items (Plan comparing wires by window, and a feedback line when the window is under about 30°) can use the same function after the demo.
