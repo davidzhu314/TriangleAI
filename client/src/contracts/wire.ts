@@ -6,7 +6,7 @@
  * `EventLog` in simulation time. Positions are metres in the loaded case's Y-up frame.
  */
 import type { LoadedCase } from './case';
-import type { EventLog, Vec3, WireMode } from './events';
+import type { DeviceId, EventLog, Vec3, WireMode } from './events';
 import type { WirePresetId } from './optimizer';
 
 export type { WireMode } from './events';
@@ -31,6 +31,56 @@ export interface ControlInput {
   fluoro: boolean;
   /** True on the one frame the player triggers a contrast puff, false otherwise. */
   contrastPuff: boolean;
+  // v3, optional; sources that don't model them ignore them:
+  /** Which device push and rotate move (chain source). */
+  device?: DeviceId;
+  /** Fluoro pulse-rate preset (chain source). */
+  pulse?: PulseRate;
+  /** True on the one frame the player stores a roadmap (chain source). */
+  storeRoadmap?: boolean;
+}
+
+/** v3: fluoro pulse-rate presets: continuous 30 frames/s, pulsed 15/s or 7.5/s. */
+export type PulseRate = 'continuous' | 'p15' | 'p7_5';
+
+/** v3: the tip as a pose. */
+export interface WireTipPose {
+  /** Unit tangent of the last link: where the tip points. */
+  tangent: Vec3;
+  /** Curvature at the tip, 1/m. */
+  curvature: number;
+  tipRollRad: number;
+  hubRollRad: number;
+  leading: DeviceId;
+}
+
+/** v3: both devices as drawn. */
+export interface WireDevices {
+  wire: Vec3[];
+  catheter: Vec3[];
+  insertedM: Record<DeviceId, number>;
+  active: DeviceId;
+}
+
+/** v3: one place pressing on the wall (illustrative load proxy, N). */
+export interface WireContact {
+  node: number;
+  edge: string;
+  loadN: number;
+}
+
+/** v3: imaging state and its cost. Units are simulated: exposure is not a dose, contrast is not millilitres. */
+export interface WireImaging {
+  held: boolean;
+  pulse: PulseRate;
+  /** Capture time of the newest live frame while fluoro is held. */
+  liveFrameT: number | null;
+  /** Capture time of the last-image-hold, and whether the device has moved since. */
+  holdImageT: number | null;
+  holdStale: boolean;
+  /** Capture time of the stored roadmap. */
+  roadmapT: number | null;
+  totals: { fluoroS: number; activations: number; frames: number; exposureUnits: number; contrastInjections: number; contrastUnits: number; roadmaps: number };
 }
 
 /** What to drive. Built by the Drive screen from the case and the chosen route. */
@@ -64,6 +114,13 @@ export interface WireState {
   /** Fluoro is on. */
   fluoro: boolean;
   atTarget: boolean;
+  // v3, optional (chain source):
+  tipPose?: WireTipPose;
+  devices?: WireDevices;
+  contacts?: WireContact[];
+  /** Educational contact-risk index, 0..100. Not a clinical force or an injury prediction. */
+  riskIndex?: number;
+  imaging?: WireImaging;
 }
 
 export type WireFallbackReason = 'socket_failed' | 'socket_stalled' | 'server_unavailable';

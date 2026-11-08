@@ -18,11 +18,17 @@ export type LeadAction = 'retry' | 'revise';
  * The one action feedback[0] drives: revise the plan when the line is about the plan and the plan's deciding
  * check took points off; otherwise retry the drive (a drive line, a budget line, or a plan line saying the plan
  * was already the best at your weights).
+ *
+ * Decided on the line and on the score as the screen prints it, never on a float: "Your route is the best
+ * available" (plan.best) always retries, and a score that prints as 100 of 100 never asks for a revision
+ * (team/requests/done/to-aroovee-from-gibran-results-revise-on-best.md).
  */
 export function leadAction(result: CaseResult): LeadAction {
   const lead = result.feedback[0];
   if (!lead) return 'retry';
-  return lead.formulaRef.startsWith('plan.') && result.plan.score < 100 ? 'revise' : 'retry';
+  if (lead.template === 'plan.best') return 'retry';
+  const shown = Number(result.plan.score.toFixed(0)); // what fmt(score, 0) prints beside it
+  return lead.formulaRef.startsWith('plan.') && shown < 100 ? 'revise' : 'retry';
 }
 
 export const ACTION_LABEL: Record<LeadAction, string> = { retry: 'Retry the drive', revise: 'Revise the plan' };

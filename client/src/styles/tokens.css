@@ -1,38 +1,38 @@
-/* ThreadSim design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
+/* Cathy design tokens. The only file with raw colours, sizes, radii or shadows. Rules for using them: DESIGN.md.
    "measured" = taken from the reference site in DECISIONS.md. "derived" = one tone step from a measured value.
-   "ours" = chosen for ThreadSim. "spec" = fixed by docs/ThreadSim_Build_Specification.md. The dark theme is at the end of this file. */
+   "ours" = chosen for Cathy. "spec" = fixed by docs/ThreadSim_Build_Specification.md. The dark theme is at the end of this file. */
 :root {
   color-scheme: light dark;
 
   /* Surfaces: frame → sheet → card, three levels at most. */
-  --color-background: #f9f7f6;     /* measured: the tinted frame behind the sheet */
+  --color-background: #f6f5f3;       /* Oxblood & Navy (2026-11-08): a warm off-white ground, short of cream */
   --color-surface: #ffffff;        /* measured: the sheet and cards */
-  --color-surface-sunken: #f2efee; /* derived: canvas wells and the 3D scene ground */
-  --color-surface-active: #eeebea; /* measured: active nav pill, selected list row */
+  --color-surface-sunken: #efedea;       /* derived: canvas wells, the 3D scene ground, card pictures */
+  --color-surface-active: #e8e6e3;       /* selected list row, active nav pill */
   --color-surface-inverse: #2e2d2d; /* measured: tooltips */
 
   /* Lines */
-  --color-border: #eeebea;         /* measured: sheet and card edges */
-  --color-rule: #f4f2f1;           /* derived: row rules, one step lighter than an edge */
-  --color-border-strong: #dad6d5;  /* measured: control borders */
+  --color-border: #e6e0d9;       /* sheet and card edges: about 1.2:1 on the ground */
+  --color-rule: #f0ebe5;       /* row rules, one step lighter than an edge */
+  --color-border-strong: #d2cbc3;       /* control borders */
 
   /* Text. Every tier passes 4.5:1 on surface and background. */
-  --color-heading: #2e2d2d;        /* measured: titles and figures */
-  --color-text: #585757;           /* measured: #2e2d2d at 80%, flattened so it is a plain hex */
-  --color-text-muted: #706e6d;     /* measured: labels, meta, placeholders. 4.43:1 on sunken: large text only there */
+  --color-heading: #1b2a44;       /* navy ink: titles and figures */
+  --color-text: #3e4656;       /* running text, navy-grey */
+  --color-text-muted: #5f6673;       /* labels, meta: 5.4:1 on white, 4.6:1 on sunken */
   --color-text-inverse: #ffffff;   /* measured */
 
   /* Actions */
-  --color-primary: #1f1e1e;        /* measured: the one filled button */
-  --color-primary-hover: #2e2d2d;  /* measured */
+  --color-primary: #1b2a44;       /* navy: the one filled button */
+  --color-primary-hover: #2a3c5e;  /* measured */
   --color-primary-foreground: #ffffff; /* measured */
-  --color-link: #1f1e1e;           /* measured */
+  --color-link: #2f5584;       /* steel blue (the vein hue) */
 
   /* Brand: contrast-agent teal. On the player's route, main data and the active tab underline; never on chrome fills. */
-  --color-brand: #0b6a7d;          /* ours */
-  --color-brand-strong: #084f5d;   /* ours: text on brand tint */
-  --color-brand-tint: #e4f1f3;     /* ours: selected state, one per screen */
-  --color-focus: #0b6a7d;          /* ours: replaces the reference's blue ring */
+  --color-brand: #8e2433;       /* oxblood (the artery hue): the accent, on data and one control */
+  --color-brand-strong: #6e1a27;       /* text on the brand tint */
+  --color-brand-tint: #f6e7e9;       /* selected state, one per screen */
+  --color-focus: #8e2433;       /* oxblood focus ring */
 
   /* Status: words and pale pairs. Colour says good or bad, never up or down. */
   --color-positive: #247b50;
@@ -55,7 +55,7 @@
   --opacity-risk-zone: 0.35;       /* risk volumes in the 3D scene */
 
   /* Routes. Each differs by colour, line pattern and label (spec §7.3). Dash values are in stroke widths' viewBox units. */
-  --color-route-player: #0b6a7d;   /* the brand: the same line on Plan, Compare and Results */
+  --color-route-player: #6a3d9a;       /* the trainee's route: purple, apart from the oxblood arteries, blue veins and red risk zones */
   --color-route-1: #2e2d2d;
   --color-route-2: #a8326e;
   --color-route-3: #8a6a00;
@@ -69,7 +69,7 @@
   --dash-route-4: 10 4 2 4;
 
   /* Charts: one hue, then neutrals */
-  --color-chart-1: #0b6a7d;
+  --color-chart-1: #2f5584;
   --color-chart-2: #2e2d2d;
   --color-chart-3: #706e6d;
   --color-grid: #eeebea;
@@ -80,10 +80,10 @@
   --color-scene-vessel: #8f8b89;
   --opacity-scene-vessel: 0.35;
   --color-scene-wire: #1f1e1e;
-  --color-scene-ghost: #0b6a7d;
+  --color-scene-ghost: #6a3d9a;
   --opacity-scene-ghost: 0.45;
   --color-marker-entry: #2e2d2d;
-  --color-marker-target: #0b6a7d;
+  --color-marker-target: #8e2433;
 
   /* X-ray view (spec §5.5): dark wire, dark silhouette, grey ground. Neutral on purpose. */
   --color-xray-bg: #8a8a8a;
@@ -93,8 +93,10 @@
   /* Anatomy layer (feature/vascular-ui): the anatomical model behind the case's own vessels. Arteries warm, veins
      cool, both muted and translucent so the route trace and markers stay on top. Never the only signal: the
      toggles and labels name them. */
-  --color-anatomy-artery: #a8584e;
-  --color-anatomy-vein: #4f6e99;
+  --color-anatomy-artery: #8e2433;
+  --color-anatomy-vein: #2f5584;
+  --color-vein: #2f5584;          /* steel blue: veins, links, the player's route */
+  --color-vein-tint: #e6edf6;
   --opacity-anatomy: 0.35;          /* the opacity slider's starting point */
 
   /* Body context (the case's own context.glb: bone and heart from the same scan). Quiet background for scale and
@@ -105,8 +107,8 @@
   --opacity-body-heart: 0.18;
   --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
-  /* Type: Inter, measured. Display sizes over 32px dropped: app titles stay at or under 32. */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Type: DM Sans for the whole app (2026-11-08, Aroovee), self-hosted. Display sizes over 32px dropped: app titles stay at or under 32. */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-size-meta: 12px;       /* labels, meta, axis ticks, pills; nothing smaller */
   --font-size-body: 14px;       /* body, nav, table cells, controls */
   --font-size-lead: 16px;       /* card titles, section headings, phone data */
@@ -172,10 +174,10 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark theme: follows the system setting. The reference has no dark mode to measure, so these are ours: true neutral
+/* Dark theme: follows the system setting unless Settings picks Light or Dark. The reference has no dark mode to measure, so these are ours: true neutral
    darks, lightness for elevation, every text tier at 4.5:1 on its surface. X-ray colours stay as they are (spec §5.5). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --color-background: #111110;
     --color-surface: #1a1919;
     --color-surface-sunken: #0d0d0c;
@@ -196,10 +198,10 @@
     --color-primary-foreground: #1f1e1e;
     --color-link: #f4f2f1;
 
-    --color-brand: #4fb4c8;         /* the same hue, lifted */
-    --color-brand-strong: #a3dde8;
-    --color-brand-tint: #143239;
-    --color-focus: #4fb4c8;
+    --color-brand: #e08591;       /* oxblood, lifted for a dark ground */
+    --color-brand-strong: #f3c1c7;
+    --color-brand-tint: #3b2125;
+    --color-focus: #e08591;
 
     --color-positive: #3fc07a;
     --color-negative: #f26b6b;
@@ -218,13 +220,13 @@
     --color-risk-heavy: #e89d3a;
     --color-risk-proximity: #d4b84a;
 
-    --color-route-player: #4fb4c8;
+    --color-route-player: #b79de3;       /* purple, lifted */
     --color-route-1: #f4f2f1;
     --color-route-2: #e77fb0;
     --color-route-3: #d4b84a;
     --color-route-4: #a09d9b;
 
-    --color-chart-1: #4fb4c8;
+    --color-chart-1: #8fb0db;
     --color-chart-2: #f4f2f1;
     --color-chart-3: #a09d9b;
     --color-grid: #2c2b2a;
@@ -234,16 +236,97 @@
     --color-scene-vessel: #b5b1ae;
     --opacity-scene-vessel: 0.4;
     --color-scene-wire: #f4f2f1;
-    --color-scene-ghost: #4fb4c8;
-    --color-anatomy-artery: #d98a80;
-    --color-anatomy-vein: #8aa6cf;
+    --color-scene-ghost: #b79de3;
+    --color-anatomy-artery: #e08591;
+    --color-anatomy-vein: #8fb0db;
+    --color-vein: #8fb0db;
+    --color-vein-tint: #1e2a38;
     --color-body-bone: #8f897f;
     --color-body-heart: #9a6f6a;
     --color-marker-entry: #f4f2f1;
-    --color-marker-target: #4fb4c8;
+    --color-marker-target: #e08591;
 
     --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
+}
+
+/* The same dark theme when the trainee picks Dark in Settings (ui/settings-store.ts sets data-theme on <html>);
+   keep it identical to the block above. Light overrides a dark system. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #111110;
+  --color-surface: #1a1919;
+  --color-surface-sunken: #0d0d0c;
+  --color-surface-active: #2a2928;
+  --color-surface-inverse: #eeebea;
+
+  --color-border: #2c2b2a;
+  --color-rule: #242322;
+  --color-border-strong: #4a4846;
+
+  --color-heading: #f4f2f1;
+  --color-text: #c9c6c4;
+  --color-text-muted: #a09d9b;
+  --color-text-inverse: #1f1e1e;
+
+  --color-primary: #f4f2f1;       /* inverted: light fill, dark label */
+  --color-primary-hover: #dad6d5;
+  --color-primary-foreground: #1f1e1e;
+  --color-link: #f4f2f1;
+
+  --color-brand: #e08591;       /* oxblood, lifted for a dark ground */
+  --color-brand-strong: #f3c1c7;
+  --color-brand-tint: #3b2125;
+  --color-focus: #e08591;
+
+  --color-positive: #3fc07a;
+  --color-negative: #f26b6b;
+  --color-warning: #e0a84e;
+  --color-pill-positive-bg: #172a1d;
+  --color-pill-positive-ink: #6fd69c;
+  --color-pill-negative-bg: #2f1a1a;
+  --color-pill-negative-ink: #f7a09c;
+  --color-pill-warning-bg: #2a2110;
+  --color-pill-warning-ink: #e0a84e;
+  --color-pill-warning-border: #5c4a1c;
+  --color-pill-neutral-bg: #2a2928;
+  --color-pill-neutral-ink: #f4f2f1;
+
+  --color-risk-forbidden: #f26b6b;
+  --color-risk-heavy: #e89d3a;
+  --color-risk-proximity: #d4b84a;
+
+  --color-route-player: #b79de3;       /* purple, lifted */
+  --color-route-1: #f4f2f1;
+  --color-route-2: #e77fb0;
+  --color-route-3: #d4b84a;
+  --color-route-4: #a09d9b;
+
+  --color-chart-1: #8fb0db;
+  --color-chart-2: #f4f2f1;
+  --color-chart-3: #a09d9b;
+  --color-grid: #2c2b2a;
+  --opacity-chart-span: 0.12;
+
+  --color-scene-ground: #0d0d0c;
+  --color-scene-vessel: #b5b1ae;
+  --opacity-scene-vessel: 0.4;
+  --color-scene-wire: #f4f2f1;
+  --color-scene-ghost: #b79de3;
+  --color-anatomy-artery: #e08591;
+  --color-anatomy-vein: #8fb0db;
+  --color-vein: #8fb0db;
+  --color-vein-tint: #1e2a38;
+  --color-body-bone: #8f897f;
+  --color-body-heart: #9a6f6a;
+  --color-marker-entry: #f4f2f1;
+  --color-marker-target: #e08591;
+
+  --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 /* Phone: titles step down and data stays readable. Width matches DESIGN.md's breakpoints. */

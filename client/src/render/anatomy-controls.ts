@@ -4,10 +4,13 @@
  * first time the layer is turned on, so a case view costs nothing extra until then.
  *
  * The panel is a disclosure, not a dialog: nothing behind it is blocked, and Escape closes it.
+ *
+ * On a case with its own context.glb the panel has "Body" and, when that file has vein nodes, "Veins" (the same
+ * patient's veins, off by default). The generic model's rows are hidden there.
  */
 import type { AnatomyConfig } from './anatomy-config';
 import type { AnatomyLayer } from './anatomy-layer';
-import { defaultState, readState, type AnatomyState } from './anatomy-model';
+import { defaultState, glbNodeKinds, readState, type AnatomyState } from './anatomy-model';
 import type { CaseScene } from './scene3d';
 import { tokenNumber } from './tokens';
 
@@ -33,6 +36,8 @@ function save(s: AnatomyState): void {
 export interface AnatomyControls {
   /** The button and its panel, for the view's toolbar. */
   readonly element: HTMLElement;
+  /** True on a case with its own body context (context.glb): no generic vessel names there. */
+  readonly context: boolean;
   /** The current settings. */
   state(): AnatomyState;
   /** Change settings from outside (another control, the assistant later). Saved like a click. */
@@ -75,7 +80,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   panel.setAttribute('role', 'group');
   panel.setAttribute('aria-label', 'Anatomy layer');
 
-  const check = (key: 'visible' | 'arteries' | 'veins' | 'labels' | 'body', text: string): HTMLInputElement => {
+  const check = (key: 'visible' | 'arteries' | 'veins' | 'labels' | 'body' | 'bodyVeins', text: string): HTMLInputElement => {
     const label = document.createElement('label');
     label.className = 'anatomy-row';
     const input = document.createElement('input');
@@ -90,9 +95,17 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   // never drawn on such a case, so they don't appear there.
   const context = config.context === true;
   const body = context ? check('body', 'Body') : null;
+  // Shown once context.glb is known to hold at least one vein node (read from its JSON, without loading the layer).
+  const bodyVeins = context ? check('bodyVeins', 'Veins') : null;
+  let hasVeins = false;
+  if (bodyVeins) {
+    bodyVeins.dataset['testid'] = 'anatomy-body-veins';
+    bodyVeins.closest('label')!.hidden = true;
+  }
   const show = check('visible', 'Show anatomy');
   const arteries = check('arteries', 'Arteries');
   const veins = check('veins', 'Veins');
+  veins.dataset['testid'] = 'anatomy-generic-veins';
   const labels = check('labels', 'Labels');
   for (const i of [show, arteries, veins, labels]) i.closest('label')!.hidden = context;
 
@@ -120,11 +133,19 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
 
   const note = document.createElement('p');
   note.className = 'anatomy-note';
-  note.textContent = config.placeholder
-    ? 'Placeholder model, fitted to this case. Not anatomy.'
-    : context
-      ? "Bone and heart from this case's scan, for scale and orientation only."
-      : '';
+  const noteText = (): string =>
+    config.unavailable
+      ? config.unavailable
+      : config.note
+        ? config.note
+        : config.placeholder
+      ? 'Placeholder model, fitted to this case. Not anatomy.'
+      : context
+        ? hasVeins
+          ? "Bone, heart and veins from this case's scan, for scale and orientation only."
+          : "Bone and heart from this case's scan, for scale and orientation only."
+        : '';
+  note.textContent = noteText();
   note.hidden = !note.textContent;
   panel.append(note);
   const status = document.createElement('p');
@@ -135,6 +156,11 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   element.append(toggle, panel);
 
   const open = (on: boolean): void => {
+    // Open toward the side of the view with room: the toolbar wraps on narrow views, so the button can sit at
+    // either edge, and a panel hanging outside the view would land under the screen's own panels.
+    const b = toggle.getBoundingClientRect();
+    const v = host.getBoundingClientRect();
+    panel.dataset['align'] = b.left - v.left < v.right - b.right ? 'left' : 'right';
     panel.hidden = !on;
     toggle.setAttribute('aria-expanded', String(on));
   };
@@ -147,7 +173,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   });
 
   const ensureLayer = (): void => {
-    if (layer || loading) return;
+    if (layer || loading || config.unavailable) return;
     status.textContent = 'Loading the model…';
     loading = import('./anatomy-layer').then((m) => {
       layer = m.createAnatomyLayer(scene, config, host);
@@ -162,6 +188,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
 
   const sync = (): void => {
     if (body) body.checked = current.body;
+    if (bodyVeins) bodyVeins.checked = current.bodyVeins;
     show.checked = current.visible;
     arteries.checked = current.arteries;
     veins.checked = current.veins;
@@ -169,11 +196,16 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
     for (const i of [arteries, veins, labels, opacity]) i.disabled = !current.visible;
     opacity.value = String(Math.round(current.opacity * 100));
     opacity.setAttribute('aria-valuetext', `${opacity.value} percent`);
-    const on = context ? current.body : current.visible;
+    const on = context ? current.body || (hasVeins && current.bodyVeins) : current.visible;
     toggle.setAttribute('aria-pressed', String(on));
     if (on) ensureLayer();
     // Suppressed (Drive's X-ray): nothing of the layer shows, whatever the settings.
-    layer?.apply({ ...current, visible: !context && current.visible && !suppressed, body: context && current.body && !suppressed });
+    layer?.apply({
+      ...current,
+      visible: !context && current.visible && !suppressed,
+      body: context && current.body && !suppressed,
+      bodyVeins: context && hasVeins && current.bodyVeins && !suppressed,
+    });
     host.dataset['anatomySuppressed'] = String(suppressed);
   };
 
@@ -185,8 +217,24 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   }
 
   sync();
+  if (bodyVeins) {
+    // The context.glb is already in memory (a blob URL from the probe), so this read is cheap.
+    void fetch(config.url)
+      .then((r) => r.arrayBuffer())
+      .then((bytes) => {
+        hasVeins = glbNodeKinds(bytes).some((n) => n.kind === 'vein');
+        bodyVeins.closest('label')!.hidden = !hasVeins;
+        note.textContent = noteText();
+        host.dataset['anatomyHasVeins'] = String(hasVeins);
+        sync();
+      })
+      .catch(() => {
+        host.dataset['anatomyHasVeins'] = 'false';
+      });
+  }
   return {
     element,
+    context,
     state: () => ({ ...current }),
     set,
     suppress(on) {

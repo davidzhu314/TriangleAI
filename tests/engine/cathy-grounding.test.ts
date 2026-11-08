@@ -212,8 +212,21 @@ for (const { id } of index.cases) {
             const at = r.edges.indexOf(edge);
             expect(ans.offPlan).toBeNull();
             expect(ans.nextEdge).toBe(r.edges[at + 1] ?? null);
-            const next = ans.lines.find((l) => l.template === 'assist.next_branch');
-            if (ans.nextEdge) expect(next?.values['vessel']).toBe(vesselName(c, ans.nextEdge));
+            // Directions name vessels, not edges (Vaibhav, at Aroovee's request): more of the same vessel next is
+            // "keep going along it", and the vessel named is the next one that differs.
+            if (ans.nextEdge) {
+              const vid = (e: string) => c.edges.find((x) => x.id === e)!.vessel;
+              const dir = ans.lines[0]!;
+              if (vid(ans.nextEdge) !== vid(edge)) {
+                expect(dir.template).toBe('assist.next_branch');
+                expect(dir.values['vessel']).toBe(vesselName(c, ans.nextEdge));
+              } else {
+                const branch = r.edges.slice(at + 1).find((e) => vid(e) !== vid(edge));
+                expect(dir.template).toBe(branch ? 'assist.keep_going' : 'assist.keep_going_target');
+                expect(dir.values['vessel']).toBe(vesselName(c, edge));
+                if (branch) expect(dir.values['next']).toBe(vesselName(c, branch));
+              }
+            }
           }
         }
       }, 60_000);
@@ -232,10 +245,16 @@ for (const { id } of index.cases) {
           const ans = driveAssist({ log, optimized: res, weights: W, case: c });
           expect(ans.offPlan, `${r.id}`).not.toBeNull();
           const pull = ans.lines[0]!;
-          expect(pull.template).toBe('assist.pull_back');
           expectGrounded(pull);
-          expect(pull.values['wrong_vessel']).toBe(vesselName(c, ans.offPlan!.edge));
           expect(pull.values['vessel']).toBe(vesselName(c, ev.expectedEdge));
+          // In a vessel the plan also uses (past an opening), Cathy says so instead of "you're in the Aorta".
+          const vid = (e: string) => c.edges.find((x) => x.id === e)!.vessel;
+          const past = r.edges.some((e) => vid(e) === vid(ans.offPlan!.edge)) && vid(ev.expectedEdge) !== vid(ans.offPlan!.edge);
+          if (past) expect(pull.template).toBe('assist.past_opening');
+          else {
+            expect(pull.template).toBe('assist.pull_back');
+            expect(pull.values['wrong_vessel']).toBe(vesselName(c, ans.offPlan!.edge));
+          }
           for (const line of ans.lines) expectGrounded(line);
         }
       });

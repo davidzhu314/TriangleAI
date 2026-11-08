@@ -9,6 +9,7 @@
 
 import { DEG_PER_TURN, FLUORO_S_PER_CM, FLUORO_S_PER_TURN } from '../optimize/constants';
 import { WIRE_PRESETS } from '../optimize/presets';
+import { BRANCH_ENTRY_BEGINNER_DEG } from '../optimize/branch-entry';
 import { FORCE_N_PER_MPS, FORCE_SPIKE_THRESHOLD_N, RAIL_ROLL_RAD_PER_S, RAIL_SPEED_MPS, WALL_ANGLE_DEG, WALL_PROLAPSE_S, BRANCH_ENTRY_DEG } from '../wire/rail';
 import {
   BUDGET_STAR_COST,
@@ -18,6 +19,8 @@ import {
   LOW_TORTUOSITY_MAX,
   RADIATION_ZERO_FACTOR,
 } from './constants';
+import { CATHY_MAX_CHARS } from './grounding';
+import { WARN_AHEAD_M } from './warn';
 
 export interface IllustrativeConstant {
   id: string;
@@ -49,7 +52,8 @@ export const ILLUSTRATIVE_CONSTANTS: readonly IllustrativeConstant[] = Object.fr
   { id: 'fluoro.deg_per_turn', label: 'Degrees of turning that count as one turn', value: DEG_PER_TURN, unit: '°', decision: 'Estimated fluoro time (illustrative).' },
   { id: 'rail.speed', label: 'Rail wire speed at full push', value: RAIL_SPEED_MPS * 1000, unit: 'mm/s', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.roll', label: 'Rail wire roll at full rotate', value: (RAIL_ROLL_RAD_PER_S * 180) / Math.PI, unit: '°/s', decision: 'Rail wire constants (illustrative).' },
-  { id: 'rail.branch_entry', label: 'Tip must point within this of a branch to enter it', value: BRANCH_ENTRY_DEG, unit: '°', decision: 'Rail branch entry as implemented.' },
+  { id: 'rail.branch_entry', label: 'Tip must point within this of a branch to enter it (intermediate and expert cases)', value: BRANCH_ENTRY_DEG, unit: '°', decision: 'Rail branch entry as implemented.' },
+  { id: 'rail.branch_entry_beginner', label: 'The same on beginner cases', value: BRANCH_ENTRY_BEGINNER_DEG, unit: '°', decision: 'Branch entry 35° on beginner cases.' },
   { id: 'rail.wall_angle', label: 'Angle where wall force starts', value: WALL_ANGLE_DEG, unit: '°', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.force_gain', label: 'Wall force per push speed', value: FORCE_N_PER_MPS, unit: 'N·s/m', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.force_spike', label: 'Force spike threshold', value: FORCE_SPIKE_THRESHOLD_N, unit: 'N', decision: 'Rail wire constants (illustrative).' },
@@ -60,4 +64,6 @@ export const ILLUSTRATIVE_CONSTANTS: readonly IllustrativeConstant[] = Object.fr
   { id: 'score.radiation_zero', label: 'Radiation reaches zero at this × the estimate', value: RADIATION_ZERO_FACTOR, unit: '×', decision: 'Gentleness and radiation curves (illustrative).' },
   { id: 'result.budget_star_cost', label: 'Stars lost when over the fluoro allowance', value: BUDGET_STAR_COST, unit: 'stars', decision: 'Stars and radiation budget as implemented.' },
   { id: 'ladder.low_tortuosity_max', label: 'Low-tortuosity tier: tortuosity at or below', value: LOW_TORTUOSITY_MAX, unit: '', decision: 'Ladder tiers from case.anatomy (§6.5).' },
+  { id: 'cathy.warn_ahead', label: 'Cathy warns of a wrong branch this far ahead', value: WARN_AHEAD_M * 1000, unit: 'mm', decision: 'Cathy: warning distance (illustrative).' },
+  { id: 'cathy.max_chars', label: "Longest line Cathy's LLM may say", value: CATHY_MAX_CHARS, unit: 'characters', decision: 'Cathy: LLM line length (illustrative).' },
 ]);

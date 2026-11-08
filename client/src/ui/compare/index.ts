@@ -10,6 +10,7 @@ import { svgEl } from '../../render/case-svg';
 import { createCompareView, type CompareView } from '../../render/compare-view';
 import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
+import { createHandsVoice, zoomToAnswer, type HandsVoice } from '../hands-voice';
 import { dash, h } from '../dom';
 import { labelled } from '../icons';
 import { formatCost, FORMULA_TEXT, type CostRow } from '../plan/cost-rows';
@@ -23,7 +24,11 @@ import { finding, groupRanks, groupRoutes, overlaySelection, startingWeights, vi
 let liveView: CompareView | null = null;
 /** Kept across redraws of the same case (every slider move redraws): the 3D camera stays put. */
 let liveCase: LoadedCase | null = null;
+/** Hands-free input for the live view (pan and zoom here): kept and disposed with it. */
+let liveHands: HandsVoice | null = null;
 export function disposeCompareView(): void {
+  liveHands?.dispose();
+  liveHands = null;
   liveView?.dispose();
   liveView = null;
   liveCase = null;
@@ -93,8 +98,28 @@ function draw(sc: Screen): void {
   // ---- overlay, the largest block
   if (!liveView || liveCase !== c) {
     disposeCompareView();
-    liveView = createCompareView(c, anatomyFor(entry(key), c));
+    const created = createCompareView(c, anatomyFor(entry(key), c));
+    liveView = created;
     liveCase = c;
+    liveHands = createHandsVoice({
+      host: created.element,
+      actions: ['zoom_in', 'zoom_out', 'zoom_to', 'reset_view', 'hide_labels', 'show_labels', 'undo'],
+      onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
+      onVoice: (a, m) => {
+        if (a === 'zoom_to') return zoomToAnswer(c, m, (edges) => created.zoomTo(edges));
+        if (a === 'hide_labels' || a === 'show_labels') {
+          if (created.bodyContext()) return 'No vessel names on this case.';
+          return created.setLabels(a === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
+        }
+        if (a === 'reset_view') {
+          created.resetView();
+          return null;
+        }
+        if (a === 'undo') return 'Undo works on Plan.';
+        return created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+      },
+    });
+    created.toolbar.append(liveHands.controls);
   }
   const view = liveView;
   const entryNode = graph.entries.get(plan.entryId);

@@ -66,7 +66,7 @@ function drive(c: LoadedCase, entryId: string, targetId: string, presetId: (type
 describe('steerableAt', () => {
   it('diamond route B (38° takeoff) is steerable with soft angled and standard J', () => {
     const g = buildGraph(loadSynthetic('diamond'));
-    for (const p of ['soft_angled', 'standard_j'] as const) expect(steerableAt(g, ['e0', 'e3', 'e4'], p)).toEqual({ ok: true, failures: [] });
+    for (const p of ['soft_angled', 'standard_j'] as const) expect(steerableAt(g, ['e0', 'e3', 'e4'], p)).toMatchObject({ ok: true, failures: [] });
   });
 
   it('a 30° side branch: soft angled (45°) can point into it, standard J (60°) cannot', () => {
@@ -95,7 +95,7 @@ describe('steerableAt', () => {
   });
 
   it('a route with no branch point is trivially steerable', () => {
-    expect(steerableAt(buildGraph(loadSynthetic('straight')), ['e0'], 'stiff_straight')).toEqual({ ok: true, failures: [] });
+    expect(steerableAt(buildGraph(loadSynthetic('straight')), ['e0'], 'stiff_straight')).toMatchObject({ ok: true, failures: [] });
   });
 
   it('pickBranch returns null with no candidates', () => {

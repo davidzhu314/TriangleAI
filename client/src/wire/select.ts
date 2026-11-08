@@ -9,6 +9,8 @@
  * - Every other case drives on rail, which never fires `onFallback`.
  * - Replay is not offered: there are no recorded runs (D4, DECISIONS.md).
  * - The V1 mock wire is not reachable from here, even under VITE_ENGINE=mock (rail exists).
+ * - Dev switch, off by default: `?wire=chain` in the page URL drives every case on the browser chain simulation
+ *   (physics-chain-source.ts), loaded only then, for trying it before a screen draws its imaging states.
  */
 import type {
   ControlInput,
@@ -32,10 +34,23 @@ export interface SelectWireOptions extends PhysicsWireOptions {
 
 export async function selectWireSource(c: LoadedCase, options: SelectWireOptions = {}): Promise<WireSource> {
   const rail = options.rail ?? (() => new RailWireSource());
+  if (chainRequested()) {
+    const { ChainWireSource } = await import('./physics-chain-source');
+    return new ChainWireSource();
+  }
   if (c.origin === 'physics' && c.physics.available && c.physics.phantom) {
     return new FallbackWireSource(new PhysicsWireSource(options), rail);
   }
   return rail();
+}
+
+/** The `?wire=chain` dev switch. */
+function chainRequested(): boolean {
+  try {
+    return typeof location !== 'undefined' && new URLSearchParams(location.search).get('wire') === 'chain';
+  } catch {
+    return false;
+  }
 }
 
 /** Physics first; rail after a failure. Listeners stay subscribed across the switch. */

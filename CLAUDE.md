@@ -28,6 +28,12 @@ The repo is a message bus only when someone opens a session to read it. Each of 
 ## Git
 
 - D0a lands directly on `main`. Everything after it, D0b included, goes lane branch → PR → `main`, with CI green.
+- **Until the demo: features integrate on `integration/hands-voice`, not `main`.**
+  - `main` is frozen (DECISIONS.md 2026-11-08).
+  - **Features:** every feature, from every lane, goes lane branch → PR or merge → `integration/hands-voice`, with CI green there. All features must be integrated before the demo.
+  - **Merging to main:** the integration branch merges into `main` once, with David's OK, after it has been rehearsed on its Vercel preview, before the cut-off (06:00 EST, 2026-11-08). If it isn't ready by then, `main` stays as it is and the demo runs keyboard-only.
+  - **Demo fixes** still go straight to `main`, each with David's OK.
+  - **After the demo,** PRs target `main` again.
 - Contract changes: `team/requests/to-all-from-<you>-contract-<slug>.md`. David waits up to 20 minutes for both answers, then merges, bumps `CONTRACTS_VERSION` and posts a handoff listing the changed types. Mistakes found later become new contract requests. Nobody else edits `client/src/contracts/`.
 - `pnpm` only. Never add npm or yarn lockfiles.
 - Runtime dependencies go through David by request. A dev-only dependency request unanswered after 20 minutes may be added by the requester and named in their handoff.
@@ -36,7 +42,8 @@ The repo is a message bus only when someone opens a session to read it. Each of 
 
 | Folder or file | Owner |
 | --- | --- |
-| `client/src/contracts/`, `client/src/case/`, `client/src/wire/physics*`, `client/src/wire/replay*`, `client/src/wire/select.ts`, `client/public/cases/` | David |
+| `client/src/contracts/`, `client/src/case/`, `client/src/wire/physics*`, `client/src/wire/replay*`, `client/src/wire/select.ts`, `client/public/cases/`, `client/public/models/` | David |
+| `client/src/input/`, `tests/fixtures/hands/` | Vaibhav |
 | `physics/` (including `physics/cases/`, the CathSim-derived packages), `tools/`, `slicer/`, `tests/fixtures/broken/` | David |
 | `package.json`, `pnpm-lock.yaml`, `vite.config.ts`, `vitest.config.*`, `playwright.config.*`, `.github/` (CI, `CODEOWNERS`), `README.md` structure | David, as release manager |
 | `client/src/optimize/`, `client/src/score/`, `client/src/wire/rail*`, `client/src/wire/mock-source.ts` | Vaibhav |

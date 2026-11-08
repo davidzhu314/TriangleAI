@@ -1,4 +1,4 @@
-/* ThreadSim screens. Every value is a token from styles/tokens.css; the only raw numbers are the media-query
+/* Cathy screens. Every value is a token from styles/tokens.css; the only raw numbers are the media-query
    width (DESIGN.md: Responsive Behavior) and unitless ratios. */
 
 /* ---------------------------------------------------------------- shell: Framed sheet */
@@ -751,4 +751,525 @@ a.case-row-title:hover {
     min-height: var(--size-touch);
     min-width: var(--size-touch);
   }
+}
+
+/* ---------------------------------------------------------------- Library: case grid (Oxblood & Navy, 2026-11-08) */
+.library-title {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.library-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.library-add-plus {
+  font-size: var(--font-size-lead);
+  line-height: 1;
+  color: var(--color-brand);
+}
+
+.library-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.select,
+.input {
+  min-height: var(--size-field);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-field);
+  font: inherit;
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: calc(var(--size-field) * 2);
+}
+
+.select:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 1100px) {
+  .case-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .case-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.case-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.case-card:hover,
+.case-card:focus-within {
+  border-color: var(--color-border-strong);
+}
+
+.case-card-next {
+  border-color: var(--color-brand);
+}
+
+.case-card-picture {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  /* A faint glow behind the vessels gives the rendered picture depth on the flat tile. */
+  background:
+    radial-gradient(ellipse 55% 75% at 50% 42%, color-mix(in srgb, var(--color-brand) 16%, transparent), transparent 72%),
+    var(--color-vein-tint);
+}
+
+.case-card-svg {
+  position: absolute;
+  inset: var(--space-3);
+  width: calc(100% - 2 * var(--space-3));
+  height: calc(100% - 2 * var(--space-3));
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+/* The case's real mesh, lit (render/case-thumb.ts), fading in over the flat drawing once it is ready. */
+.case-card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-standard);
+  pointer-events: none;
+}
+
+.case-card-rendered .case-card-img {
+  opacity: 1;
+}
+
+.case-card-rendered .case-card-svg {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-card-svg,
+  .case-card-img {
+    transition: none;
+  }
+}
+
+/* The case's arteries in oxblood; its risk zones stay on the case's own screens. */
+.case-card-svg .vessel {
+  stroke: var(--color-brand);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 1;
+  stroke-opacity: 1;
+}
+
+.case-card-svg .zones {
+  display: none;
+}
+
+.case-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.case-card-title {
+  margin: 0;
+  padding-right: var(--space-8);
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  font-weight: var(--font-weight-strong);
+  color: var(--color-heading);
+}
+
+.case-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* The whole card enters the case; the menu and the resume link sit above this layer. */
+.case-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.case-card-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.case-card-link:focus-visible {
+  outline: none;
+}
+
+.case-card:has(.case-card-link:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.case-card-synopsis {
+  margin: 0;
+  color: var(--color-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.case-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-rule);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.case-card-stage {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.case-card-resume {
+  position: relative;
+  z-index: 1;
+  color: var(--color-link);
+  font-weight: var(--font-weight-medium);
+}
+
+.pill-brand {
+  background: var(--color-brand-tint);
+  color: var(--color-brand-strong);
+}
+
+.case-card-menu {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  z-index: 2;
+}
+
+.btn-icon {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--size-control);
+  min-height: var(--size-control);
+  padding: 0;
+  background: var(--color-surface);
+  color: var(--color-heading);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  cursor: pointer;
+}
+
+.btn-icon:hover {
+  background: var(--color-surface-active);
+}
+
+.btn-icon:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.case-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-1));
+  min-width: 14rem;
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float);
+}
+
+.case-menu-item {
+  display: block;
+  width: 100%;
+  min-height: var(--size-control);
+  padding-inline: var(--space-3);
+  background: transparent;
+  color: var(--color-heading);
+  border: 0;
+  border-radius: var(--radius-field);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.case-menu-item:hover,
+.case-menu-item:focus-visible {
+  background: var(--color-surface-active);
+  outline: none;
+}
+
+.case-menu-item:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.case-menu-note {
+  margin: 0;
+  padding-inline: var(--space-3);
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.case-menu-note:empty {
+  display: none;
+}
+
+.library-none {
+  margin: 0;
+  padding: var(--space-8) 0;
+}
+
+.add-case {
+  width: min(40rem, calc(100vw - var(--space-8)));
+  max-height: calc(100vh - var(--space-8));
+  padding: var(--space-6);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+}
+
+.add-case::backdrop {
+  background: rgb(0 0 0 / 0.32);
+}
+
+.add-case-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.add-case-head h2 {
+  margin: 0;
+}
+
+.add-case-fields {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-4);
+}
+
+.field-label {
+  font-size: var(--font-size-meta);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-heading);
+}
+
+.add-case .block {
+  padding: 0;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------- Case brief: vessel map and facts (2026-11-08) */
+.brief-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.brief-columns-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 900px) {
+  .brief-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.brief-columns .fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.brief-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.brief-map-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  max-height: 34rem;
+  background: var(--color-vein-tint);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.brief-map-svg {
+  position: absolute;
+  inset: var(--space-4);
+  width: calc(100% - 2 * var(--space-4));
+  height: calc(100% - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.brief-map-svg .vessel {
+  stroke: var(--color-brand);
+  stroke-opacity: 0.55;
+}
+
+.brief-entry {
+  fill: var(--color-vein);
+}
+
+.brief-target {
+  fill: var(--color-surface);
+  stroke: var(--color-brand);
+}
+
+.brief-label {
+  fill: var(--color-heading);
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  paint-order: stroke;
+  stroke: var(--color-vein-tint);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+}
+
+.brief-map figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.brief-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+}
+
+.brief-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brief-key {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.brief-key-entry {
+  background: var(--color-vein);
+}
+
+.brief-key-target {
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand);
+}
+
+.brief-key-zone {
+  width: 1rem;
+  height: 0.375rem;
+  border-radius: 0;
+  background: var(--color-risk-forbidden);
+}
+
+.brief-next h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lead);
+}
+
+.brief-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+}
+
+.brief-steps strong {
+  color: var(--color-heading);
+}
+
+@media (max-width: 900px) {
+  .brief-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.brief-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.brief-dataset summary {
+  color: var(--color-link);
+  font-size: var(--font-size-meta);
+  cursor: pointer;
+}
+
+.brief-dataset p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
 }

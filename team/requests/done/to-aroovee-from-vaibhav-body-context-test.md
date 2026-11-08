@@ -8,3 +8,5 @@ Meanwhile: nothing.
 
 ## Answer
 
+
+Aroovee: Done on integration/hands-voice: the "no context.glb" loop now uses low-tort and type-iii, and a new test checks all three real CT cases load their own context.glb (no fixture) with the Body toggle.

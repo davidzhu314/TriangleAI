@@ -18,6 +18,8 @@ export type ViewKind = '3d' | 'flat';
 /** Where the 3D camera looks: the arch-and-target close-up, or the whole tree (framing.ts). */
 export type FrameKind = 'close' | 'whole';
 const KEY = 'threadsim.view.v1';
+/** Radians the case turns for a hand sweep across the whole view: half a turn. */
+const TURN_PER_VIEW = Math.PI;
 
 export function preferredView(): ViewKind {
   try {
@@ -39,6 +41,11 @@ export interface DualView {
   readonly element: HTMLElement;
   /** The view-style switch and AR entry; views may move it (Drive puts it in its HUD). */
   readonly toolbar: HTMLElement;
+  /**
+   * The hand's pan gesture: in 3D it turns the case on three axes (dx, dy: shares of the view's size, as yaw and
+   * pitch; roll: from two hands moving opposite ways); in the flat drawing it slides the picture (no roll).
+   */
+  pan(dx: number, dy: number, roll?: number): void;
   /** Null until the scene has loaded, and always when WebGL isn't available. */
   scene(): CaseScene | null;
   kind(): ViewKind;
@@ -74,9 +81,17 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
   let anatomyControls: AnatomyControls | null = null;
   const resetCamera = (): void => {
     userFramed = false;
-    if (scene?.closeUp) frameTo(startFrame);
-    else scene?.frame('whole');
+    // Undo any turn of the case, then the opening framing; and slide the flat drawing back.
+    if (scene) {
+      if (scene.closeUp) {
+        scene.resetView(startFrame);
+        frameTo(startFrame);
+      } else scene.resetView('whole');
+    }
+    const svg = flat as SVGSVGElement;
+    if (flatViewBox !== null) svg.setAttribute('viewBox', flatViewBox);
   };
+  const flatViewBox = (flat as SVGSVGElement).getAttribute?.('viewBox') ?? null;
 
   const set = (k: ViewKind): void => {
     wanted = k;
@@ -111,6 +126,14 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
       group.append(b);
     }
     toolbar.append(group);
+    // Reset view: whatever the camera, the hand or the anatomy panel did, back to where the view opened.
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'btn btn-secondary view-reset';
+    reset.textContent = 'Reset view';
+    reset.dataset['testid'] = 'reset-view';
+    reset.addEventListener('click', () => resetCamera());
+    toolbar.append(reset);
     set(wanted);
     void Promise.all([import('./scene3d'), ar ? import('./ar') : Promise.resolve(null)]).then(([m, arMod]) => {
       if (disposed) return;
@@ -174,6 +197,18 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
       if (!scene?.closeUp || userFramed || !p) return;
       const want: FrameKind = scene.inCloseUp(p) ? 'close' : 'whole';
       if (want !== framed) frameTo(want);
+    },
+    pan(dx, dy, roll = 0) {
+      if (scene && wanted === '3d') {
+        // A hand sweep across the whole view turns the case half a turn.
+        scene.rotate(dx * TURN_PER_VIEW, dy * TURN_PER_VIEW, roll * TURN_PER_VIEW);
+        return;
+      }
+      const svg = flat as SVGSVGElement;
+      const vb = svg.viewBox?.baseVal;
+      if (!vb || !vb.width) return;
+      vb.x -= dx * vb.width;
+      vb.y -= dy * vb.height;
     },
     anatomy: () => anatomyControls,
     resetCamera,

@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: "ThreadSim"
-description: "A quiet instrument for a decision trainer. Measured from a reference site on 2026-11-07, then made ThreadSim's. Inspired by it, not affiliated with it."
+name: "Cathy"
+description: "A quiet instrument for a decision trainer. Measured from a reference site on 2026-11-07, then made Cathy's. Inspired by it, not affiliated with it."
 colors:
   background: "#f9f7f6"
   text: "#2e2d2dcc"
@@ -15,47 +15,47 @@ colors:
   primary: "#1f1e1e"
   primary-foreground: "#ffffff"
   link: "#1f1e1e"
-  focus: "#0b6a7d"
-  brand: "#0b6a7d"
+  focus: "#8e2433"
+  brand: "#8e2433"
   positive: "#247b50"
   negative: "#c4242a"
   warning: "#92400e"
-  chart-1: "#0b6a7d"
+  chart-1: "#2f5584"
   chart-2: "#2e2d2d"
   chart-3: "#706e6d"
 typography:
   h3:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 32px
     fontWeight: 500
     lineHeight: 1.1
     letterSpacing: -0.01em
   h4:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 24px
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: -0.01em
   h5:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 20px
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: -0.01em
   body:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 16px
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: -0.01em
   body-sm:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.2
     letterSpacing: -0.01em
   caption:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.2
@@ -118,7 +118,9 @@ components:
     typography: "{typography.body}"
 ---
 
-# ThreadSim design system
+# Cathy design system
+
+**Name (2026-11-08):** the product is **Cathy** everywhere a person reads it (the logo text in the sidebar and phone menu, the browser tab, page titles "Plan · Cathy"). It was ThreadSim. Internal identifiers keep the old prefix so saved progress and case packages still work: storage keys (`threadsim.plans.v1` …), the case format id `threadsim.case/1`, event names and test hooks. The voice assistant is also Cathy ("Hey Cathy, …"): one name for the trainer and its voice.
 
 Read this before any UI work. Values live in `client/src/styles/tokens.css`; see them all in `client/src/styles/palette.html`. The YAML above is generated from the measured roles; the CSS tokens are the source of truth for code.
 
@@ -131,6 +133,21 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 **Face and signature, chosen before any screen.** The face is the brand hue on the main data element. The signature element is the **route trace**: the player's route as one heavier teal line, the same line on Plan, Compare and the Results replay, so a trainee follows one object through the whole case.
 
 ## Colors
+
+**Oxblood & Navy (2026-11-08, Aroovee's choice for the demo).** Arteries and veins name the two hues, so the palette says what the app is about before any screen does:
+
+| Role | Light | Dark | Use |
+| --- | --- | --- | --- |
+| Ground | `#f6f5f3` warm off-white (short of cream) | true neutral, unchanged | `--color-background` |
+| Ink | `#1b2a44` navy | unchanged neutral light ink | headings, figures, the one filled button (`--color-primary`) |
+| Text | `#3e4656` navy-grey, muted `#5f6673` | unchanged | running text, labels |
+| Oxblood (artery) | `#8e2433`, tint `#f6e7e9` | `#e08591`, tint `#3b2125` | `--color-brand`: the accent, the suggested case, focus, artery drawings; never a button fill |
+| Steel blue (vein) | `#2f5584`, tint `#e6edf6` | `#8fb0db`, tint `#1e2a38` | `--color-vein`, `--color-link`, the Library's picture tiles |
+| Purple (the route) | `#6a3d9a` | `#b79de3` | `--color-route-player` and `--color-scene-ghost`: the trainee's route on Plan, Compare, Results and the planned route on Drive. Neither artery nor vein, so it never reads as part of the anatomy. A deliberate exception to the taste rule against violet, at Aroovee's request. |
+| Danger | `#c4242a` | unchanged | forbidden zones and errors: brighter and redder than oxblood, so the accent never reads as a warning |
+
+The player's route moved from teal to purple (steel blue for an hour first): apart from the red risk zones, the oxblood arteries and the blue veins. The dark theme stays true neutral: only the accents are lifted.
+
 
 | Role | Token | Use it for | Never for |
 | --- | --- | --- | --- |
@@ -163,7 +180,7 @@ Measured from one reference site (`DECISIONS.md`), then made ours: its logo, red
 
 ## Typography
 
-Inter alone, self-hosted from `client/src/assets/fonts/` so the demo works offline. Sentence case everywhere. Tracking `--letter-spacing` at every size, as measured. Weight 400 for reading, 500 for titles and headings, and 600 for one job per screen at most. No mono face: the reference's mono labels were its identity.
+DM Sans alone (from 2026-11-08, replacing Inter), self-hosted from `client/src/assets/fonts/` so the demo works offline. Sentence case everywhere. Tracking `--letter-spacing` at every size, as measured. Weight 400 for reading, 500 for titles and headings, and 600 for one job per screen at most. No mono face: the reference's mono labels were its identity.
 
 | Role | Size / line | Weight | Notes |
 | --- | --- | --- | --- |
@@ -233,7 +250,7 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 
 ### Don't
 
-- Don't invent numbers. **This overrides Taste's app rules**, which ask for believable sample data: ThreadSim never hard-codes realistic-looking numbers, clinical or otherwise.
+- Don't invent numbers. **This overrides Taste's app rules**, which ask for believable sample data: Cathy never hard-codes realistic-looking numbers, clinical or otherwise.
 - Don't use teal on buttons, nav fills, card fills or headings. A brand fill everywhere is exactly what the colour budget forbids.
 - No gradients, glass, glows, emoji, eyebrow labels, 01/02/03 numbering, resting shadows, zebra rows, uppercase table headers, icons in tinted squares, or sparklines on figures.
 - No rainbow charts: one hue per chart, then neutrals. Compare's route colours are the one exception, required by spec §7.3, and each also has a pattern and label.
@@ -243,6 +260,34 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 ## Motion
 
 Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover and press, `--duration-base` for menus, `--duration-slow` for sheets, `--ease-standard` throughout. Nothing performs an entrance. `theme.css` honours reduced motion. The contrast fade is the one timed effect, and it belongs to the X-ray shader.
+
+### Case brief (2026-11-08)
+
+- Two columns: the case's vessel map (flat, front-on, on a vein-blue panel: arteries in oxblood, risk zones, entry sites as steel-blue dots and targets as oxblood rings, each named, labels on the side of the tree their point is on) and the facts (scenario, targets, entry sites, arch, fluoro budget, risk zones by kind and severity, vessel count, source with the dataset citation behind "Dataset details", your progress).
+- Under them, "What happens next" in one row of four (Plan, Compare, Drive, Results), the checks, and Start planning.
+
+### Drive HUD (2026-11-08)
+
+- **Tip twist readout** under the top row: a small dial (needle in the route purple) and the tip's twist in degrees, 0–359, from `WireState.rollRad` (rail) or `tipPose.tipRollRad` (physics, with "Hub" beside it, since the tip lags the hub). With Hands on and the gun pose held, "Hand +23°" is the hand's twist from where the pose started.
+- **Fine twist:** Shift with A or D twists at a quarter of full speed (`FINE_TWIST`), for a narrow branch opening. The Controls card says so.
+- **Foldable cards:** "Training case" and "Controls" fold from their title (a chevron), open by default, each remembered.
+- **Setting the tip angle:** type an angle in the readout and press Set (or Enter); the wire turns there at up to full speed, slowing over the last 30°, and stops within half a degree. A dashed second needle on the dial marks the target. `[` and `]` nudge it one degree. A or D (or the stick) takes over at once.
+- **Hand angle mode** ("Hand sets angle", shown with Hands on): while the gun pose is held, the hand's twist sets the tip's angle at half scale from where the tip was when the pose started (10° of hand, 5° of tip); a still hand holds the tip still. Push and pull by curl are unchanged.
+- **The catheter head's label:** a small pill at the tip in the 3D and flat views shows its angle ("122°", or "122° → 140°" while turning), repositioned every frame as the camera follows.
+
+### Plan declutter (2026-11-08)
+
+- The 3D views' controls are one toolbar bar: inside it buttons and segmented groups lose their own borders; a pressed state is the only tone.
+- Route setup rows are compact; a wire preset's note is one line ("Turns up to 110°").
+- Route cost rows are tighter. The Cathy box is unchanged (David's, added tonight).
+
+### Library (2026-11-08)
+
+- A grid of case cards, three across at desktop, two at tablet, one on a phone. Each card: the case's own flat vessel drawing (oxblood on a vein-blue tile, decorative), the title as the link into the case (the whole card is its hit area), the synopsis (case.json `scenario`, or the trainee's own), difficulty, mode, stars, and "Left off at Plan" or "Left off at Results" with a link back when the case was started this session.
+- Filters over the grid: Difficulty (segmented) and Arch type (a select). No age filter and no "Assigned" tab: the cases carry no patient age, and nothing assigns cases yet.
+- "+ Add a case" opens a dialog: Name, Synopsis, then the import drop zone with its checks and fixes. The name and synopsis replace the package's own on the card only.
+- "…" on a card: "Download case (.zip)", the package as loaded. Never "MRI": the cases are CT angiograms and generated models.
+- The suggested next case is first, marked "Suggested next" and edged in oxblood.
 
 ## Iconography & Graphics
 
@@ -264,6 +309,7 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 - **AR (A7) is built but unverified on a headset.** "Enter AR" shows only where immersive-ar is supported. It places the case at 50% scale (1:1 on a button), grab moves it, both hands scale and turn it, select picks a branch, the cost panel and the HUD float beside it, and the controller drives. The 72 fps target and the 14 ms simplified-mesh switch are coded and unit-tested, but have not been measured on a Quest 3.
 - **Anatomy layer (feature/vascular-ui):** an optional anatomical model behind the case in 3D. Arteries are warm and veins cool, from `--color-anatomy-artery` and `--color-anatomy-vein`, starting at `--opacity-anatomy`. Labels name every vessel, so colour is never the only signal. It sits under the route trace and markers. Until David's model arrives it is a fitted placeholder, and the panel says so.
 - **Body context:** a real CT case can carry `context.glb` (bone and heart from the same scan, in the same frame as its vessels). It is placed exactly, never fitted, and switched by "Body" in the anatomy panel, off by default. It is quiet background, `--color-body-bone` and `--color-body-heart` at `--opacity-body-bone` and `--opacity-body-heart`, drawn first and depth-tested, so the vessels, risk zones, route tubes and branch handles stay on top and clickable. It carries no labels, and its note says "for scale and orientation only". The generic placeholder is never drawn on such a case.
+- **Veins on a context case:** when that `context.glb` also holds the same patient's veins (nodes tagged `extras.kind: "vein"`), the panel adds "Veins", off by default and remembered on its own (`bodyVeins`, not the generic model's Veins). They use `--color-anatomy-vein` at `--opacity-anatomy`, depth-tested, writing no depth, drawn after the body and before the case's own vessels, so the arteries, risk zones, route tubes and branch handles stay on top and clickable. They are never picked, and carry no labels (the context panel has no Labels switch). The note then reads "Bone, heart and veins from this case's scan, for scale and orientation only." Drive's X-ray hides them, like Body, without changing the setting.
 - The Results replay view stays 2D: it is small, and its job is the path over the best route, which reads best flat.
 - Taste Skill is pinned at v2.1.5 (`DECISIONS.md`). The `npx skills add` line in the lane file installs 2.5.0, which has no `draw.mjs --app`, `lint.mjs` or `inspect.mjs`.
 
@@ -272,6 +318,6 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 - `client/src/styles/tokens.css`: every token. Imported by `client/src/main.ts`.
 - `client/src/styles/theme.css`: the font and element defaults, plain CSS. `client/src/main.ts` imports it after tokens, then `client/src/ui/ui.css` (the screens).
 - `client/src/styles/palette.html`: every token on one page. In dev, open `/src/styles/palette.html`.
-- `client/src/assets/fonts/`: Inter and its licence.
+- `client/src/assets/fonts/`: DM Sans and its licence.
 - `client/src/assets/icons/`, `client/src/assets/empty/`: the icon set and empty-state art. `metrics/aroovee/A1-icon-set.png` shows them all.
 - `metrics/aroovee/A0-reference-measurement.md`: what was measured from the reference.

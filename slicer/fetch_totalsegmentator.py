@@ -4,7 +4,8 @@
     python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context
 
 `--context` fetches the body-context masks instead: the vertebrae C7 to L5, the ribs (left and right 1 to 12),
-the sternum and the heart, for the faint background mesh (`slicer/export_context.py`).
+the sternum and the heart, and the major veins (venae cavae, iliac and brachiocephalic veins), for the faint
+background mesh (`slicer/export_context.py`). A class missing from the subject's folder is skipped and named.
 
 Reads only the needed members of the 3.2 GB Zenodo zip with HTTP range requests. Only the arterial
 masks are written. The CT image (`ct.nii.gz`) and the dataset's `meta.csv` (age, sex, scanner) are
@@ -38,6 +39,16 @@ CONTEXT = (
     + [f"rib_{side}_{i}" for side in ("left", "right") for i in range(1, 13)]
     + ["sternum", "heart"]
 )
+
+# Major veins for the body context: TotalSegmentator v2 class -> node id in context.glb. File name = class name.
+VEINS = {
+    "inferior_vena_cava": "inferior_vena_cava",
+    "superior_vena_cava": "superior_vena_cava",
+    "iliac_vena_left": "l_iliac_vein",
+    "iliac_vena_right": "r_iliac_vein",
+    "brachiocephalic_vein_left": "l_brachiocephalic_vein",
+    "brachiocephalic_vein_right": "r_brachiocephalic_vein",
+}
 
 
 class HttpFile(io.RawIOBase):
@@ -76,9 +87,14 @@ class HttpFile(io.RawIOBase):
 def main(subject, out_dir, context=False):
     os.makedirs(out_dir, exist_ok=True)
     z = zipfile.ZipFile(io.BufferedReader(HttpFile(URL), buffer_size=1 << 20))
-    wanted = {c: c for c in CONTEXT} if context else MASKS
+    wanted = {c: c for c in [*CONTEXT, *VEINS]} if context else MASKS
+    members = set(z.namelist())
     for cls, name in wanted.items():
-        data = z.read(f"{subject}/segmentations/{cls}.nii.gz")
+        member = f"{subject}/segmentations/{cls}.nii.gz"
+        if context and member not in members:
+            print("SKIPPED", cls, "(not in this subject's segmentations)")
+            continue
+        data = z.read(member)
         with open(os.path.join(out_dir, f"{name}.nii.gz"), "wb") as f:
             f.write(data)
         print(name, len(data), "bytes")

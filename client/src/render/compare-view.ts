@@ -30,6 +30,23 @@ export interface CompareViewState {
 
 export interface CompareView {
   readonly element: HTMLElement;
+  /** The view's toolbar: screens may add their own controls to it. */
+  readonly toolbar: HTMLElement;
+  /** Pan the view (3D or flat) by a share of its size. */
+  pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
+  /**
+   * Show or hide the anatomy layer's vessel names (the panel's Labels switch, saved like a click). False when the
+   * view has no anatomy layer (Flat view, no WebGL).
+   */
+  setLabels(on: boolean): boolean;
+  /** True when this case's anatomy is its own body context, which has no vessel names. */
+  bodyContext(): boolean;
+  /** Zoom the 3D view; false in the flat view. */
+  /** Frame these edges in the 3D view ("Hey Cathy, zoom into …"); false in the flat view. */
+  zoomTo(edgeIds: readonly string[]): boolean;
+  zoom(factor: number): boolean;
   update(state: CompareViewState): void;
   dispose(): void;
 }
@@ -59,6 +76,27 @@ export function createCompareView(c: LoadedCase, anatomy?: Promise<AnatomyConfig
 
   return {
     element,
+    toolbar: dual.toolbar,
+    pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
+    setLabels(on) {
+      const a = dual.anatomy();
+      if (!a) return false;
+      a.set({ labels: on });
+      return true;
+    },
+    bodyContext: () => dual.anatomy()?.context === true,
+    zoomTo(edgeIds) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      return scene.frameEdges(edgeIds);
+    },
+    zoom(factor) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      scene.zoom(factor);
+      return true;
+    },
     update(state) {
       lines.replaceChildren();
       // The selected line last, so it sits above the other frontier lines (the player's route stays on top).

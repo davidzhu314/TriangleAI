@@ -15,7 +15,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedCase, RiskTier, Vec3 } from '../contracts';
 
 import { centre, closeUpBox, extent, inside, type Box } from './framing';
-import { token, tokenMs, tokenNumber } from './tokens';
+import { THEME_EVENT, token, tokenMs, tokenNumber } from './tokens';
 const color = (name: string): THREE.Color => {
   const v = token(name);
   return v ? new THREE.Color(v) : new THREE.Color();
@@ -32,6 +32,12 @@ export interface RouteStyle {
   heavy?: boolean;
   /** An opacity token. */
   opacityToken?: string;
+  /** Tube radius in the scene's line unit, instead of the heavy/normal width (a device drawn to its own size). */
+  width?: number;
+  /** Round off the far end with a cap of the tube's radius (a device's tip). */
+  cap?: boolean;
+  /** Draw order among overlays; higher draws on top (a translucent sleeve over the wire inside it). */
+  order?: number;
 }
 
 export interface CaseScene {
@@ -66,6 +72,8 @@ export interface CaseScene {
   readonly closeUp: Box | null;
   /** Point the camera at the close-up or the whole tree, easing over --duration-slow (instant with reduced motion). */
   frame(kind: 'close' | 'whole'): void;
+  /** Ease the camera onto these edges ("Hey Cathy, zoom into the aortic arch"); false when none of them exist. */
+  frameEdges(edgeIds: readonly string[]): boolean;
   /** Whether a point (metres) is inside the close-up. */
   inCloseUp(p: Vec3): boolean;
   /** Swap between the full mesh and the simplified tubes (AR frame budget). */
@@ -73,8 +81,25 @@ export interface CaseScene {
   setBackground(colorToken: string | null): void;
   /** Raycast the handles from normalised device coordinates (or a ray, in AR). */
   pick(ray: THREE.Raycaster): string | null;
+  /** The branch handle under a point of the canvas, given as 0..1 of its width and height (hands-free pinch). */
+  pickAt(x: number, y: number): string | null;
+  /** Move the camera toward (factor < 1) or away from (factor > 1) what it looks at. */
+  zoom(factor: number): void;
+  /** Pan the view by a share of the canvas (dx of its width, dy of its height), as dragging the picture would. */
+  pan(dx: number, dy: number): void;
+  /**
+   * Turn the case about the point the camera looks at, on all three axes, in the camera's frame (radians):
+   * yaw about the screen's vertical, pitch about its horizontal, roll about the line of sight (positive is
+   * counter-clockwise as seen). The case turns, not the camera, so OrbitControls' upright camera never fights a
+   * roll, and picking still works (handles turn with the case).
+   */
+  rotate(yaw: number, pitch: number, roll: number): void;
+  /** Undo every turn of the case and put the camera back on the given framing. */
+  resetView(kind: 'close' | 'whole'): void;
   /** Where each branch handle is on the canvas, in CSS pixels from its top left (for automated tests). */
   handlesOnScreen(): { node: string; x: number; y: number }[];
+  /** Where a point in the case's frame (metres, Y-up) is on the canvas, in CSS pixels; null when behind the camera. */
+  screenPoint(p: Vec3): { x: number; y: number } | null;
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -230,11 +255,20 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     const opacity = style.opacityToken ? tokenNumber(style.opacityToken) : 1;
     const transparent = opacity < 1;
     if (!style.dashToken || token(style.dashToken) === 'none') {
-      const r = unit * (style.heavy ? 1.6 : 1);
-      const m = new THREE.Mesh(new THREE.TubeGeometry(curveOf(points), Math.max(16, points.length * 2), r, 8, false), new THREE.MeshBasicMaterial({ color: color(style.colorToken), transparent, opacity, depthTest: false }));
-      m.renderOrder = 2;
+      const r = unit * (style.width ?? (style.heavy ? 1.6 : 1));
+      const mat = new THREE.MeshBasicMaterial({ color: color(style.colorToken), transparent, opacity, depthTest: false });
+      const m = new THREE.Mesh(new THREE.TubeGeometry(curveOf(points), Math.max(16, points.length * 2), r, 8, false), mat);
+      m.renderOrder = style.order ?? 2;
       m.name = name;
-      return m;
+      if (!style.cap) return m;
+      const g = new THREE.Group();
+      g.name = name;
+      const end = points[points.length - 1]!;
+      const tipCap = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mat);
+      tipCap.position.set(end[0], end[1], end[2]);
+      tipCap.renderOrder = m.renderOrder;
+      g.add(m, tipCap);
+      return g;
     }
     // Dashed: one tube per dash, the dash pattern from its token (SVG units) scaled to the case.
     const pattern = token(style.dashToken).split(/\s+/).map(Number).filter((n) => n > 0);
@@ -357,6 +391,24 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       tween = { from: [controls.target.clone(), camera.position.clone()], to, t: 0, ms };
       canvas.dataset['frame'] = kind;
     },
+    frameEdges(edgeIds) {
+      const pts = c.edges.filter((e) => edgeIds.includes(e.id)).flatMap((e) => e.points);
+      if (pts.length === 0) return false;
+      const box: Box = {
+        min: [0, 1, 2].map((k) => Math.min(...pts.map((p) => p[k]!))) as unknown as Box['min'],
+        max: [0, 1, 2].map((k) => Math.max(...pts.map((p) => p[k]!))) as unknown as Box['max'],
+      };
+      // the case may be turned by the hand: frame where the edges are now
+      content.updateMatrixWorld(true);
+      const at = content.localToWorld(new THREE.Vector3(...centre(box)));
+      const span = Math.max(extent(box), size * 0.08);
+      const dist = (span / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.6;
+      const dir = camera.position.clone().sub(controls.target).normalize();
+      const ms = reducedMotion() ? 0 : tokenMs('--duration-slow');
+      tween = { from: [controls.target.clone(), camera.position.clone()], to: [at, at.clone().add(dir.multiplyScalar(dist))], t: 0, ms };
+      canvas.dataset['frame'] = 'vessel';
+      return true;
+    },
     inCloseUp(p) {
       return !!closeUp && inside(closeUp, p);
     },
@@ -375,6 +427,72 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     },
     setBackground(colorToken) {
       scene.background = colorToken ? color(colorToken) : null;
+    },
+    pickAt(x, y) {
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(x * 2 - 1, 1 - y * 2), camera);
+      // Handles are small: a pinch near one counts, so try the exact point, then a ring around it.
+      const hit = api.pick(ray);
+      if (hit) return hit;
+      let best: { id: string; d: number } | null = null;
+      const r = canvas.getBoundingClientRect();
+      for (const h of handles.children) {
+        const v = h.getWorldPosition(new THREE.Vector3()).project(camera);
+        const d = Math.hypot(((v.x + 1) / 2 - x) * r.width, ((1 - v.y) / 2 - y) * r.height);
+        if (d < (best?.d ?? Infinity)) best = { id: h.userData['node'] as string, d };
+      }
+      // Within about a fingertip's width on screen (a touch target).
+      return best && best.d <= tokenNumber('--size-touch') ? best.id : null;
+    },
+    rotate(yaw, pitch, roll) {
+      if (!yaw && !pitch && !roll) return;
+      camera.updateMatrixWorld();
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+      const toViewer = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 2).normalize();
+      const q = new THREE.Quaternion()
+        .setFromAxisAngle(up, yaw)
+        .multiply(new THREE.Quaternion().setFromAxisAngle(right, pitch))
+        .multiply(new THREE.Quaternion().setFromAxisAngle(toViewer, roll));
+      const pivot = controls.target.clone();
+      content.position.sub(pivot).applyQuaternion(q).add(pivot);
+      content.quaternion.premultiply(q);
+      content.updateMatrixWorld(true);
+      canvas.dataset['turned'] = String(!content.quaternion.equals(new THREE.Quaternion()));
+    },
+    resetView(kind) {
+      content.position.set(0, 0, 0);
+      content.quaternion.identity();
+      content.updateMatrixWorld(true);
+      canvas.dataset['turned'] = 'false';
+      api.frame(kind);
+    },
+    pan(dx, dy) {
+      // The size of the canvas, in world units, at the distance of what the camera looks at.
+      const dist = camera.position.distanceTo(controls.target);
+      const height = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const width = height * camera.aspect;
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0);
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+      // The picture moves with the hand, so the camera moves the other way.
+      const move = right.multiplyScalar(-dx * width).add(up.multiplyScalar(dy * height));
+      camera.position.add(move);
+      controls.target.add(move);
+      controls.update();
+    },
+    zoom(factor) {
+      const to = camera.position.clone().sub(controls.target).multiplyScalar(factor);
+      const min = size * 0.05;
+      const max = size * 6;
+      to.setLength(Math.min(max, Math.max(min, to.length())));
+      camera.position.copy(controls.target).add(to);
+      controls.update();
+    },
+    screenPoint(p) {
+      const r = canvas.getBoundingClientRect();
+      const v = content.localToWorld(new THREE.Vector3(p[0], p[1], p[2])).project(camera);
+      if (v.z > 1) return null;
+      return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
     },
     handlesOnScreen() {
       const r = canvas.getBoundingClientRect();
@@ -400,6 +518,7 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       renderer.setAnimationLoop(null);
       resize.disconnect();
       themeQuery.removeEventListener('change', retheme);
+      window.removeEventListener(THEME_EVENT, retheme);
       canvas.removeEventListener('pointerup', onPointerUp);
       controls.dispose();
       disposeObject(content);
@@ -422,6 +541,7 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
   };
   const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
   themeQuery.addEventListener('change', retheme);
+  window.addEventListener(THEME_EVENT, retheme);
   retheme();
   api.setVessels({ colorToken: '--color-scene-vessel', opacity: tokenNumber('--opacity-scene-vessel'), zones: true });
 

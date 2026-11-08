@@ -39,6 +39,10 @@ export const FEEDBACK_TEMPLATES = {
   'replay.contrast_puff': 'Contrast puff.',
   'replay.target_reached': 'Reached the {target}.',
   'assist.next_branch': 'Next, head into the {vessel}.',
+  'assist.keep_going': 'Keep going along the {vessel}. The next branch is the {next}.',
+  'assist.keep_going_target': 'Keep going along the {vessel}. The {target} is ahead.',
+  'assist.target_ahead': "You're on the plan. The {target} is ahead.",
+  'assist.past_opening': "You've gone past the opening of the {vessel}. Pull back until the tip is at the opening, then rotate toward it.",
   'assist.pull_back': "You're in the {wrong_vessel}. Pull back toward the {vessel}.",
   'assist.at_target': "You're at the {target}.",
   'assist.best_route': 'The best route from here goes through the {vessel} ({label}).',
@@ -49,6 +53,14 @@ export const FEEDBACK_TEMPLATES = {
   'assist.no_continuation': 'No route to the {target} continues from here; undo the last branch.',
   'assist.no_safe_route': 'No safe way on from here with this wire.',
   'assist.cannot_steer': "This wire can't steer into any of the ways on from here; try another wire or entry.",
+  'assist.wrong_branch_ahead': 'Careful: the tip will go into the {wrong_vessel}, not the {vessel}. Rotate {direction}.',
+  'assist.wrong_branch_ahead_no_roll': 'Careful: the tip will go into the {wrong_vessel}, not the {vessel}.',
+  'assist.on_plan': "You're on the plan; next, the {vessel}.",
+  'assist.on_plan_last': "You're on the plan; the {target} is ahead.",
+  'assist.mark_cannot_steer': "The wire can't steer into the {vessel} on your route.",
+  'assist.mark_off_frontier': 'Your route leaves the best routes at the {vessel}.',
+  'assist.mark_heavy_zone': 'Your route through the {vessel} crosses {zone}.',
+  'assist.no_answer': "I can only answer from this case's results. Try asking where next, or how you're doing.",
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;

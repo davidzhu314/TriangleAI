@@ -6,7 +6,13 @@
  */
 import type { LoadedCase, Route, WirePreset, WirePresetId } from '../../contracts';
 import './plan.css';
-import { buildGraph, WIRE_PRESETS, type RouteGraph } from '../../optimize';
+import { buildGraph, defaultWeights, optimize, planAssist, WIRE_PRESETS, type RouteGraph } from '../../optimize';
+import { cathyFacts, planAssistLine, type CathyFacts } from '../../score';
+import { planCheckLine } from '../../score/live';
+import { planMarks } from '../../score/plan-marks';
+import { measureRoute } from '../../optimize/measure-route';
+import type { VoiceAction, VoiceMatch } from '../../input';
+import { createHandsVoice, zoomToAnswer, type HandsVoice } from '../hands-voice';
 import { createPlanView, type PlanView } from '../../render/plan-view';
 import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
@@ -38,10 +44,60 @@ let liveView: PlanView | null = null;
 let liveCase: LoadedCase | null = null;
 let pickNow: (node: string) => void = () => undefined;
 let panelLines: string[] = [];
+/** Hands-free input for the live view: kept and disposed with it. */
+let liveHands: HandsVoice | null = null;
+/** The current route for voice answers (updated on every redraw, like pickNow). */
+let voiceNow: (action: VoiceAction, match?: VoiceMatch) => Promise<string | null> = async () => null;
 export function disposePlanView(): void {
+  liveHands?.dispose();
+  liveHands = null;
   liveView?.dispose();
   liveView = null;
   liveCase = null;
+}
+
+/** Cathy's answer for the route so far, from the engine (planAssist, planAssistLine): never a model's numbers. */
+async function assistLine(c: LoadedCase, graph: RouteGraph, s: RouteState, ask: 'best' | 'options'): Promise<string> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  return planAssistLine(assist, c, s.targetId, ask).text;
+}
+
+/** "Is this right" (G5): the route's first problem edge (planMarks), else the best way on. Engine only. */
+async function checkLine(c: LoadedCase, graph: RouteGraph, s: RouteState): Promise<string> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  let measures = null;
+  try {
+    const startNode = graph.entries.get(s.entryId);
+    measures = s.edges.length > 0 ? measureRoute(graph, s.edges, startNode === undefined ? {} : { startNode }) : null;
+  } catch {
+    measures = null; // a route that doesn't chain: no crossings to mark
+  }
+  const marks = planMarks({ routeSoFar: s.edges, measures, optimized, entryId: s.entryId, presetId: s.presetId, graph });
+  return planCheckLine(marks, assist, c, s.targetId).text;
+}
+
+/**
+ * The engine's facts on Plan now, for Cathy's AI wording (G5): the same pieces the "best next" and "is this right"
+ * answers use (planAssist, planMarks, the route's measures), plus their template lines. Engine only.
+ */
+async function planFacts(c: LoadedCase, graph: RouteGraph, s: RouteState): Promise<CathyFacts> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  let measures = null;
+  try {
+    const startNode = graph.entries.get(s.entryId);
+    measures = s.edges.length > 0 ? measureRoute(graph, s.edges, startNode === undefined ? {} : { startNode }) : null;
+  } catch {
+    measures = null;
+  }
+  const marks = planMarks({ routeSoFar: s.edges, measures, optimized, entryId: s.entryId, presetId: s.presetId, graph });
+  const lines = [planAssistLine(assist, c, s.targetId, 'best'), planAssistLine(assist, c, s.targetId, 'options'), planCheckLine(marks, assist, c, s.targetId)];
+  return cathyFacts({ screen: 'plan', case: c, targetId: s.targetId, entryId: s.entryId, presetId: s.presetId, weights, optimized, lines, routeSoFar: s.edges, measures, assist, marks });
 }
 
 function presetOf(id: WirePresetId): WirePreset {
@@ -163,7 +219,7 @@ function draw(sc: Screen): void {
       WIRE_PRESETS.map((p) => ({
         value: p.id,
         label: labelled(PRESET_ICON[p.id], p.name),
-        note: h('span', { class: 'choice-note', title: 'Illustrative value (spec §4.3)' }, 'Sharpest turn it can enter: ', h('span', { class: 'num' }, String(p.maxTurnDeg)), '°'),
+        note: h('span', { class: 'choice-note', title: 'Illustrative value (spec §4.3)' }, 'Turns up to ', h('span', { class: 'num' }, String(p.maxTurnDeg)), '°'),
       })),
       s.presetId,
       (v) => set(choose(s, { presetId: v })),
@@ -221,10 +277,48 @@ function draw(sc: Screen): void {
     }),
     ...(warnings[0] ? [warnings[0].text] : []),
   ];
+  voiceNow = async (action, match) => {
+    if (action === 'zoom_to') return zoomToAnswer(c, match, (edges) => liveView?.zoomTo(edges) ?? false);
+    if (action === 'zoom_in' || action === 'zoom_out') {
+      return liveView?.zoom(action === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+    }
+    if (action === 'assist_check') return checkLine(c, graph, sc.state);
+    if (action === 'assist_best_next' || action === 'assist_options') return assistLine(c, graph, sc.state, action === 'assist_best_next' ? 'best' : 'options');
+    if (action === 'hide_labels' || action === 'show_labels') {
+      if (liveView?.bodyContext()) return 'No vessel names on this case.';
+      return liveView?.setLabels(action === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
+    }
+    if (action === 'reset_view') {
+      liveView?.resetView();
+      return null;
+    }
+    if (action === 'undo') {
+      // Exactly the Undo button: the same call, and nothing when it would be disabled.
+      if (!sc.state.edges.length) return 'Nothing to undo yet.';
+      set(undo(sc.state));
+      return null;
+    }
+    return null;
+  };
   if (!liveView || liveCase !== c) {
     disposePlanView();
-    liveView = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines }, anatomyFor(entry(key), c));
+    const created = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines }, anatomyFor(entry(key), c));
+    liveView = created;
     liveCase = c;
+    // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
+    liveHands = createHandsVoice({
+      facts: () => planFacts(c, graph, sc.state),
+      host: created.element,
+      actions: ['zoom_in', 'zoom_out', 'zoom_to', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'assist_check', 'undo'],
+      onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
+      onVoice: (a, m) => voiceNow(a, m),
+      onGesture: (g) => {
+        if (!g?.select || !g.pointer) return;
+        const node = created.pickAt(g.pointer.x, g.pointer.y);
+        if (node) pickNow(node);
+      },
+    });
+    created.toolbar.append(liveHands.controls);
   }
   const view = liveView;
   view.update({ routeEdges: s.edges, pickable: steps.map((x) => x.node), entryNode: graph.entries.get(s.entryId), targetNode: graph.targets.get(s.targetId) });

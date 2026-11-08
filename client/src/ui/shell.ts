@@ -26,14 +26,15 @@ export interface ScreenFrame {
 
 let menuOpen = false;
 
-export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library' | null): void {
+export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library' | 'settings' | null): void {
   const nav = h(
     'nav',
     { class: 'nav', 'aria-label': 'Main' },
     h('a', { href: href.library(), class: 'nav-item', 'aria-current': active === 'library' ? 'page' : false }, 'Library'),
+    h('a', { href: href.settings(), class: 'nav-item', 'aria-current': active === 'settings' ? 'page' : false }, 'Settings'),
   );
 
-  const sidebar = h('aside', { class: 'sidebar' }, h('a', { class: 'mark', href: href.library() }, 'ThreadSim'), nav);
+  const sidebar = h('aside', { class: 'sidebar' }, h('a', { class: 'mark', href: href.library() }, 'Cathy'), nav);
 
   const current = frame.crumbs.at(-1);
   const crumbs = h(
@@ -64,7 +65,7 @@ export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'libr
   const menuSheet = h(
     'div',
     { id: 'menu-sheet', class: 'menu-sheet', hidden: !menuOpen, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Menu' },
-    h('div', { class: 'menu-head' }, h('span', { class: 'mark' }, 'ThreadSim'), h('button', { type: 'button', class: 'btn btn-secondary menu-close' }, 'Close')),
+    h('div', { class: 'menu-head' }, h('span', { class: 'mark' }, 'Cathy'), h('button', { type: 'button', class: 'btn btn-secondary menu-close' }, 'Close')),
     nav.cloneNode(true),
   );
 
@@ -86,7 +87,7 @@ export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'libr
 
   const sheet = h('main', { class: 'sheet', id: 'main' }, frame.body);
   replace(root, h('a', { class: 'skip-link', href: '#main' }, 'Skip to content'), frame.layout === 'focus' ? h('div', { class: 'app app-focus' }, topbar, sheet) : h('div', { class: 'app' }, sidebar, topbar, sheet), menuSheet);
-  document.title = current && current.label !== 'Library' ? `${current.label} · ThreadSim` : 'ThreadSim';
+  document.title = current && current.label !== 'Library' ? `${current.label} · Cathy` : 'Cathy';
 }
 
 /** The honesty line, exact text (DECISIONS.md). On Library, Case brief and Results; never on the Drive HUD. */

@@ -24,6 +24,25 @@ export interface PlanViewState {
 
 export interface PlanView {
   readonly element: HTMLElement;
+  /** The view's toolbar (3D | Flat, camera, anatomy): screens may add their own controls to it. */
+  readonly toolbar: HTMLElement;
+  /** The branch-point node under a point of the view (0..1 of its width and height), in 3D or flat. */
+  pickAt(x: number, y: number): string | null;
+  /** Zoom the 3D view; false in the flat view, which has no zoom. */
+  /** Frame these edges in the 3D view ("Hey Cathy, zoom into …"); false in the flat view. */
+  zoomTo(edgeIds: readonly string[]): boolean;
+  zoom(factor: number): boolean;
+  /** Pan the view (3D or flat) by a share of its size. */
+  pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
+  /**
+   * Show or hide the anatomy layer's vessel names (the panel's Labels switch, saved like a click). False when the
+   * view has no anatomy layer (Flat view, no WebGL).
+   */
+  setLabels(on: boolean): boolean;
+  /** True when this case's anatomy is its own body context, which has no vessel names. */
+  bodyContext(): boolean;
   update(state: PlanViewState): void;
   dispose(): void;
 }
@@ -68,6 +87,34 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks,
 
   return {
     element,
+    toolbar: dual.toolbar,
+    pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
+    setLabels(on) {
+      const a = dual.anatomy();
+      if (!a) return false;
+      a.set({ labels: on });
+      return true;
+    },
+    bodyContext: () => dual.anatomy()?.context === true,
+    pickAt(x, y) {
+      const scene = dual.scene();
+      if (scene && dual.kind() === '3d') return scene.pickAt(x, y);
+      const r = d.svg.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + x * r.width, r.top + y * r.height);
+      return at?.closest('[data-node]')?.getAttribute('data-node') ?? null;
+    },
+    zoomTo(edgeIds) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      return scene.frameEdges(edgeIds);
+    },
+    zoom(factor) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      scene.zoom(factor);
+      return true;
+    },
     update(state) {
       route.setAttribute('points', d.routePoints(state.entryNode, state.routeEdges));
       handles.replaceChildren();
