@@ -103,9 +103,13 @@ function draw(sc: Screen): void {
     liveCase = c;
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'reset_view', 'undo'],
+      actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
       onVoice: (a) => {
+        if (a === 'hide_labels' || a === 'show_labels') {
+          if (created.bodyContext()) return 'No vessel names on this case.';
+          return created.setLabels(a === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
+        }
         if (a === 'reset_view') {
           created.resetView();
           return null;

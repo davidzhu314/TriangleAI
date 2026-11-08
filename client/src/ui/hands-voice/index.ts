@@ -21,6 +21,8 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   assist_review: 'How am I doing',
   undo: 'Undo last step',
   reset_view: 'Reset view',
+  hide_labels: 'Hide names',
+  show_labels: 'Show names',
 };
 
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {

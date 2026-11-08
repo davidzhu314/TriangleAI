@@ -94,6 +94,8 @@ The wake word is "Hey Cathy", with a C. The app's name stays Catherine. The matc
 | `zoom_in` | "zoom in", "closer", … | Zoom the Plan/Drive view in |
 | `zoom_out` | "zoom out", "wider", … | Zoom out |
 | `reset_view` | "reset view", "reset camera", "recenter", … | Put the view back where it opened, like the Reset view button (`resetCamera()` on the screen's view) |
+| `hide_labels` | "hide", "hide the names", "labels off", … | Hide the vessel names: the anatomy layer's Labels off (`anatomy().set({ labels: false })`) |
+| `show_labels` | "show labels", "show the names", "unhide", … | Show them again (`labels: true`) |
 | `assist_best_next` | "best next artery", "where next", … | Plan: `planAssistLine(planAssist(…), case, target, 'best')`; highlight `best.edge`. Drive: `driveAssist({ log: wireLogSoFar(source), … }).lines[0]` (the drive so far, without stopping it; null for a source without `logSoFar`) |
 | `assist_options` | "what are my options", … | Plan: `planAssistLine(…, 'options')`; highlight every steerable `options[i].edge` and make them pinchable |
 | `assist_review` | "how am I doing", "any mistakes", … | Drive: `driveAssist({ log: wireLogSoFar(source), … }).lines` (the drive so far) |

@@ -33,6 +33,8 @@ function save(s: AnatomyState): void {
 export interface AnatomyControls {
   /** The button and its panel, for the view's toolbar. */
   readonly element: HTMLElement;
+  /** True on a case with its own body context (context.glb): no generic vessel names there. */
+  readonly context: boolean;
   /** The current settings. */
   state(): AnatomyState;
   /** Change settings from outside (another control, the assistant later). Saved like a click. */
@@ -192,6 +194,7 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   sync();
   return {
     element,
+    context,
     state: () => ({ ...current }),
     set,
     suppress(on) {

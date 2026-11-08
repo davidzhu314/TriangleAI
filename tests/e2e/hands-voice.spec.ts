@@ -360,6 +360,42 @@ test('"Hey Cathy, reset view" puts a zoomed and turned 3D view back where it ope
   expect(far(await settled(), opened)).toBeLessThan(2);
 });
 
+test('"Hey Cathy, hide" takes the vessel names away, "show labels" brings them back; a CT case has none to hide', async ({ page }) => {
+  await stubSpeech(page);
+  await page.addInitScript(() =>
+    localStorage.setItem('threadsim.anatomy.v1', JSON.stringify({ visible: true, arteries: true, veins: true, labels: true, body: false, opacity: 0.35 })),
+  );
+  await page.goto('/#/case/type-iii/plan');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await expect(view).toHaveAttribute('data-anatomy', 'ready');
+  await expect(view).toHaveAttribute('data-anatomy-labels', 'true');
+  await expect(page.locator('.anatomy-labels')).toBeVisible();
+  await expect(page.locator('.anatomy-label').first()).toBeVisible();
+
+  await voiceOn(page);
+  await say(page, 'hey cathy hide');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Hide names');
+  await expect(view).toHaveAttribute('data-anatomy-labels', 'false');
+  await expect(page.locator('.anatomy-labels')).toBeHidden();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('threadsim.anatomy.v1')!).labels)).toBe(false); // the Labels switch, saved
+  await page.getByRole('button', { name: 'Anatomy' }).click();
+  await expect(page.getByRole('group', { name: 'Anatomy layer' }).getByLabel('Labels')).not.toBeChecked();
+
+  await say(page, 'hey cathy show labels');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Show names');
+  await expect(view).toHaveAttribute('data-anatomy-labels', 'true');
+  await expect(page.locator('.anatomy-label').first()).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Anatomy layer' }).getByLabel('Labels')).toBeChecked();
+
+  // A real CT case draws its own body context, which has no vessel names.
+  await page.goto('/#/case/ts-s1404-cta/plan');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-anatomy-model', 'context', { timeout: 30_000 });
+  await voiceOn(page);
+  await say(page, 'hey cathy hide');
+  await expect(page.getByTestId('voice-answer')).toHaveText('No vessel names on this case.');
+});
+
 test('every 3D view has a Reset view button, and it brings the view back', async ({ page }) => {
   await page.addInitScript(() =>
     sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
