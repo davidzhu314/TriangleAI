@@ -151,7 +151,18 @@
 }
 
 .wire-tip {
-  fill: var(--color-scene-ghost);
+  fill: var(--color-scene-wire);
+}
+
+/* The catheter (chain mode): a wider, translucent sleeve over the wire inside it. */
+.catheter-line {
+  fill: none;
+  stroke: var(--color-scene-wire);
+  stroke-width: calc(var(--stroke-route-player) * 2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: var(--opacity-scene-ghost);
+  vector-effect: non-scaling-stroke;
 }
 
 .drive-dim .vessels,
@@ -172,6 +183,7 @@
 }
 
 .drive-view[data-mode='xray'] .wire-line,
+.drive-view[data-mode='xray'] .catheter-line,
 .drive-view[data-mode='xray'] .wire-tip {
   stroke: var(--color-xray-ink);
   fill: var(--color-xray-ink);
@@ -181,6 +193,10 @@
 .drive-view[data-mode='xray'].fluoro-on .wire-line,
 .drive-view[data-mode='xray'].fluoro-on .wire-tip {
   opacity: 1;
+}
+
+.drive-view[data-mode='xray'].fluoro-on .catheter-line {
+  opacity: var(--opacity-scene-ghost);
 }
 
 .drive-view[data-mode='xray'] .wire-line {

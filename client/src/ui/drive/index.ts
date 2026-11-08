@@ -351,7 +351,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       b.setAttribute('aria-pressed', String(k !== 'puff' && held.has(k)));
     }
     const fluoroOn = s ? s.fluoro : held.has('fluoro');
-    view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], tip: s?.tip ?? null, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
+    view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], catheter: s?.devices?.catheter ?? [], tip: s?.tip ?? null, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
     // The wire's own state says which mode is driving: after a fallback it reports rail.
     const wireMode = s?.mode ?? fellBackTo ?? source?.mode;
     modeLabel.textContent = `${live.mode === 'front' ? 'Front view' : 'X-ray'} · ${wireMode ? `${wireMode} mode` : 'wire not connected'}`;
