@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { CaseResult, CostVector, EventLog, Frontier, FrontierRoute, NoSafeRoute, Route, Weights } from '../contracts';
+import type { CaseResult, ConstraintViolation, CostVector, EventLog, Frontier, FrontierRoute, NoSafeRoute, Route, Weights } from '../contracts';
 import { createEventLog } from '../contracts';
 import { loadFixtureY } from '../optimize/fixture-y.testutil';
 import { buildGraph } from '../optimize/graph';
@@ -246,6 +246,8 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'plan.turn_too_sharp': { turn_deg: 120, vessel: 'Left subclavian', preset: 'Standard J', max_turn_deg: 80 },
   'plan.forbidden_zone': { zone: 'the dissection in the Aorta' },
   'plan.arch_never_reached': { preset: 'Stiff straight' },
+  'plan.blocked_at': { preset: 'Soft angled', vessel: 'Left branch' },
+  'plan.blocked': { preset: 'Soft angled' },
   'plan.no_safe_route': { target: 'Right branch' },
   'plan.heavy_crossing_shorter': { dl_cm: 2.4, zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
   'plan.heavy_crossing': { zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
@@ -324,6 +326,12 @@ describe('feedback templates (§6.4)', () => {
     expect(violationLine({ kind: 'arch_never_reached', presetId: 'stiff_straight', target: 'left_branch' }, 'stiff_straight', n).template).toBe(
       'plan.arch_never_reached',
     );
+    // a kind the contract gains later (cannot_steer) is still explained, never dropped
+    const later = (v: object) => violationLine(v as ConstraintViolation, 'soft_angled', n);
+    expect(later({ kind: 'cannot_steer', edge: 'e_left', takeoffDeg: 73, tipDeg: 45, toleranceDeg: 25 }).text).toBe(
+      "Route blocked: the Soft angled wire can't take the route into the Left branch.",
+    );
+    expect(later({ kind: 'something_new' }).text).toBe("Route blocked: the Soft angled wire can't take this route.");
   });
 
   it('plan lines for heavy crossing (shorter or not), dominated, top contributor and best', () => {
