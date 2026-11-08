@@ -7,7 +7,7 @@
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const HERE = import.meta.dirname;
@@ -33,7 +33,13 @@ describe('input folder purity', () => {
   });
 
   it('nothing in the app imports the input folder yet', () => {
+    // resolve each relative import, so a screen's own ./input module (e.g. ui/drive/input.ts) isn't mistaken for this folder
     const outside = files(SRC).filter((f) => !f.startsWith(HERE) && !f.endsWith('.test.ts') && !f.endsWith('.testutil.ts'));
-    for (const f of outside) expect(readFileSync(f, 'utf8'), relative(SRC, f)).not.toMatch(/from ['"][./]*input(\/|['"])/);
+    for (const f of outside) {
+      for (const m of readFileSync(f, 'utf8').matchAll(/from ['"](\.[^'"]+)['"]/g)) {
+        const target = resolve(dirname(f), m[1]!);
+        expect(target === HERE || target.startsWith(HERE + sep), `${relative(SRC, f)} imports ${m[1]}`).toBe(false);
+      }
+    }
   });
 });

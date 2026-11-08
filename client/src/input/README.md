@@ -11,10 +11,10 @@ Everything here is pure logic plus two thin wrappers. Nothing in the app imports
 
 | | |
 | --- | --- |
-| Code | Draft PR #22 (`lane/vaibhav-input`), CI green. Tuned on a real webcam clip. |
+| Code | PR #22 (`lane/vaibhav-input`), synced with main after S5 (contracts v2), CI green. Tuned on a real webcam clip. Merges after the demo, once David lifts the merge freeze (DECISIONS.md, 2026-11-08). |
 | Team request | `team/requests/to-all-from-vaibhav-hands-voice-assist.md` |
-| Aroovee | Yes to all three features, **after the demo** (not before S5; no demo beat uses them). Always-listen is OK, off by default, with the UI showing the live mic and that audio streams to Google. A hint marks the attempt "assisted", shown on Results (A6). |
-| David | Answer pending, plus the CLAUDE.md ownership row for `client/src/input/` and `tests/fixtures/hands/`. On the earlier MediaPipe request: after the demo. |
+| Aroovee | Yes to all three features, **after the demo** (no demo beat uses them). Always-listen is OK, off by default, with the UI showing the live mic and that audio streams to Google. A hint marks the attempt "assisted", shown on Results (A6). |
+| David | **After the demo** (not before S5; S5 was reached on 2026-11-08). He adds the CLAUDE.md ownership row for `client/src/input/` and `tests/fixtures/hands/` when #22 merges, then the pinned `@mediapipe/tasks-vision` dependency, the bundled `hand_landmarker.task` model and its THIRD_PARTY.md entry. |
 | MediaPipe | `@mediapipe/tasks-vision` isn't installed yet. This folder declares the landmark types itself and never imports MediaPipe. |
 | Assistant answers | Already on main (PR #21): `client/src/optimize/assist.ts`, `client/src/score/live.ts`. |
 
@@ -77,7 +77,7 @@ const g = hands.step({ tMs: video.currentTime * 1000, hands: toHandObservations(
 There are two ways to talk:
 
 - **Push-to-talk (default).** The app listens only while the talk control is held. After release, a result still counts for 0.7 s (the end of what was said while held). Then the microphone is cut off and later speech is ignored. Saying "Hey Cathy" first is optional.
-- **Always listen (opt-in; approved by Aroovee, David pending).** The player switches it on and the microphone stays live. **Only speech that starts with "Hey Cathy" runs a command**; everything else is ignored.
+- **Always listen (opt-in; approved by Aroovee and David).** The player switches it on and the microphone stays live. **Only speech that starts with "Hey Cathy" runs a command**; everything else is ignored.
   - "Hey Cathy, zoom in" works in one go.
   - "Hey Cathy" alone arms it for the next phrase.
   - It restarts after each phrase until switched off, and stops for good if the microphone is blocked.
@@ -90,7 +90,7 @@ The wake word is "Hey Cathy", with a C. The app's name stays Catherine. The matc
 | `zoom_in` | "zoom in", "closer", … | Zoom the Plan/Drive view in |
 | `zoom_out` | "zoom out", "wider", … | Zoom out |
 | `assist_best_next` | "best next artery", "where next", … | Plan: `planAssistLine(planAssist(…), case, target, 'best')`; highlight `best.edge`. Drive: `driveAssist(…).lines[0]` |
-| `assist_options` | "what are my options", … | Plan: `planAssistLine(…, 'options')`; highlight every `options[i].edge` and make them pinchable |
+| `assist_options` | "what are my options", … | Plan: `planAssistLine(…, 'options')`; highlight every steerable `options[i].edge` and make them pinchable |
 | `assist_review` | "how am I doing", "any mistakes", … | Drive: `driveAssist(input).lines` (the drive so far) |
 
 ```ts
@@ -118,6 +118,8 @@ Use one recogniser per mode, or stop one mode before starting the other. Disable
 ## Assistant answers and "assisted"
 
 `planAssist`, `planAssistLine` and `driveAssist` come from the engine (`client/src/optimize/assist.ts`, `client/src/score/live.ts`, on main). No AI model computes any number. Count each hint in `ProgressRecord.hintsUsed`. Per Aroovee's answer, an attempt with `hintsUsed > 0` is "assisted", and Results (A6) shows it. Progression still ignores the count.
+
+Pass the case's graph so Cathy only names routes the wire can steer: `planAssist({ …, graph: buildGraph(case) })`. Each option then carries `steerable`, `best` is never one the wire can't steer, and when nothing for that entry and wire is drivable the answer is "No safe way on from here with this wire." With contracts v2 the optimizer already drops unsteerable routes (`cannot_steer`), so this is a double check. Highlight only options with `steerable !== false`.
 
 ## Tests
 
