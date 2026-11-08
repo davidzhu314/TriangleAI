@@ -132,6 +132,58 @@
 }
 
 /* ---------------------------------------------------------------- controls legend */
+/* Hands and "Hey Cathy" help, under the keys (text from client/src/input/help.ts). */
+.help-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-rule);
+}
+
+.help-heading {
+  margin: 0;
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.help-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.help-what {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--color-heading);
+}
+
+.help-how {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.help-tag {
+  padding: 0 var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-field);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+}
+
 .control-row {
   display: flex;
   align-items: center;

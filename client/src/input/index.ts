@@ -16,3 +16,4 @@ export { matchCommand, type SpeechAlternative, type VoiceMatch } from './voice/m
 export type { Recognizer } from './voice/recognizer';
 export { createBrowserRecognizer } from './voice/speech';
 export { createWakeListener, FATAL_SPEECH_ERRORS, startsWithWake, type WakeListener, type WakeState } from './voice/wake';
+export { GESTURE_HELP, VOICE_HELP, type GestureHelp, type VoiceHelp } from './help';

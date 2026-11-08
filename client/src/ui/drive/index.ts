@@ -25,7 +25,7 @@ import './drive.css';
 import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 import { wireChoice, wireUrl, type WireChoice } from './wire-switch';
-import { mergeControl } from '../../input';
+import { GESTURE_HELP, mergeControl, VOICE_HELP, type VoiceAction } from '../../input';
 import { createHandsVoice } from '../hands-voice';
 
 type SelectModule = { selectWireSource?: (c: LoadedCase) => Promise<WireSource> };
@@ -208,6 +208,27 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const controlRow = (icon: IconName, label: string, ...keys: HTMLButtonElement[]): HTMLElement =>
     h('div', { class: 'control-row' }, labelled(icon, label), h('div', { class: 'control-keys' }, keys));
+  // The voice commands Drive answers (also the hands-free hookup's list below), and the help for both hands and
+  // voice, from client/src/input/help.ts so the card can't drift from what the commands and gestures do.
+  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'assist_check', 'undo'];
+  const helpRow = (what: string, how: string, tag?: string): HTMLElement =>
+    h('li', { class: 'help-row' }, h('span', { class: 'help-what' }, what, tag ? h('span', { class: 'help-tag' }, tag) : null), h('span', { class: 'help-how' }, how));
+  const handsHelp = h(
+    'div',
+    { class: 'help-group', 'data-testid': 'help-hands' },
+    h('p', { class: 'help-heading' }, 'Hands'),
+    h('ul', { class: 'help-list' }, ...GESTURE_HELP.map((g) => helpRow(`${g.name}: ${g.does}`, g.how, g.where === 'plan' ? 'Plan' : undefined))),
+    h('p', { class: 'hud-note' }, 'Turn on Hands above. Either hand works, and both at once.'),
+  );
+  const planOnly = (Object.keys(VOICE_HELP) as VoiceAction[]).filter((a) => !driveVoice.includes(a));
+  const voiceHelp = h(
+    'div',
+    { class: 'help-group', 'data-testid': 'help-voice' },
+    h('p', { class: 'help-heading' }, '“Hey Cathy, …”'),
+    h('ul', { class: 'help-list' }, ...driveVoice.map((a) => helpRow(`“${VOICE_HELP[a].say}”`, VOICE_HELP[a].does, a === 'undo' ? 'Plan' : undefined))),
+    planOnly.length ? h('p', { class: 'hud-note' }, `On Plan, also: ${planOnly.map((a) => `“${VOICE_HELP[a].say}”`).join(', ')}.`) : null,
+    h('p', { class: 'hud-note' }, 'Turn on Voice above, then start with “Hey Cathy”.'),
+  );
   const controls = h(
     'section',
     { class: 'hud-card hud-controls', 'aria-label': 'Controls' },
@@ -217,6 +238,8 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     controlRow('fluoro', 'Hold for fluoro', keyButton('Space', 'Hold for fluoro', 'fluoro')),
     controlRow('contrast-puff', 'Contrast puff', keyButton('C', 'Contrast puff', 'puff')),
     h('p', { class: 'hud-note' }, 'Hold a key, or press and hold its button. Gamepad: sticks push and rotate, right trigger for fluoro, A for contrast.'),
+    handsHelp,
+    voiceHelp,
   );
 
   // ---- top: view label, view switch, banner
@@ -275,7 +298,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'assist_check', 'undo'],
+    actions: driveVoice,
     onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
     onVoice: async (a) => {
       if (a === 'hide_labels' || a === 'show_labels') {
