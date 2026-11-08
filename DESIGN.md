@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: "ThreadSim"
-description: "A quiet instrument for a decision trainer. Measured from a reference site on 2026-11-07, then made ThreadSim's. Inspired by it, not affiliated with it."
+name: "Cathy"
+description: "A quiet instrument for a decision trainer. Measured from a reference site on 2026-11-07, then made Cathy's. Inspired by it, not affiliated with it."
 colors:
   background: "#f9f7f6"
   text: "#2e2d2dcc"
@@ -118,7 +118,9 @@ components:
     typography: "{typography.body}"
 ---
 
-# ThreadSim design system
+# Cathy design system
+
+**Name (2026-11-08):** the product is **Cathy** everywhere a person reads it (the logo text in the sidebar and phone menu, the browser tab, page titles "Plan · Cathy"). It was ThreadSim. Internal identifiers keep the old prefix so saved progress and case packages still work: storage keys (`threadsim.plans.v1` …), the case format id `threadsim.case/1`, event names and test hooks. The voice assistant is also Cathy ("Hey Cathy, …"): one name for the trainer and its voice.
 
 Read this before any UI work. Values live in `client/src/styles/tokens.css`; see them all in `client/src/styles/palette.html`. The YAML above is generated from the measured roles; the CSS tokens are the source of truth for code.
 
@@ -248,7 +250,7 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 
 ### Don't
 
-- Don't invent numbers. **This overrides Taste's app rules**, which ask for believable sample data: ThreadSim never hard-codes realistic-looking numbers, clinical or otherwise.
+- Don't invent numbers. **This overrides Taste's app rules**, which ask for believable sample data: Cathy never hard-codes realistic-looking numbers, clinical or otherwise.
 - Don't use teal on buttons, nav fills, card fills or headings. A brand fill everywhere is exactly what the colour budget forbids.
 - No gradients, glass, glows, emoji, eyebrow labels, 01/02/03 numbering, resting shadows, zebra rows, uppercase table headers, icons in tinted squares, or sparklines on figures.
 - No rainbow charts: one hue per chart, then neutrals. Compare's route colours are the one exception, required by spec §7.3, and each also has a pattern and label.

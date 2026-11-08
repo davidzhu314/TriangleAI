@@ -1,4 +1,4 @@
-// ThreadSim app entry (Aroovee). Tokens, then the theme, then the screens' styles; the router picks a screen.
+// Cathy app entry (Aroovee). Tokens, then the theme, then the screens' styles; the router picks a screen.
 import './styles/tokens.css';
 import './styles/theme.css';
 import './ui/ui.css';
