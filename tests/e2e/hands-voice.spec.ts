@@ -201,6 +201,53 @@ test('a recorded real hand drives the wire on Drive through the gesture machine'
   await expect.poll(cm).not.toBe(before); // the hand moved the wire
 });
 
+for (const wire of ['rail', 'chain'] as const) {
+  test(`${wire}: the gun pose pushes the wire (barrel straight), pulls it back (barrel curled), and stops when the camera does`, async ({ page }) => {
+    await page.addInitScript(() =>
+      sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
+    );
+    await page.goto(wire === 'chain' ? '/?wire=chain#/case/fixture-y/drive' : '/#/case/fixture-y/drive');
+    await expect(page.getByTestId('drive-mode')).toHaveText(new RegExp(`${wire} mode$`));
+    const view = page.locator('.drive-view');
+    const distance = page.getByTestId('hud-distance');
+    await expect(distance).not.toContainText('—');
+    const cm = async (): Promise<number> => Number((await distance.innerText()).replace(/[^0-9.]/g, ''));
+
+    // Frames from the camera as a webcam sends them (raw, un-mirrored), paced in real time in the page, so the wire
+    // runs while the hand holds the pose. No key is pressed in this test.
+    let t = 0;
+    const hold = async (curl: number, ms: number): Promise<void> => {
+      const frames = Array.from({ length: Math.round(ms / synth.FRAME_MS) }, () => synth.frame((t += synth.FRAME_MS), synth.gun(curl, 0, { cameraFrame: true })));
+      await page.evaluate(async (fs) => {
+        for (const f of fs) {
+          window.__threadsimHands!.feed(f as never);
+          await new Promise((r) => setTimeout(r, 1000 / 30));
+        }
+      }, frames);
+    };
+
+    const start = await cm();
+    await hold(0, 1500); // barrel straight: push
+    await expect(view).toHaveAttribute('data-hands', 'gun');
+    await expect(view).toHaveAttribute('data-hands-push', 'push');
+    await expect(page.getByTestId('hands-status')).toContainText('Pushing.');
+    const pushed = await cm();
+    expect(pushed).toBeLessThan(start - 0.5); // the wire went in: nearer the target
+
+    await hold(0.85, 1500); // barrel curled: pull
+    await expect(view).toHaveAttribute('data-hands-push', 'pull');
+    await expect(page.getByTestId('hands-status')).toContainText('Pulling.');
+    const pulled = await cm();
+    expect(pulled).toBeGreaterThan(pushed + 0.3); // the wire came back
+
+    // The camera stops sending frames mid-pull: within the stale window the wire stops, it doesn't pull on.
+    await page.waitForTimeout(800);
+    const stopped = await cm();
+    await page.waitForTimeout(800);
+    expect(await cm()).toBe(stopped);
+  });
+}
+
 test('pointing shows the pointer dot, and pinches pass through as picks on Plan', async ({ page }) => {
   await page.goto('/#/case/type-iii/plan');
   await expect(page.locator('.plan-view')).toHaveAttribute('data-scene', 'ready');

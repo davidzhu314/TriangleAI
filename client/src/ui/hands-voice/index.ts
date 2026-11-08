@@ -26,10 +26,19 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
   none: 'Show your hand to the camera.',
   lost: 'Hand lost. Show it again.',
-  gun: 'Gun pose: aim to push or pull, twist to rotate.',
+  gun: 'Gun pose: barrel straight pushes, half-curled holds, curled pulls; twist to rotate.',
   point: 'Pointing: pinch to pick the branch under the dot.',
   pan: 'Turning: move your hand to turn the case; two hands moving opposite ways roll it.',
 };
+
+/** What the gun pose is doing to the wire this frame, shown after the pose's words. */
+const pushWords = (push: number): string => (push > 0 ? 'Pushing.' : push < 0 ? 'Pulling.' : 'Holding.');
+
+/**
+ * A gesture older than this, with no newer camera frame, counts as no hand: if the camera or the tracker stalls
+ * mid-push, the wire stops instead of pushing on. A webcam runs at about 20 fps (50 ms a frame).
+ */
+const STALE_MS = 400;
 
 /** Words for the wake listener's errors (Web Speech codes); anything else is said generically. */
 const VOICE_ERROR_WORDS: Readonly<Record<string, string>> = {
@@ -78,6 +87,7 @@ declare global {
 export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: HandsVoiceOptions): HandsVoice {
   let tracker: HandTracker | null = null;
   let latest: GestureOutput | null = null;
+  let latestAt = 0;
   let starting = false;
 
   // ---- floating panel: self-view, status, notices, caption
@@ -93,8 +103,10 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
 
   const show = (g: GestureOutput | null): void => {
     latest = g;
-    status.textContent = g ? STATUS_WORDS[g.status] : '';
+    latestAt = performance.now();
+    status.textContent = g ? (g.control ? `${pushWords(g.control.push)} ${STATUS_WORDS[g.status]}` : STATUS_WORDS[g.status]) : '';
     host.dataset['hands'] = g ? g.status : 'off';
+    host.dataset['handsPush'] = g?.control ? (g.control.push > 0 ? 'push' : g.control.push < 0 ? 'pull' : 'hold') : 'none';
     if (g?.pointer) {
       pointer.hidden = false;
       pointer.style.setProperty('--hv-x', `${g.pointer.x * 100}%`);
@@ -182,7 +194,7 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
   const controls = h('div', { class: 'hv-controls', role: 'group', 'aria-label': 'Hands-free input' }, handsButton, voiceButton);
   return {
     controls,
-    gesture: () => latest,
+    gesture: () => (latest && performance.now() - latestAt <= STALE_MS ? latest : null),
     dispose() {
       tracker?.stop();
       tracker = null;
