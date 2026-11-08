@@ -1,7 +1,7 @@
 # client/src/input: hands-free and voice input (owner: Vaibhav, pending the CLAUDE.md row)
 
 Optional controls for Catherine:
-- **MediaPipe hand gestures, with either or both hands:** push, pull and rotate the wire; point and pinch to pick a branch; a fist (thumb tucked) to grab and drag the view.
+- **MediaPipe hand gestures, with either or both hands:** push, pull and rotate the wire; point and pinch to pick a branch (dominant hand); pinch with the other hand and move it to turn the view, twist the pinch to roll (a fist also works).
 - **Voice commands:** once voice is on it's always listening, and a command runs only after "Hey Cathy". There's no push-to-talk.
 - **The engine's assistant answers**, which voice asks for.
 
@@ -46,7 +46,8 @@ Everything here is pure logic plus two thin wrappers. Only the screens (`client/
 | Twist the hand (clockwise, as you see it, is positive) | Rotate; ±10° dead zone, full rate at ±45° |
 | **Point pose:** index out; middle, ring and pinky folded (thumb free) | Moves the pointer |
 | Pinch: thumb tip to index tip while pointing | Selects the hovered branch, **once per pinch**; open the thumb before the next |
-| **Pan pose ("grab and drag"):** a fist, all four fingers curled, thumb tucked | Pans the view like a trackpad (and turns it in 3D): the hand's movement × 1.5, with a small dead zone. Told apart from the gun pulling (also curled) by the thumb: tucked for the pan, up for the gun. Untuned on a real hand yet |
+| **Pinch-grab (non-dominant hand):** thumb tip to index tip, held; the other fingers don't matter | Grabs the view: moving the pinch point pans (× 1.5), twisting the hand rolls (`pan.roll`, half-turns), opening the pinch lets go after the grace period. The dominant hand's pinch stays a select while pointing. |
+| **Pan pose ("grab and drag"), the fallback:** a fist, all four fingers curled, thumb tucked | Pans the view like a trackpad (and turns it in 3D): the hand's movement × 1.5, with a small dead zone. Told apart from the gun pulling (also curled) by the thumb: tucked for the pan, up for the gun. Untuned on a real hand yet |
 
 **Both hands at once.** Each hand has its own machine (`createHandMachine`), so either hand can drive, point or pan, and they can do different things together: one hand drives while the other pans or points. `GestureOutput` combines them: `control` and `pointer` come from the dominant hand when it's engaged, else the other hand; `select` fires if either hand pinches; `pan` is the mean of the hands panning; `status` follows the dominant hand when it's engaged. Each hand's own output is in `g.hands.Left` and `g.hands.Right`. `dominant` only decides who wins when both hands do the same thing.
 

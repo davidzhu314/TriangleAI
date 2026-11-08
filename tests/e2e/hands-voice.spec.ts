@@ -429,6 +429,34 @@ test('"Hey Cathy, hide" takes the vessel names away, "show labels" brings them b
   await expect(page.getByTestId('voice-answer')).toHaveText('No vessel names on this case.');
 });
 
+test('a pinch with the non-dominant hand grabs the 3D view: moving it turns the case, twisting it rolls', async ({ page }) => {
+  // The left hand (non-dominant), as a webcam reports it: thumb tip to index tip.
+  const pinchHand = (x: number, rollDeg = 0) => synth.syntheticHand({ handedness: 'Left', thumb: { pinch: 0.1 }, pos: { x, y: 0.5 }, rollDeg, cameraFrame: true });
+  let t = 0;
+  const feed = async (hands: unknown[]): Promise<void> => {
+    for (const h of hands) await page.evaluate((f) => window.__threadsimHands!.feed(f as never), synth.frame((t += synth.FRAME_MS), h as never));
+  };
+  await page.goto('/#/case/type-iii/plan');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await page.locator('button[data-view-kind="3d"]').first().click();
+  const canvas = view.locator('canvas');
+  await expect(canvas).not.toHaveAttribute('data-turned', 'true');
+
+  // Hold the pinch still to grab, then move it.
+  await feed(Array.from({ length: 45 }, (_, i) => pinchHand(0.4 + (i > 12 ? (i - 12) * 0.008 : 0))));
+  await expect(view).toHaveAttribute('data-hands', 'pan');
+  await expect(page.getByTestId('hands-status')).toContainText('pinch');
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+  await page.getByTestId('reset-view').first().click();
+  await expect(canvas).toHaveAttribute('data-turned', 'false');
+
+  // Keep the pinch where it is and twist it: a roll, with no pan.
+  await feed(Array.from({ length: 45 }, (_, i) => pinchHand(0.5, i > 12 ? (i - 12) * 2 : 0)));
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+  expect(await page.evaluate(() => document.querySelector('.plan-view')?.getAttribute('data-hands'))).toBe('pan');
+});
+
 test('every 3D view has a Reset view button, and it brings the view back', async ({ page }) => {
   await page.addInitScript(() =>
     sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
