@@ -49,6 +49,14 @@ export const FEEDBACK_TEMPLATES = {
   'assist.no_continuation': 'No route to the {target} continues from here; undo the last branch.',
   'assist.no_safe_route': 'No safe way on from here with this wire.',
   'assist.cannot_steer': "This wire can't steer into any of the ways on from here; try another wire or entry.",
+  'assist.wrong_branch_ahead': 'Careful: the tip will go into the {wrong_vessel}, not the {vessel}. Rotate {direction}.',
+  'assist.wrong_branch_ahead_no_roll': 'Careful: the tip will go into the {wrong_vessel}, not the {vessel}.',
+  'assist.on_plan': "You're on the plan; next, the {vessel}.",
+  'assist.on_plan_last': "You're on the plan; the {target} is ahead.",
+  'assist.mark_cannot_steer': "The wire can't steer into the {vessel} on your route.",
+  'assist.mark_off_frontier': 'Your route leaves the best routes at the {vessel}.',
+  'assist.mark_heavy_zone': 'Your route through the {vessel} crosses {zone}.',
+  'assist.no_answer': "I can only answer from this case's results. Try asking where next, or how you're doing.",
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;
