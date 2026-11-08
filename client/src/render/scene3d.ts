@@ -32,6 +32,12 @@ export interface RouteStyle {
   heavy?: boolean;
   /** An opacity token. */
   opacityToken?: string;
+  /** Tube radius in the scene's line unit, instead of the heavy/normal width (a device drawn to its own size). */
+  width?: number;
+  /** Round off the far end with a cap of the tube's radius (a device's tip). */
+  cap?: boolean;
+  /** Draw order among overlays; higher draws on top (a translucent sleeve over the wire inside it). */
+  order?: number;
 }
 
 export interface CaseScene {
@@ -245,11 +251,20 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     const opacity = style.opacityToken ? tokenNumber(style.opacityToken) : 1;
     const transparent = opacity < 1;
     if (!style.dashToken || token(style.dashToken) === 'none') {
-      const r = unit * (style.heavy ? 1.6 : 1);
-      const m = new THREE.Mesh(new THREE.TubeGeometry(curveOf(points), Math.max(16, points.length * 2), r, 8, false), new THREE.MeshBasicMaterial({ color: color(style.colorToken), transparent, opacity, depthTest: false }));
-      m.renderOrder = 2;
+      const r = unit * (style.width ?? (style.heavy ? 1.6 : 1));
+      const mat = new THREE.MeshBasicMaterial({ color: color(style.colorToken), transparent, opacity, depthTest: false });
+      const m = new THREE.Mesh(new THREE.TubeGeometry(curveOf(points), Math.max(16, points.length * 2), r, 8, false), mat);
+      m.renderOrder = style.order ?? 2;
       m.name = name;
-      return m;
+      if (!style.cap) return m;
+      const g = new THREE.Group();
+      g.name = name;
+      const end = points[points.length - 1]!;
+      const tipCap = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), mat);
+      tipCap.position.set(end[0], end[1], end[2]);
+      tipCap.renderOrder = m.renderOrder;
+      g.add(m, tipCap);
+      return g;
     }
     // Dashed: one tube per dash, the dash pattern from its token (SVG units) scaled to the case.
     const pattern = token(style.dashToken).split(/\s+/).map(Number).filter((n) => n > 0);

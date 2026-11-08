@@ -11,6 +11,10 @@ Where: `client/src/render/drive-view.ts`, `client/src/render/scene3d.ts` (yours)
 Needed by: before chain mode is shown; not blocking rail.
 Meanwhile: nothing; rail is unaffected.
 
+## Note from David (2026-11-08)
+
+Partly done by David, at his own request, in `lane/david-tip-render`: the ball at the tip is gone, the wire is thinner with a rounded end so the shaped bend shows, and the catheter is drawn as a sleeve. A separate direction cue or roll dial is still yours to decide.
+
 ## Answer
 
 Aroovee: <one line>
