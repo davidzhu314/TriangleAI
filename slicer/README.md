@@ -36,13 +36,29 @@ The same three steps, with `s1336` or `s0727` in place of `s1404`, and `case-met
 ## Body context: `context.glb` for the real CT cases
 
 ```sh
-python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context   # vertebrae C7-L5, ribs, sternum, heart
+# Vertebrae C7-L5, ribs, sternum, heart, and the major veins (a class missing for the subject is skipped and named).
+python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context
 "$SLICER" --no-main-window --no-splash --python-script slicer/export_context.py -- \
   --masks /tmp/ts-s1404-context --segmentation slicer/cases/ts-s1404-cta/context.seg.nrrd \
-  --out client/public/cases/ts-s1404-cta/context.glb
+  --veins slicer/cases/ts-s1404-cta/veins.seg.nrrd --out client/public/cases/ts-s1404-cta/context.glb
 ```
 
-The first two arguments build the committed `context.seg.nrrd` (segments `bone` and `heart`). Leave out `--masks` to export again from it; the output is byte-identical. The GLB is in mm and RAS, the frame of `vessels.glb`. Nodes `bone` (34k triangles) and `heart` (8k), with extras `{kind: "context", label}`, about 0.75 MB. It is faint background only: no file of the case package names it, and the loader never reads it.
+With `--masks`, this builds the committed `context.seg.nrrd` (segments `bone` and `heart`) and `veins.seg.nrrd` (one segment per vein). Add `--veins-only` to build just `veins.seg.nrrd` and keep `context.seg.nrrd` as committed (how the veins were added). Leave out `--masks` to export again from the committed segmentations; the output is byte-identical.
+
+The GLB is in mm and RAS, the frame of `vessels.glb`. It holds these nodes, about 1.1 MB in all:
+
+| Node | Triangles | Extras |
+| --- | --- | --- |
+| `bone` | 34k | `{kind: "context", label}` |
+| `heart` | 8k | `{kind: "context", label}` |
+| `inferior_vena_cava` | 6k | `{kind: "vein", label}` |
+| `superior_vena_cava` | 2.5k | `{kind: "vein", label}` |
+| `l_iliac_vein`, `r_iliac_vein` | 3k each | `{kind: "vein", label}` |
+| `l_brachiocephalic_vein`, `r_brachiocephalic_vein` | 2k each | `{kind: "vein", label}` |
+
+The veins come from TotalSegmentator classes `inferior_vena_cava`, `superior_vena_cava`, `iliac_vena_left/right` and `brachiocephalic_vein_left/right`. All six are present for s1404, s1336 and s0727. Because the veins are a separate segmentation, `bone` and `heart` export exactly as before.
+
+It is faint background only: no file of the case package names it, and the loader never reads it.
 
 ## Inputs for any case
 
