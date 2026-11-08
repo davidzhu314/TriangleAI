@@ -125,6 +125,11 @@ export function createAnatomyControls({ scene, config, host, onResetCamera }: An
   element.append(toggle, panel);
 
   const open = (on: boolean): void => {
+    // Open toward the side of the view with room: the toolbar wraps on narrow views, so the button can sit at
+    // either edge, and a panel hanging outside the view would land under the screen's own panels.
+    const b = toggle.getBoundingClientRect();
+    const v = host.getBoundingClientRect();
+    panel.dataset['align'] = b.left - v.left < v.right - b.right ? 'left' : 'right';
     panel.hidden = !on;
     toggle.setAttribute('aria-expanded', String(on));
   };
