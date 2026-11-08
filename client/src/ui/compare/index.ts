@@ -103,7 +103,7 @@ function draw(sc: Screen): void {
     liveHands = createHandsVoice({
       host: created.element,
       actions: ['zoom_in', 'zoom_out', 'undo'],
-      onPan: (dx, dy) => created.pan(dx, dy),
+      onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
       onVoice: (a) => (a === 'undo' ? 'Undo works on Plan.' : created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
     });
     created.toolbar.append(liveHands.controls);

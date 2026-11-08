@@ -259,7 +259,7 @@ function draw(sc: Screen): void {
     liveHands = createHandsVoice({
       host: created.element,
       actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_options', 'undo'],
-      onPan: (dx, dy) => created.pan(dx, dy),
+      onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
       onVoice: (a) => voiceNow(a),
       onGesture: (g) => {
         if (!g?.select || !g.pointer) return;
