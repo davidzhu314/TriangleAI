@@ -3,8 +3,9 @@
  * a Vite dev server started here with client/public as its public folder. Saved drives are seeded from Vaibhav's
  * golden scoring logs, and every expected value is read from the golden's committed result, never typed in.
  *
- * The click-through drives fixture-y with Vaibhav's RailWireSource injected where the app passes select.ts,
- * because select.ts is not on main: the plain app build can't drive yet (see the A6 handoff).
+ * The click-through drives fixture-y with Vaibhav's RailWireSource on a manual clock with its autopilot, injected
+ * where the app passes select.ts, so the drive is the same on every run. The demo test (a8-demo.spec.ts) drives
+ * the production build through select.ts with the keys.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

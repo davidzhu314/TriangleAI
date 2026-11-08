@@ -10,6 +10,7 @@ import { renderLibrary } from './library';
 import { disposePlanView, renderPlan } from './plan';
 import { renderResults } from './results';
 import { parseRoute } from './router';
+import { startTutorial, tutorialScreen } from './tutorial';
 
 export interface AppOptions {
   getWireSource?: WireFactory;
@@ -30,8 +31,12 @@ export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource
     disposeDrive();
     const r = parseRoute(location.hash);
     const done = r.name === 'library' ? renderLibrary(root) : screens[r.name](r.key);
-    void done.then(() => window.scrollTo(0, 0));
+    void done.then(() => {
+      window.scrollTo(0, 0);
+      tutorialScreen(r);
+    });
   };
+  startTutorial(root);
   window.addEventListener('hashchange', route);
   route();
 }
