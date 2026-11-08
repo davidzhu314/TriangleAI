@@ -9,8 +9,10 @@ describe('matchCommand', () => {
   it('matches every phrasing, with and without each wake variant', () => {
     const wakes = ['', ...WAKE_NAMES.map((n) => `${n} `), ...WAKE_LEADS.flatMap((l) => WAKE_NAMES.map((n) => `${l} ${n} `))];
     for (const action of VOICE_ACTIONS) {
+      // zoom_to's phrases only start the command: they need an artery after them (vessel-target.test.ts)
+      const tail = action === 'zoom_to' ? ' the aorta' : '';
       for (const p of VOICE_COMMANDS[action]) {
-        for (const w of wakes) expect(matchCommand(say(`${w}${p}`)).action, `"${w}${p}"`).toBe(action);
+        for (const w of wakes) expect(matchCommand(say(`${w}${p}${tail}`)).action, `"${w}${p}${tail}"`).toBe(action);
       }
     }
   });

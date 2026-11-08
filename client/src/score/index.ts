@@ -16,7 +16,7 @@ export { applyFluoroBudget, starsFor } from './stars';
 export type { ForceReference } from './reference';
 export { LOW_TORTUOSITY_MAX } from './constants';
 export { ILLUSTRATIVE_CONSTANTS, type IllustrativeConstant } from './illustrative';
-export { replayTimeline, type ReplayMarker, type ReplayTimeline } from './replay';
+export { MISTAKE_KINDS, mistakeMarkers, replayTimeline, type ReplayMarker, type ReplayTimeline } from './replay';
 export { driveAssist, driveCheckLine, MAX_ASSIST_LINES, noAnswerLine, planAssistLine, planCheckLine, type DriveAssist } from './live';
 export { driveWarning, warningLine, WARN_AHEAD_M, type DriveWarning } from './warn';
 export { planMarkLine, planMarks, type PlanMark, type PlanMarksInput, type PlanMarkWhy } from './plan-marks';

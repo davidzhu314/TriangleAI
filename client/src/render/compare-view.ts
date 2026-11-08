@@ -44,6 +44,8 @@ export interface CompareView {
   /** True when this case's anatomy is its own body context, which has no vessel names. */
   bodyContext(): boolean;
   /** Zoom the 3D view; false in the flat view. */
+  /** Frame these edges in the 3D view ("Hey Cathy, zoom into …"); false in the flat view. */
+  zoomTo(edgeIds: readonly string[]): boolean;
   zoom(factor: number): boolean;
   update(state: CompareViewState): void;
   dispose(): void;
@@ -84,6 +86,11 @@ export function createCompareView(c: LoadedCase, anatomy?: Promise<AnatomyConfig
       return true;
     },
     bodyContext: () => dual.anatomy()?.context === true,
+    zoomTo(edgeIds) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      return scene.frameEdges(edgeIds);
+    },
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;

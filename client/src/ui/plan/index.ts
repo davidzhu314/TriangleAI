@@ -11,8 +11,8 @@ import { planAssistLine } from '../../score';
 import { planCheckLine } from '../../score/live';
 import { planMarks } from '../../score/plan-marks';
 import { measureRoute } from '../../optimize/measure-route';
-import type { VoiceAction } from '../../input';
-import { createHandsVoice, type HandsVoice } from '../hands-voice';
+import type { VoiceAction, VoiceMatch } from '../../input';
+import { createHandsVoice, zoomToAnswer, type HandsVoice } from '../hands-voice';
 import { createPlanView, type PlanView } from '../../render/plan-view';
 import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
@@ -47,7 +47,7 @@ let panelLines: string[] = [];
 /** Hands-free input for the live view: kept and disposed with it. */
 let liveHands: HandsVoice | null = null;
 /** The current route for voice answers (updated on every redraw, like pickNow). */
-let voiceNow: (action: VoiceAction) => Promise<string | null> = async () => null;
+let voiceNow: (action: VoiceAction, match?: VoiceMatch) => Promise<string | null> = async () => null;
 export function disposePlanView(): void {
   liveHands?.dispose();
   liveHands = null;
@@ -257,7 +257,8 @@ function draw(sc: Screen): void {
     }),
     ...(warnings[0] ? [warnings[0].text] : []),
   ];
-  voiceNow = async (action) => {
+  voiceNow = async (action, match) => {
+    if (action === 'zoom_to') return zoomToAnswer(c, match, (edges) => liveView?.zoomTo(edges) ?? false);
     if (action === 'zoom_in' || action === 'zoom_out') {
       return liveView?.zoom(action === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
     }
@@ -287,9 +288,9 @@ function draw(sc: Screen): void {
     // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'assist_check', 'undo'],
+      actions: ['zoom_in', 'zoom_out', 'zoom_to', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_options', 'assist_check', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
-      onVoice: (a) => voiceNow(a),
+      onVoice: (a, m) => voiceNow(a, m),
       onGesture: (g) => {
         if (!g?.select || !g.pointer) return;
         const node = created.pickAt(g.pointer.x, g.pointer.y);

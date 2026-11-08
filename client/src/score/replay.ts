@@ -8,7 +8,7 @@
  * the `replay.*` feedback templates, so every number in a label is in its `values`.
  */
 
-import { WIRE_EVENT_KINDS, type EventLog, type Vec3, type WireEvent } from '../contracts';
+import { WIRE_EVENT_KINDS, type EventLog, type LoadedCase, type Vec3, type WireEvent } from '../contracts';
 import { buildGraph } from '../optimize/graph';
 import { orientRoute } from '../optimize/measure-route';
 import { joinRoute, type Point3 } from '../optimize/measures';
@@ -102,4 +102,23 @@ export function replayTimeline(input: ScoreInput): ReplayTimeline {
     bestPath: points.map((p) => [p[0], p[1], p[2]] as Vec3),
     markers,
   };
+}
+
+/** The events that count as mistakes on the drive (the route overview's red dots). */
+export const MISTAKE_KINDS: readonly WireEvent['kind'][] = ['wrong_branch', 'prolapse', 'back_out', 'force_spike'];
+
+/**
+ * The drive's mistakes so far, for the route overview: each wrong branch, prolapse, back-out and force spike, in
+ * time order, with the tip where it happened and the same plain line Replay shows. Works on a partial log
+ * (RailWireSource.logSoFar) or a finished one, and needs no optimizer result.
+ */
+export function mistakeMarkers(log: EventLog, c: LoadedCase): ReplayMarker[] {
+  const n = new Names(c);
+  return log.events
+    .filter((e) => MISTAKE_KINDS.includes(e.kind))
+    .sort((a, b) => a.t - b.t)
+    .map((e): ReplayMarker => {
+      const s = log.samples[sampleAt(log, e.t)];
+      return { t: e.t, kind: e.kind, tip: s ? [s.tip[0], s.tip[1], s.tip[2]] : [0, 0, 0], ...label(e, n, log.targetId) };
+    });
 }

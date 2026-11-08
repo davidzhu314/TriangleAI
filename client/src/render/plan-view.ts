@@ -29,6 +29,8 @@ export interface PlanView {
   /** The branch-point node under a point of the view (0..1 of its width and height), in 3D or flat. */
   pickAt(x: number, y: number): string | null;
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
+  /** Frame these edges in the 3D view ("Hey Cathy, zoom into …"); false in the flat view. */
+  zoomTo(edgeIds: readonly string[]): boolean;
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
   pan(dx: number, dy: number, roll?: number): void;
@@ -101,6 +103,11 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks,
       const r = d.svg.getBoundingClientRect();
       const at = document.elementFromPoint(r.left + x * r.width, r.top + y * r.height);
       return at?.closest('[data-node]')?.getAttribute('data-node') ?? null;
+    },
+    zoomTo(edgeIds) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      return scene.frameEdges(edgeIds);
     },
     zoom(factor) {
       const scene = dual.scene();

@@ -47,6 +47,8 @@ export interface DriveView {
   readonly toolbar: HTMLElement | null;
   update(state: DriveViewState): void;
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
+  /** Frame these edges in the 3D view ("Hey Cathy, zoom into …"); false in the flat view. */
+  zoomTo(edgeIds: readonly string[]): boolean;
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
   pan(dx: number, dy: number, roll?: number): void;
@@ -137,6 +139,11 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
       return true;
     },
     bodyContext: () => dual.anatomy()?.context === true,
+    zoomTo(edgeIds) {
+      const scene = dual.scene();
+      if (!scene || dual.kind() !== '3d') return false;
+      return scene.frameEdges(edgeIds);
+    },
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;
