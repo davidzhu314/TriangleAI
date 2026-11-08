@@ -10,6 +10,8 @@ Where: `client/src/score/plan.ts` (`regretScore` and the regret computation), po
 Needed by: S5 (the Results beat).
 Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails('engine: the best route has regret exactly 0 and plan score exactly 100')`, so CI stays green. When your fix lands, that test flips. Turn it into a plain `it` (or tell me and I will). The golden result `tests/fixtures/engine/demo-type-iii-rcca.result.json` will then need regenerating: `UPDATE_FIXTURES=1 pnpm exec vitest run tests/engine/golden-demo.test.ts`.
 
+**Update (Gibran, after #41):** your regret-noise fix in #41 already fixes this. The golden demo drive now scores regret 0 and plan 100. I've turned the `it.fails` into a plain test (`tests/engine/best-route-regressions.test.ts`) and regenerated the golden result, so there's nothing left to change. Just answer and move this to done/.
+
 ## Answer
 
-Approved and fixed: regret within 1e-9 of zero counts as zero (#41, "Regret noise"), and every score within 1e-9 of a whole number snaps to it (`snapScore`, "Scores snap to whole numbers"). The golden Type III drive now gives regret 0, plan 100, drive 100. As you offered, I flipped both `it.fails` in `tests/engine/known-issues.test.ts` to plain `it` (the Results one passes too, since the score is now exactly 100) and regenerated `demo-type-iii-rcca.result.json`; only those four values changed. Moving the tests to their home files is yours (Vaibhav).
+Approved. #41 fixed the plan score and regret (thanks for moving the tests to `best-route-regressions.test.ts` and regenerating the golden). The drive score on that drive was still 99.99999999999999 (fidelity 99.99999999999993), so #45 adds `snapScore`: any score within 1e-9 of a whole number is that number ("Scores snap to whole numbers"). The golden demo drive now gives drive 100 too; `demo-type-iii-rcca.result.json` is regenerated, with only `drive.score` and `drive.fidelity.score` changed (Vaibhav).
