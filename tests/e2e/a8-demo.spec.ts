@@ -12,7 +12,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Clock, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import type { EventLog, Frontier, LoadedCase, Weights } from '../../client/src/contracts';
 import { writeZip } from '../../tools/lib/zip';
@@ -161,8 +161,14 @@ async function keyRecipes(c: LoadedCase, entryId: string, targetId: string, pres
   return windows.map((w) => ({ dir: w.dir, holdMs: w.from === 0 ? 0 : Math.round(((w.from + w.to) / 2) * tickMs) }));
 }
 
-/** Drive to the target with the keys, as the presenter would; off the route, restart and try the next way. */
-async function driveToTarget(recipes: readonly KeyRecipe[]): Promise<void> {
+/**
+ * Drive to the target with the keys, as the presenter would; off the route, restart and try the next way.
+ *
+ * With `clock` (Playwright's fake clock, installed on the page), time is paused while the keys are held and advanced
+ * by the test: the rail ticks on setInterval, and on a loaded machine late intervals make a hold played back in wall
+ * time land a few ticks short of the rotation window (rehearsal 2026-11-07-2). Without it, keys are held in real time.
+ */
+async function driveToTarget(recipes: readonly KeyRecipe[], clock?: Clock): Promise<void> {
   expect(recipes.length, 'the rail model finds a way to drive this route with the keys').toBeGreaterThan(0);
   const banner = page.getByTestId('drive-banner');
   for (const [n, r] of recipes.entries()) {
@@ -171,15 +177,23 @@ async function driveToTarget(recipes: readonly KeyRecipe[]): Promise<void> {
       await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
     }
     await expect(page.getByTestId('hud-distance')).not.toContainText('—'); // the wire has started
+    if (clock) await clock.pauseAt((await page.evaluate(() => Date.now())) + 100);
+    const hold = (ms: number) => (clock ? clock.runFor(ms) : page.waitForTimeout(ms));
     if (r.holdMs > 0) {
       const key = r.dir > 0 ? 'KeyD' : 'KeyA';
       await page.keyboard.down(key);
-      await page.waitForTimeout(r.holdMs);
+      await hold(r.holdMs);
       await page.keyboard.up(key);
     }
     await page.keyboard.down('KeyW');
-    await expect(banner).toContainText(/The wire reached the|Off the planned route|Wall force over the threshold/, { timeout: 90_000 });
+    const done = /The wire reached the|Off the planned route|Wall force over the threshold/;
+    if (clock) {
+      // Push in one-second steps of page time until the banner says how the drive went (90 s at most).
+      for (let s = 0; s < 90 && !done.test(await banner.innerText()); s++) await clock.runFor(1000);
+    }
+    await expect(banner).toContainText(done, { timeout: 90_000 });
     await page.keyboard.up('KeyW');
+    if (clock) await clock.resume();
     if ((await banner.innerText()).includes('The wire reached the')) return;
   }
   throw new Error('no key recipe reached the target');
@@ -349,6 +363,10 @@ test('2:45 Scale: the 3D Slicer-exported ts-s1404-cta case.zip imports, validate
 
 test('fixture-y: Plan → Compare → Drive → Results', async () => {
   test.skip(!!process.env.A8_VIDEO, 'the backup video records the six Type III beats only');
+  // fixture-y has no route the keys drive on W alone (its only frontier target needs a rotation of about 11 ticks'
+  // width), so this drive runs in its own tab on Playwright's fake clock. The Type III beats keep the real clock.
+  page = await context.newPage();
+  await page.clock.install();
   const c = cases.get('fixture-y')!;
   await page.goto(app('#/case/fixture-y/plan'));
   const frontier = (await engine.optimize({ caseId: c.id, targetId: 'left_branch' }, c)) as Frontier;
@@ -360,7 +378,7 @@ test('fixture-y: Plan → Compare → Drive → Results', async () => {
   // This drive needs a timed rotation. The flat view keeps the page light, so key holds keep their timing in the
   // headless browser, where the 3D scene is drawn in software.
   await page.getByRole('button', { name: 'Flat' }).click();
-  await driveToTarget(await keyRecipes(c, best.entryId, 'left_branch', best.presetId, best.edges));
+  await driveToTarget(await keyRecipes(c, best.entryId, 'left_branch', best.presetId, best.edges), page.clock);
   await page.getByTestId('finish-drive').click();
   await expectResults(c, 'fixture-y');
   await neverSay();
