@@ -10,6 +10,7 @@ import type { LoadedCase, Vec3, WireEvent } from '../contracts';
 import { optimize } from '../optimize';
 import { CONTACT_MIN_N, createChainModel, initialChainState, stepChain, tipPose, type ChainControl, type ChainModel, type ChainState } from './physics-chain';
 import { EXPOSURE_UNITS_PER_FRAME, heldImageAge, heldIsStale, initialImaging, stepImaging, type DeviceSnapshot, type ImagingInput, type ImagingState } from './physics-chain-imaging';
+import { autopilot } from './physics-chain-autopilot';
 import { ChainWireSource } from './physics-chain-source';
 
 const DT = 1 / 30;
@@ -53,7 +54,7 @@ function rollTo(m: ChainModel, s: ChainState, theta: number): ChainState {
 const dist = (a: Vec3, b: Vec3): number => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 describe('chain simulation: device', () => {
-  it('stays inside the lumen with every link exactly one spacing long while it is pushed', async () => {
+  it('stays inside the lumen with every link one spacing long (the growing tip link within half a spacing) while it is pushed', async () => {
     const m = await model('low-tort', 'rcca');
     let s = initialChainState(m);
     let worst = 0;
@@ -62,7 +63,11 @@ describe('chain simulation: device', () => {
       for (const x of s.nodes.slice(2)) worst = Math.max(worst, m.lumen.query(x).slack);
     }
     expect(worst, 'furthest outside the wall, m').toBeLessThan(0.001);
-    for (let k = 1; k + 1 < s.nodes.length; k++) expect(dist(s.nodes[k]!, s.nodes[k + 1]!)).toBeCloseTo(m.params.spacingM, 9);
+    const h = m.params.spacingM;
+    for (let k = 0; k + 2 < s.nodes.length; k++) expect(dist(s.nodes[k]!, s.nodes[k + 1]!)).toBeCloseTo(h, 9);
+    const tipLink = dist(s.nodes.at(-2)!, s.nodes.at(-1)!);
+    expect(tipLink).toBeGreaterThanOrEqual(h * 0.5 - 1e-9);
+    expect(tipLink).toBeLessThanOrEqual(h * 1.5 + 1e-9);
     expect(s.s, 'the tip has moved along the plan').toBeGreaterThan(0.05);
   });
 
@@ -87,9 +92,12 @@ describe('chain simulation: device', () => {
 
   it('enters a branch by where its shaped tip points: different rolls take different branches', async () => {
     const m = await model('fixture-y', 'left_branch');
+    // Pull the angled catheter back first, so only the wire's own shape aims it (the catheter's angle would aim it too).
+    const bare = run(m, initialChainState(m), { push: -1, rotate: 0, device: 'catheter' }, 45);
+    expect(bare.inserted.catheter).toBe(0);
     const taken = new Set<string>();
     for (let k = 0; k < 8; k++) {
-      let s = rollTo(m, initialChainState(m), (k * Math.PI) / 4);
+      let s = rollTo(m, bare, (k * Math.PI) / 4);
       for (let i = 0; i < 300; i++) {
         s = stepChain(m, s, { push: 1, rotate: 0, device: 'wire' }, DT).state;
         const q = m.lumen.query(s.nodes.at(-1)!);
@@ -217,5 +225,45 @@ describe('chain simulation: ChainWireSource', () => {
     expect(log.samples.at(-2)!.device).toBe('catheter');
     expect(log.samples.at(-2)!.tangent).toHaveLength(3);
     expect(log.review!.filter((e) => e.kind === 'imaging_interval')).toEqual([expect.objectContaining({ pulse: 'p15', frames: 15 })]);
+  });
+});
+
+describe('chain simulation: drivability', () => {
+  // A scripted driver (physics-chain-autopilot.ts) with the player's controls only (push, pull, roll the wire) must reach
+  // the target on every frontier route of the arch cases it can drive. Type III from the femoral or the left radial
+  // needs the angled catheter to select the vessel, which the driver does not use yet (see the handoff).
+  const drivable: [string, string, (r: { entryId: string }) => boolean][] = [
+    ['low-tort', 'rcca', () => true],
+    ['low-tort', 'lcca', () => true],
+    ['type-iii', 'rcca', (r) => r.entryId === 'rad_r'],
+  ];
+  for (const [id, target, keep] of drivable) {
+    it(`reaches ${target} on ${id} on every ${id === 'low-tort' ? '' : 'right radial '}frontier route`, async () => {
+      if (!cases.has(id)) cases.set(id, await load(id));
+      const c = cases.get(id)!;
+      const f = await optimize({ caseId: c.id, targetId: target }, c);
+      if (f.kind !== 'frontier') throw new Error('no frontier');
+      const routes = f.routes.filter(keep);
+      expect(routes.length).toBeGreaterThan(0);
+      for (const r of routes) {
+        const m = createChainModel(c, r.entryId, target, r.presetId, r.edges);
+        const out = autopilot(m, initialChainState(m), 120);
+        expect(out.reached, `${r.entryId} ${r.presetId}`).toBe(true);
+        expect(out.steps.at(-1)!.riskIndex).toBeLessThan(100);
+      }
+    }, 60_000);
+  }
+
+  it('keeps a plain push gentle: the risk index stays low along a straight vessel', async () => {
+    const m = await model('low-tort', 'rcca');
+    let risk = 0;
+    let s = initialChainState(m);
+    for (let i = 0; i < 30 * 8; i++) {
+      const out = stepChain(m, s, { push: 1, rotate: 0, device: 'wire' }, DT);
+      s = out.state;
+      risk = out.riskIndex;
+    }
+    expect(s.s, 'progress keeps up with the feed').toBeGreaterThan(s.inserted.wire - 0.02);
+    expect(risk).toBeLessThan(20);
   });
 });
