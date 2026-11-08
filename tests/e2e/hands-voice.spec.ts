@@ -123,6 +123,25 @@ test('push-to-talk on Plan: the mic notice while held, the caption, zoom, and Ca
   await expect(page.getByTestId('voice-caption')).toContainText('No command matched');
 });
 
+test('push-to-talk on Drive: Cathy answers from the drive so far (driveAssist on the rail log)', async ({ page }) => {
+  await stubSpeech(page);
+  await page.addInitScript(() =>
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
+  );
+  await page.goto('/#/case/fixture-y/drive');
+  await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
+  await expect(page.getByTestId('hud-distance')).not.toContainText('—');
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(800);
+  await page.keyboard.up('KeyW');
+  await say(page, 'how am I doing');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ How am I doing');
+  await expect(page.getByTestId('voice-answer')).not.toHaveText('Start the drive first.');
+  await expect(page.getByTestId('voice-answer')).not.toBeEmpty();
+  await say(page, 'zoom out');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom out');
+});
+
 test('a recorded real hand drives the wire on Drive through the gesture machine', async ({ page }) => {
   await page.addInitScript(() =>
     sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),

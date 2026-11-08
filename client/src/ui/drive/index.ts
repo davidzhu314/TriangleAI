@@ -8,8 +8,8 @@
  * the screen says driving isn't available yet, and the HUD shows dashes: never a made-up number.
  */
 import type { EventLog, LoadedCase, Route, WireFallback, WireSource, WireState } from '../../contracts';
-import { buildGraph, routeFor, type RouteGraph } from '../../optimize';
-import { ILLUSTRATIVE_CONSTANTS } from '../../score';
+import { buildGraph, defaultWeights, optimize, routeFor, type RouteGraph } from '../../optimize';
+import { driveAssist, ILLUSTRATIVE_CONSTANTS } from '../../score';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
 import { notFound } from '../brief';
@@ -236,10 +236,28 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
   // Hands-free (integration/hands-voice): the hand pushes and rotates through the same frame as the keys, and any
   // key pressed wins (mergeControl); voice zooms. Off until the trainee turns it on.
+  /**
+   * Cathy on Drive: the engine's driveAssist on the drive so far. The rail wire can give its log mid-drive
+   * (logSoFar, Vaibhav); a source that can't means no drive lines. Duck-typed, so this screen still gets its wire
+   * only through select.ts.
+   */
+  const driveLines = async (): Promise<string[] | null> => {
+    const log = (source as { logSoFar?: () => EventLog | null } | null)?.logSoFar?.() ?? null;
+    if (!log) return null;
+    const optimized = await optimize({ caseId: c.id, targetId: plan.targetId }, c);
+    const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+    return driveAssist({ log, optimized, weights, case: c }).lines.map((l) => l.text);
+  };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out'],
-    onVoice: (a) => (view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
+    actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_review'],
+    onVoice: async (a) => {
+      if (a === 'zoom_in' || a === 'zoom_out') return view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+      const lines = await driveLines();
+      if (!lines) return 'Start the drive first.';
+      if (a === 'assist_best_next') return lines[0] ?? null;
+      return lines.join(' ') || null;
+    },
   });
   const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar, hands.controls), notice, banner);
 
