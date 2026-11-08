@@ -1,12 +1,13 @@
 # ThreadSim — rules for every Claude Code session
 
-Three teammates build ThreadSim at the same time, each with their own Claude Code:
+Four teammates build ThreadSim at the same time, each with their own Claude Code:
 
 | Teammate | Lane | Branch | Lane file |
 | --- | --- | --- | --- |
 | Teammate 1 — David | Anatomy, case data, physics; release manager | `lane/david` | `team/lanes/david.md` |
 | Teammate 2 — Vaibhav | Engine: optimizer, rail wire, scoring | `lane/vaibhav` | `team/lanes/vaibhav.md` |
 | Teammate 3 — Aroovee | Design system, screens, rendering, AR | `lane/aroovee` | `team/lanes/aroovee.md` |
+| Teammate 4 — Gibran | Engine verification, data and demo QA | `lane/gibran` | `team/lanes/gibran.md` |
 
 The spec is `docs/ThreadSim_Build_Specification.md`. The plan is `PLAN.md`. The demo script is `team/DEMO.md`. **Precedence:** the spec wins on product behaviour, `PLAN.md` on sequencing and ownership, this file on session rules. Deliberate deviations from the spec are in `DECISIONS.md`.
 
@@ -20,7 +21,7 @@ The spec is `docs/ThreadSim_Build_Specification.md`. The plan is `PLAN.md`. The 
 6. **Finish.** A milestone is done when its acceptance test passes. Then: commit, open a PR from your lane branch to main, write `team/handoffs/<YYYY-MM-DD>-<you>-<milestone>-<slug>.md`, update `team/status/<you>.md`, push, and stop for your human to look at the PR.
 7. **Ambiguity.** Pick the simpler option, add one line to `DECISIONS.md`, continue. Exception: if the simpler option changes a contract, a license boundary or demo scope (cutting physics, AR, a case or a screen), stop and file a request to all instead of deciding alone.
 
-## For the three humans
+## For the four humans
 
 The repo is a message bus only when someone opens a session to read it. Each of you starts a Claude Code session at least once an hour during the build, and right away when a teammate says a handoff or request landed. Mandatory stops for a human look: after D0b, after D1, after A0.
 
@@ -39,9 +40,10 @@ The repo is a message bus only when someone opens a session to read it. Each of 
 | `physics/` (including `physics/cases/`, the CathSim-derived packages), `tools/`, `slicer/`, `tests/fixtures/broken/` | David |
 | `package.json`, `pnpm-lock.yaml`, `vite.config.ts`, `vitest.config.*`, `playwright.config.*`, `.github/` (CI, `CODEOWNERS`), `README.md` structure | David, as release manager |
 | `client/src/optimize/`, `client/src/score/`, `client/src/wire/rail*`, `client/src/wire/mock-source.ts` | Vaibhav |
-| `tests/crosscheck/`, `tests/fixtures/synthetic/`, `tests/fixtures/logs/` | Vaibhav |
+| `tests/fixtures/synthetic/`, `tests/fixtures/logs/` | Vaibhav |
 | `DESIGN.md`, `client/src/styles/`, `client/src/render/`, `client/src/ui/` (including `ui/plan/`, the Plan screen), `client/src/assets/`, `tests/e2e/`, `team/DEMO.md` | Aroovee |
-| `metrics/<lane>/` | Each lane writes only its own (`metrics/david/`, `metrics/vaibhav/`, `metrics/aroovee/`). Commit summaries, not raw high-frequency logs. |
+| `tests/engine/`, `tests/fixtures/engine/`, `tests/crosscheck/`, `team/rehearsal/` | Gibran |
+| `metrics/<lane>/` | Each lane writes only its own (`metrics/david/`, `metrics/vaibhav/`, `metrics/aroovee/`, `metrics/gibran/`). Commit summaries, not raw high-frequency logs. |
 | `DECISIONS.md`, `THIRD_PARTY.md`, `docs/` | Shared, append-only |
 | `tests/fixtures/` root | Nobody. New fixtures go in a subfolder you own. |
 
