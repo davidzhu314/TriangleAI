@@ -266,6 +266,11 @@
   display: none;
 }
 
+.anatomy-panel[data-align='left'] {
+  left: 0;
+  right: auto;
+}
+
 .anatomy-row {
   display: flex;
   align-items: center;
