@@ -1,0 +1,28 @@
+{
+  "description": "Recorded /api/cathy responses for the G5 client tests. Shapes the server function returns: understand → {\"intent\": <action|question|none>}; answer → {\"text\": <line>}. 'error' rows stand for an HTTP failure or offline, 'hang' rows never answer (timeout). None of these came from or go to the real API.",
+  "understand": [
+    { "name": "valid action", "transcript": "is the tip heading the right way", "body": { "intent": "assist_check" } },
+    { "name": "valid question", "transcript": "why is the radial route better", "body": { "intent": "question" } },
+    { "name": "valid none", "transcript": "what's for lunch", "body": { "intent": "none" } },
+    { "name": "unknown action", "transcript": "start the drive", "body": { "intent": "start_drive" } },
+    { "name": "malformed: not an object", "transcript": "zoom please", "body": "zoom_in" },
+    { "name": "malformed: wrong field", "transcript": "zoom please", "body": { "action": "zoom_in" } },
+    { "name": "malformed: intent not a string", "transcript": "zoom please", "body": { "intent": 3 } },
+    { "name": "error", "transcript": "zoom please", "error": "HTTP 502" },
+    { "name": "offline", "transcript": "zoom please", "error": "TypeError: Failed to fetch" },
+    { "name": "timeout", "transcript": "zoom please", "hang": true }
+  ],
+  "answer": [
+    { "name": "valid, grounded", "question": "where should I go next", "body": { "text": "Head for the Right common carotid next; it's on the shortest, gentlest route." } },
+    { "name": "valid, grounded, with numbers", "question": "how long is the best route", "body": { "text": "The best route is 42.8 cm, with an estimated 50 s of fluoro." } },
+    { "name": "ungrounded number", "question": "how long is the best route", "body": { "text": "The best route is about 43 cm." } },
+    { "name": "ungrounded vessel", "question": "where next", "body": { "text": "Go up the right vertebral artery." } },
+    { "name": "never-say claim", "question": "is this the best", "body": { "text": "Yes, this is the optimal route." } },
+    { "name": "too long", "question": "explain", "body": { "text": "The best route from here goes through the Right common carotid, which is the shortest, the gentlest and the one with the least radiation of all the routes this case offers, and it reaches the target without crossing any heavy risk zone at all, so it is a sound choice." } },
+    { "name": "malformed: no text", "question": "where next", "body": { "answer": "Right common carotid" } },
+    { "name": "malformed: text not a string", "question": "where next", "body": { "text": null } },
+    { "name": "error", "question": "where next", "error": "HTTP 500" },
+    { "name": "offline", "question": "where next", "error": "TypeError: Failed to fetch" },
+    { "name": "timeout", "question": "where next", "hang": true }
+  ]
+}
