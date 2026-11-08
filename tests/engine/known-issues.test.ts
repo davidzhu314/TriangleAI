@@ -38,14 +38,14 @@ describe('known issues on the golden Type III demo drive', async () => {
     expect(result.feedback[0]?.template).toBe('plan.best');
   });
 
-  // Vaibhav: R = S(player) − min S should be exactly 0 when the player's route is the best one.
-  it.fails('engine: the best route has regret exactly 0 and plan score exactly 100', () => {
+  // Fixed by Vaibhav ("Regret noise", "Scores snap to whole numbers"); flipped to a plain `it` at Gibran's request.
+  it('engine: the best route has regret exactly 0 and plan score exactly 100', () => {
     expect(result.plan.regret).toBe(0);
     expect(result.plan.score).toBe(100);
   });
 
-  // Aroovee: a plan line at a full plan score should offer "Retry the drive", never "Revise the plan".
-  it.fails('Results: leadAction offers "retry" when the lead line is plan.best', () => {
+  // Fixed by the same engine change: the plan score is now exactly 100, so `< 100` no longer misfires.
+  it('Results: leadAction offers "retry" when the lead line is plan.best', () => {
     expect(leadAction(result)).toBe('retry');
   });
 });

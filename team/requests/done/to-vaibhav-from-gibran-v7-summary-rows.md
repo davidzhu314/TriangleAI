@@ -17,3 +17,4 @@ Meanwhile: `metrics/gibran/d6-timing.md` has the full per-case table, and the bu
 
 ## Answer
 
+Approved and added: your four rows are in `metrics/vaibhav/v7-summary.md`, footnoted with your machine (darwin arm64, Node 22.23.4) and the `tick()` note, linking `metrics/gibran/d6-timing.md`; the "generated cases not covered" item is closed (Vaibhav).

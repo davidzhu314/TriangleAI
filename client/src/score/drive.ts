@@ -17,6 +17,7 @@ import {
   GENTLENESS_FLOOR_NS,
   GENTLENESS_SPAN,
   RADIATION_ZERO_FACTOR,
+  snapScore,
 } from './constants';
 import type { ForceReference } from './reference';
 
@@ -124,7 +125,7 @@ export function meanTipDistanceM(log: EventLog, segments: readonly Segment[]): n
   return sum / log.samples.length;
 }
 
-export const fidelityScore = (meanM: number): number => 100 * (1 - Math.min(1, meanM / FIDELITY_ZERO_M));
+export const fidelityScore = (meanM: number): number => snapScore(100 * (1 - Math.min(1, meanM / FIDELITY_ZERO_M)));
 
 /** 100 at or below the reference, 0 at reference + SPAN × max(reference, floor). */
 export function gentlenessPart(value: number, reference: number, floor: number): number {
@@ -133,14 +134,14 @@ export function gentlenessPart(value: number, reference: number, floor: number):
 }
 
 export function gentlenessScore(peakN: number, cumulativeNs: number, ref: Pick<ForceReference, 'peakForceN' | 'cumulativeForceNs'>): number {
-  return (gentlenessPart(peakN, ref.peakForceN, GENTLENESS_FLOOR_N) + gentlenessPart(cumulativeNs, ref.cumulativeForceNs, GENTLENESS_FLOOR_NS)) / 2;
+  return snapScore((gentlenessPart(peakN, ref.peakForceN, GENTLENESS_FLOOR_N) + gentlenessPart(cumulativeNs, ref.cumulativeForceNs, GENTLENESS_FLOOR_NS)) / 2);
 }
 
 /** 100 within the estimate, 0 at ZERO_FACTOR × the estimate. */
 export function radiationScore(fluoroS: number, estFluoroS: number): number {
   if (fluoroS <= estFluoroS) return 100;
   if (estFluoroS <= 0) return 0;
-  return 100 * (1 - Math.min(1, (fluoroS - estFluoroS) / ((RADIATION_ZERO_FACTOR - 1) * estFluoroS)));
+  return snapScore(100 * (1 - Math.min(1, (fluoroS - estFluoroS) / ((RADIATION_ZERO_FACTOR - 1) * estFluoroS))));
 }
 
 export function errorsScore(wrongBranches: number, prolapses: number, backOuts: number): number {
@@ -197,6 +198,6 @@ export function driveScore(log: EventLog, c: LoadedCase, estFluoroS: number, ref
     prolapses,
     backOuts,
   };
-  const score = fidelity.weight * fidelity.score + gentleness.weight * gentleness.score + radiation.weight * radiation.score + errors.weight * errors.score;
+  const score = snapScore(fidelity.weight * fidelity.score + gentleness.weight * gentleness.score + radiation.weight * radiation.score + errors.weight * errors.score);
   return { score, fidelity, gentleness, radiation, errors, timeS: timeOf(log) };
 }

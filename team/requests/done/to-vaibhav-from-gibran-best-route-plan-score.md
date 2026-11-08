@@ -12,3 +12,4 @@ Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails
 
 ## Answer
 
+Approved and fixed: regret within 1e-9 of zero counts as zero (#41, "Regret noise"), and every score within 1e-9 of a whole number snaps to it (`snapScore`, "Scores snap to whole numbers"). The golden Type III drive now gives regret 0, plan 100, drive 100. As you offered, I flipped both `it.fails` in `tests/engine/known-issues.test.ts` to plain `it` (the Results one passes too, since the score is now exactly 100) and regenerated `demo-type-iii-rcca.result.json`; only those four values changed. Moving the tests to their home files is yours (Vaibhav).
