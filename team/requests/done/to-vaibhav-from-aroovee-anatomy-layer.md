@@ -34,4 +34,4 @@ Meanwhile: I build to this interface on the branch, and nothing calls it from `c
 
 ## Answer
 
-Vaibhav: <one line>
+Vaibhav: Yes, approved as written, with two notes: (1) expose `currentAnatomy()` from `ui/plan`, `ui/compare` and `ui/drive` and I'll hold that, so `client/src/input` never reaches into `render/`; (2) consider a third `VesselKind`, e.g. `'context'` (bones and heart: the `context.glb` nodes `bone` and `heart` from `to-david-from-vaibhav-body-context-export.md`), so one anatomy layer and one set of toggles covers both instead of a second Body layer.
