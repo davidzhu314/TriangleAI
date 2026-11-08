@@ -14,6 +14,7 @@
 import type { LoadedCase } from '../../contracts';
 import { createBrowserRecognizer, createWakeListener, matchCommand, resolveVesselTarget, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
 import { h } from '../dom';
+import { readSettings } from '../settings-store';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
 import './hands-voice.css';
 
@@ -164,8 +165,10 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
 
   // ---- Cathy's box: ask by button, by typing, or by voice; the answer shows here
   const questions = QUESTIONS.filter((a) => actions.includes(a));
+  // Settings: the Hands and Voice buttons are offered only when the trainee keeps them on (read once per screen).
+  const prefs = readSettings();
   const cathyOut = h('div', { class: 'cathy-out', role: 'status', 'aria-live': 'polite', 'data-testid': 'cathy-output' });
-  cathyOut.append(h('p', { class: 'cathy-hint' }, 'Pick a question, type one, or turn Voice on and say “Hey Cathy, …”.'));
+  cathyOut.append(h('p', { class: 'cathy-hint' }, prefs.voice ? 'Pick a question, type one, or turn Voice on and say “Hey Cathy, …”.' : 'Pick a question or type one.'));
   /**
    * Run an action through the screen and show the exchange in the box. With `quiet`, an action that succeeds without
    * words (a zoom by voice) leaves the box as it was.
@@ -319,7 +322,9 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     window.__threadsimHands = { feed };
   }
 
-  const controls = h('div', { class: 'hv-controls', role: 'group', 'aria-label': 'Hands-free input' }, handsButton, voiceButton);
+  handsButton.hidden = !prefs.hands;
+  voiceButton.hidden = !prefs.voice;
+  const controls = h('div', { class: 'hv-controls', role: 'group', 'aria-label': 'Hands-free input', hidden: !prefs.hands && !prefs.voice }, handsButton, voiceButton);
   return {
     controls,
     gesture: () => (latest && performance.now() - latestAt <= STALE_MS ? latest : null),

@@ -3,6 +3,9 @@
  * here, so screens can read tokens without loading the 3D code.
  */
 
+/** Fired on window when the app's theme choice changes (Settings), as well as the system's own change. */
+export const THEME_EVENT = 'threadsim:theme';
+
 /** A token from the page: colours as hex, numbers as numbers, durations in milliseconds. */
 export function token(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();

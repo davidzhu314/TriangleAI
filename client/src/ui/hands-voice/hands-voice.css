@@ -220,3 +220,8 @@ body:has(.drive-stage) .hv-self {
 .cathy-note {
   margin: 0;
 }
+
+/* Settings can turn off both Hands and Voice: then the group takes no room in the toolbar. */
+.hv-controls[hidden] {
+  display: none;
+}

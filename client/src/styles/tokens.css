@@ -7,8 +7,8 @@
   /* Surfaces: frame → sheet → card, three levels at most. */
   --color-background: #f6f5f3;       /* Oxblood & Navy (2026-11-08): a warm off-white ground, short of cream */
   --color-surface: #ffffff;        /* measured: the sheet and cards */
-  --color-surface-sunken: #efebe6;       /* derived: canvas wells, the 3D scene ground, card pictures */
-  --color-surface-active: #e9e4de;       /* selected list row, active nav pill */
+  --color-surface-sunken: #efedea;       /* derived: canvas wells, the 3D scene ground, card pictures */
+  --color-surface-active: #e8e6e3;       /* selected list row, active nav pill */
   --color-surface-inverse: #2e2d2d; /* measured: tooltips */
 
   /* Lines */
@@ -69,7 +69,7 @@
   --dash-route-4: 10 4 2 4;
 
   /* Charts: one hue, then neutrals */
-  --color-chart-1: #0b6a7d;
+  --color-chart-1: #2f5584;
   --color-chart-2: #2e2d2d;
   --color-chart-3: #706e6d;
   --color-grid: #eeebea;
@@ -80,10 +80,10 @@
   --color-scene-vessel: #8f8b89;
   --opacity-scene-vessel: 0.35;
   --color-scene-wire: #1f1e1e;
-  --color-scene-ghost: #0b6a7d;
+  --color-scene-ghost: #2f5584;
   --opacity-scene-ghost: 0.45;
   --color-marker-entry: #2e2d2d;
-  --color-marker-target: #0b6a7d;
+  --color-marker-target: #8e2433;
 
   /* X-ray view (spec §5.5): dark wire, dark silhouette, grey ground. Neutral on purpose. */
   --color-xray-bg: #8a8a8a;
@@ -107,8 +107,8 @@
   --opacity-body-heart: 0.18;
   --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
-  /* Type: Inter, measured. Display sizes over 32px dropped: app titles stay at or under 32. */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Type: DM Sans for the whole app (2026-11-08, Aroovee), self-hosted. Display sizes over 32px dropped: app titles stay at or under 32. */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-size-meta: 12px;       /* labels, meta, axis ticks, pills; nothing smaller */
   --font-size-body: 14px;       /* body, nav, table cells, controls */
   --font-size-lead: 16px;       /* card titles, section headings, phone data */
@@ -174,10 +174,10 @@
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark theme: follows the system setting. The reference has no dark mode to measure, so these are ours: true neutral
+/* Dark theme: follows the system setting unless Settings picks Light or Dark. The reference has no dark mode to measure, so these are ours: true neutral
    darks, lightness for elevation, every text tier at 4.5:1 on its surface. X-ray colours stay as they are (spec §5.5). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --color-background: #111110;
     --color-surface: #1a1919;
     --color-surface-sunken: #0d0d0c;
@@ -226,7 +226,7 @@
     --color-route-3: #d4b84a;
     --color-route-4: #a09d9b;
 
-    --color-chart-1: #4fb4c8;
+    --color-chart-1: #8fb0db;
     --color-chart-2: #f4f2f1;
     --color-chart-3: #a09d9b;
     --color-grid: #2c2b2a;
@@ -236,7 +236,7 @@
     --color-scene-vessel: #b5b1ae;
     --opacity-scene-vessel: 0.4;
     --color-scene-wire: #f4f2f1;
-    --color-scene-ghost: #4fb4c8;
+    --color-scene-ghost: #8fb0db;
     --color-anatomy-artery: #e08591;
     --color-anatomy-vein: #8fb0db;
     --color-vein: #8fb0db;
@@ -244,10 +244,89 @@
     --color-body-bone: #8f897f;
     --color-body-heart: #9a6f6a;
     --color-marker-entry: #f4f2f1;
-    --color-marker-target: #4fb4c8;
+    --color-marker-target: #e08591;
 
     --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
+}
+
+/* The same dark theme when the trainee picks Dark in Settings (ui/settings-store.ts sets data-theme on <html>);
+   keep it identical to the block above. Light overrides a dark system. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-background: #111110;
+  --color-surface: #1a1919;
+  --color-surface-sunken: #0d0d0c;
+  --color-surface-active: #2a2928;
+  --color-surface-inverse: #eeebea;
+
+  --color-border: #2c2b2a;
+  --color-rule: #242322;
+  --color-border-strong: #4a4846;
+
+  --color-heading: #f4f2f1;
+  --color-text: #c9c6c4;
+  --color-text-muted: #a09d9b;
+  --color-text-inverse: #1f1e1e;
+
+  --color-primary: #f4f2f1;       /* inverted: light fill, dark label */
+  --color-primary-hover: #dad6d5;
+  --color-primary-foreground: #1f1e1e;
+  --color-link: #f4f2f1;
+
+  --color-brand: #e08591;       /* oxblood, lifted for a dark ground */
+  --color-brand-strong: #f3c1c7;
+  --color-brand-tint: #3b2125;
+  --color-focus: #e08591;
+
+  --color-positive: #3fc07a;
+  --color-negative: #f26b6b;
+  --color-warning: #e0a84e;
+  --color-pill-positive-bg: #172a1d;
+  --color-pill-positive-ink: #6fd69c;
+  --color-pill-negative-bg: #2f1a1a;
+  --color-pill-negative-ink: #f7a09c;
+  --color-pill-warning-bg: #2a2110;
+  --color-pill-warning-ink: #e0a84e;
+  --color-pill-warning-border: #5c4a1c;
+  --color-pill-neutral-bg: #2a2928;
+  --color-pill-neutral-ink: #f4f2f1;
+
+  --color-risk-forbidden: #f26b6b;
+  --color-risk-heavy: #e89d3a;
+  --color-risk-proximity: #d4b84a;
+
+  --color-route-player: #8fb0db;       /* steel blue, lifted */
+  --color-route-1: #f4f2f1;
+  --color-route-2: #e77fb0;
+  --color-route-3: #d4b84a;
+  --color-route-4: #a09d9b;
+
+  --color-chart-1: #8fb0db;
+  --color-chart-2: #f4f2f1;
+  --color-chart-3: #a09d9b;
+  --color-grid: #2c2b2a;
+  --opacity-chart-span: 0.12;
+
+  --color-scene-ground: #0d0d0c;
+  --color-scene-vessel: #b5b1ae;
+  --opacity-scene-vessel: 0.4;
+  --color-scene-wire: #f4f2f1;
+  --color-scene-ghost: #8fb0db;
+  --color-anatomy-artery: #e08591;
+  --color-anatomy-vein: #8fb0db;
+  --color-vein: #8fb0db;
+  --color-vein-tint: #1e2a38;
+  --color-body-bone: #8f897f;
+  --color-body-heart: #9a6f6a;
+  --color-marker-entry: #f4f2f1;
+  --color-marker-target: #e08591;
+
+  --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 /* Phone: titles step down and data stays readable. Width matches DESIGN.md's breakpoints. */
