@@ -1,0 +1,25 @@
+{
+  "id": "ts-s0727-cta",
+  "title": "CT angiogram s0727, groin to carotid (planning only)",
+  "source": {
+    "kind": "ct",
+    "dataset": "TotalSegmentator dataset v2.0.1 (small subset), subject s0727, University Hospital Basel; Wasserthal et al., Radiology: AI 2023; https://doi.org/10.5281/zenodo.10047263. Arterial masks converted with 3D Slicer 5.13.0 and SlicerVMTK by ThreadSim slicer/export_case.py.",
+    "license": "CC BY 4.0"
+  },
+  "scenario": "Teaching scenario: a real CT angiogram's arteries, from both groins to both common carotids. Plan a route on real anatomy. Planning only: there is no physics wire for this case.",
+  "difficulty": "intermediate",
+  "fluoro_budget_s": 240,
+  "names": {
+    "aorta": "Aorta",
+    "bca": "Brachiocephalic trunk",
+    "rcca": "Right common carotid",
+    "lcca": "Left common carotid",
+    "r_subclavian": "Right subclavian",
+    "l_subclavian": "Left subclavian",
+    "r_iliac": "Right iliac to common femoral",
+    "l_iliac": "Left iliac to common femoral",
+    "fem_r": "Right femoral",
+    "fem_l": "Left femoral"
+  },
+  "riskZones": []
+}
