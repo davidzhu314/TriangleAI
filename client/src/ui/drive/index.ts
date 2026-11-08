@@ -9,7 +9,7 @@
  */
 import type { EventLog, LoadedCase, Route, WireFallback, WireSource, WireState } from '../../contracts';
 import { buildGraph, defaultWeights, optimize, routeFor, type RouteGraph } from '../../optimize';
-import { driveAssist, ILLUSTRATIVE_CONSTANTS, mistakeMarkers, type ReplayMarker } from '../../score';
+import { cathyFacts, driveAssist, ILLUSTRATIVE_CONSTANTS, mistakeMarkers, type CathyFacts, type ReplayMarker } from '../../score';
 import { driveCheckLine } from '../../score/live';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
@@ -501,7 +501,17 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   // Cathy's box sits under the route overview (top right), clear of the arteries
   const cathySlot = h('div', { class: 'hud-cathy', 'data-testid': 'drive-cathy-slot' });
   const voiceFluoroBadge = h('span', { class: 'pill pill-warning voice-fluoro-badge', hidden: true, role: 'status', 'data-testid': 'voice-fluoro-badge' }, 'Fluoro on (voice)');
+  /** The engine's facts on Drive now, for Cathy's AI wording (G5): the drive so far through driveAssist. Engine only. */
+  const driveFacts = async (): Promise<CathyFacts | null> => {
+    const log = (source as { logSoFar?: () => EventLog | null } | null)?.logSoFar?.() ?? null;
+    if (!log) return null;
+    const optimized = await optimize({ caseId: c.id, targetId: plan.targetId }, c);
+    const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+    const drive = driveAssist({ log, optimized, weights, case: c });
+    return cathyFacts({ screen: 'drive', case: c, targetId: plan.targetId, entryId: plan.entryId, presetId: plan.presetId, weights, optimized, lines: drive.lines, plan: plan.edges, drive, warning: null });
+  };
   const hands = createHandsVoice({
+    facts: driveFacts,
     host: view.element,
     cathyHost: cathySlot,
     actions: driveVoice,

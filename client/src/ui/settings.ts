@@ -83,6 +83,7 @@ export function renderSettings(root: HTMLElement): Promise<void> {
       h('h2', { id: 'settings-general' }, 'General'),
       switchRow('hands', 'Hand gestures', 'Show the Hands button on Plan, Compare and Drive, to drive and move the view with the camera.', s.hands, (on) => updateSettings({ hands: on })),
       switchRow('voice', 'Voice dictation', 'Show the Voice button, to give “Hey Cathy, …” commands by speaking. Chrome sends the audio to Google.', s.voice, (on) => updateSettings({ voice: on })),
+      switchRow('cathyAi', "Cathy's AI wording (beta)", "Cathy words her answers with Anthropic's Claude and understands questions in your own words. Your question and this case's facts are sent to Anthropic through our server; the numbers always come from the route engine. Off by default.", s.cathyAi, (on) => updateSettings({ cathyAi: on })),
       switchRow('speak', 'Cathy speaks', 'Cathy reads her answers aloud. Her answers are always shown as text too. An on-device voice is used when the browser has one.', s.speak, (on) => updateSettings({ speak: on })),
       themeRow(s.theme),
     ),
