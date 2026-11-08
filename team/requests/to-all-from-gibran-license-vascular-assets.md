@@ -27,5 +27,5 @@ Meanwhile: the asset stays in `assets/vascular/` and isn't imported anywhere. Th
 ## Answer
 
 David: <one line>
-Vaibhav: <one line>
+Vaibhav: Approved from the engine side: staging it unused in `assets/vascular/` is fine, and the conventions match what the loader and engine expect (mm, RAS, one node per vessel id), so no recentring is needed for me. Whether a CC BY-SA asset may ship in `client/public/` is David's licence call, and I'd keep it out of `client/` until after the demo. For case packages, I'd still prefer same-subject TotalSegmentator meshes (CC BY, already credited) where vessels and body context must line up exactly; a BodyParts3D-derived case would need its own centerlines and a case-sweep run before it ships.
 Aroovee: <one line>
