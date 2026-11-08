@@ -26,14 +26,17 @@ import { ERROR_PENALTY, FIDELITY_ZERO_M } from './constants';
 import type { ForceReference } from './reference';
 import { feedbackLine, round } from './templates';
 
-/** Display for each measure in plan.top_contributor: name, unit, scale from contract units, decimals. */
-export const MEASURE_DISPLAY: Readonly<Record<MeasureKey, { name: string; unit: string; scale: number; decimals: number }>> = {
+/**
+ * Display for each measure in plan.top_contributor: name, unit, scale from contract units, decimals,
+ * and the unit for a value of exactly 1 where it differs ("1 point", not "1 points").
+ */
+export const MEASURE_DISPLAY: Readonly<Record<MeasureKey, { name: string; unit: string; one?: string; scale: number; decimals: number }>> = {
   lengthM: { name: 'route length', unit: 'cm', scale: 100, decimals: 1 },
-  sharpestTurnDeg: { name: 'the sharpest turn', unit: 'degrees', scale: 1, decimals: 0 },
-  totalTurningDeg: { name: 'total turning', unit: 'degrees', scale: 1, decimals: 0 },
+  sharpestTurnDeg: { name: 'the sharpest turn', unit: 'degrees', one: 'degree', scale: 1, decimals: 0 },
+  totalTurningDeg: { name: 'total turning', unit: 'degrees', one: 'degree', scale: 1, decimals: 0 },
   narrowestRadiusM: { name: 'the narrowest radius', unit: 'mm', scale: 1000, decimals: 1 },
-  heavyCrossings: { name: 'heavy risk zones crossed', unit: 'zones', scale: 1, decimals: 0 },
-  proximityPenalty: { name: 'closeness to risk zones', unit: 'points', scale: 1, decimals: 2 },
+  heavyCrossings: { name: 'heavy risk zones crossed', unit: 'zones', one: 'zone', scale: 1, decimals: 0 },
+  proximityPenalty: { name: 'closeness to risk zones', unit: 'points', one: 'point', scale: 1, decimals: 2 },
   estFluoroS: { name: 'estimated fluoro time', unit: 's', scale: 1, decimals: 1 },
   simPeakForceN: { name: 'simulated peak force', unit: 'N', scale: 1, decimals: 2 },
   simSuccessRate: { name: 'simulated success rate', unit: '%', scale: 100, decimals: 0 },
@@ -123,7 +126,8 @@ export function planLines(result: Pick<CaseResult, 'plan'>, player: Route, optim
         return [feedbackLine('plan.top_contributor_turn', { turn_deg: round(t.value, 0), vessel: n.vesselOfEdge(t.edge) }, 'plan.regret')];
       }
       const d = MEASURE_DISPLAY[t.measure];
-      return [feedbackLine('plan.top_contributor', { measure: d.name, value: round(t.value * d.scale, d.decimals), unit: d.unit }, 'plan.regret')];
+      const value = round(t.value * d.scale, d.decimals);
+      return [feedbackLine('plan.top_contributor', { measure: d.name, value, unit: value === 1 && d.one ? d.one : d.unit }, 'plan.regret')];
     }
   }
 }
