@@ -10,7 +10,7 @@
  *   - along the top-ranked route (score's bestFrontierRoute), "best" is that route's next edge;
  *   - a case or wire with no safe route says the no-safe-route line, with no numbers;
  *   - the same input gives the same line.
- * - Live answers ("how am I doing": driveAssist), on rail autopilot drives of every frontier route cut
+ * - Live answers ("how am I doing": driveAssist), on rail autopilot drives of every steerable frontier route cut
  *   at a quarter, half, three quarters and the end, plus a push-only drive that takes a wrong branch:
  *   - every number in every line is in its values;
  *   - every non-assist line is a line scoreCase gives for the same partial log;
@@ -51,7 +51,7 @@ function cut(log: EventLog, k: number): EventLog {
   return { ...log, samples, events: log.events.filter((e) => e.t <= t) };
 }
 
-const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: string[]; offFrontier: number; lines: number; drives: number; wrongBranchDrives: number; steerChecked: number; cannotSteer: string[] } = {
+const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: string[]; offFrontier: number; lines: number; drives: number; wrongBranchDrives: number; steerChecked: number; cannotSteer: string[]; unsteerableFrontier: string[]; noSteerableTarget: string[] } = {
   optionCount: [],
   unsteerableBest: [],
   noSafe: [],
@@ -61,6 +61,8 @@ const findings: { optionCount: string[]; unsteerableBest: string[]; noSafe: stri
   wrongBranchDrives: 0,
   steerChecked: 0,
   cannotSteer: [],
+  unsteerableFrontier: [],
+  noSteerableTarget: [],
 };
 
 const index = JSON.parse(readFileSync(join(CASES_DIR, 'index.json'), 'utf8')) as { cases: { id: string }[] };
@@ -151,7 +153,9 @@ for (const { id } of index.cases) {
         const steerable = (r: Route) => steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId)).ok;
         const byId = new Map([...res.routes, ...res.candidates].map((r) => [r.id, r] as const));
         // "Try another wire or entry" always has an answer: some frontier route on this target is steerable.
-        expect(res.routes.some(steerable), `${id} → ${t.id}: no steerable frontier route`).toBe(true);
+        // Until the optimizer's cannot_steer lands, a target may have no steerable frontier route: then Cathy can
+        // only say "try another wire or entry" without a wire that works. A finding, not a failure (David's request).
+        if (!res.routes.some(steerable)) findings.noSteerableTarget.push(`${id} → ${t.id}`);
         for (const entry of c.entries) {
           for (const preset of PRESET_IDS) {
             const mine = (r: Route) => r.entryId === entry.id && r.presetId === preset;
@@ -180,8 +184,17 @@ for (const { id } of index.cases) {
         }
       });
 
-      it(`${t.id}: "how am I doing" is grounded on drives of every frontier route`, async () => {
+      it(`${t.id}: "how am I doing" is grounded on drives of every steerable frontier route`, async () => {
         for (const r of res.routes) {
+          // The rail can't turn into a branch steerableAt rejects, so the drive can't stay on plan: that is the
+          // cannot_steer gap, listed as a finding (to-gibran-from-david-cathy-unsteerable-frontier-routes).
+          const steer = steerableAt(g, r.edges, r.presetId, g.entries.get(r.entryId));
+          if (!steer.ok) {
+            findings.unsteerableFrontier.push(
+              `${id} → ${t.id}: \`${r.entryId} · ${r.presetId}\` at ${steer.failures.map((f) => `${f.node} into ${f.edge} (takeoff ${f.takeoffDeg.toFixed(0)}° vs tip ${f.tipDeg}°)`).join('; ')}`,
+            );
+            continue;
+          }
           const { log } = await autoDrive(c, t.id, r);
           findings.drives++;
           const n = log.samples.length;
@@ -260,6 +273,16 @@ describe('Cathy QA summary', () => {
       'Without `graph`, the assistant follows the top-ranked frontier route even when the wire can\'t steer it. With `graph` (#51), the test checks that "best" is always steerable: ' + findings.steerChecked + ' plan states, all passing. Callers should pass `graph`.',
       '',
       ...list(findings.unsteerableBest),
+      '',
+      '### Frontier routes the rail wire can\'t steer (skipped by the live-answer drives)',
+      '',
+      'The optimizer doesn\'t check steering yet (the `cannot_steer` contract bump), so these frontier routes are offered but undrivable on rail.',
+      '',
+      ...list([...new Set(findings.unsteerableFrontier)]),
+      '',
+      '### Targets with no steerable frontier route at all',
+      '',
+      ...list(findings.noSteerableTarget),
       '',
       '### Where Cathy says "try another wire or entry" (with the graph, at the start of planning)',
       '',
