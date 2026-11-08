@@ -20,11 +20,12 @@ let steps: typeof import('../../client/src/ui/plan/route-state');
 let graph: ReturnType<(typeof import('../../client/src/optimize'))['buildGraph']>;
 let title = '';
 
-test.beforeAll(async () => {
+test.beforeAll(async ({ browser }) => {
   vite = await createServer({ configFile: false, root: process.cwd(), publicDir: 'client/public', logLevel: 'silent', server: { port: 0, strictPort: false, hmr: false }, appType: 'mpa', optimizeDeps: THREE_DEPS });
   await vite.listen();
   const addr = vite.httpServer?.address();
   base = typeof addr === 'object' && addr ? `http://localhost:${addr.port}` : '';
+  await warmUp(browser, `${base}/tests/e2e/harness/app.html?wire=autopilot#/case/fixture-y/plan`);
   const engine = (await vite.ssrLoadModule('/client/src/optimize/index.ts')) as typeof import('../../client/src/optimize');
   steps = (await vite.ssrLoadModule('/client/src/ui/plan/route-state.ts')) as typeof steps;
   const { loadCase } = (await vite.ssrLoadModule('/client/src/case/index.ts')) as typeof import('../../client/src/case');
@@ -37,6 +38,17 @@ test.beforeAll(async () => {
   const frontier = (await engine.optimize({ caseId: r.case.id, targetId: 'rcca' }, r.case)) as Frontier;
   route = frontier.routes[0]!;
 });
+
+/** Load a page once and let it settle: a cold dependency cache optimises (and reloads the page) here, not mid-test. */
+async function warmUp(browser: import('@playwright/test').Browser, url: string): Promise<void> {
+  const page = await browser.newPage();
+  await page.goto(url);
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await page.close();
+}
 
 test.afterAll(async () => {
   await vite?.close();

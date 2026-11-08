@@ -8,6 +8,7 @@ import type { LoadedCase, Route, WirePreset, WirePresetId } from '../../contract
 import './plan.css';
 import { buildGraph, WIRE_PRESETS, type RouteGraph } from '../../optimize';
 import { createPlanView, type PlanView } from '../../render/plan-view';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
 import { entryIcon, labelled, type IconName } from '../icons';
@@ -222,7 +223,7 @@ function draw(sc: Screen): void {
   ];
   if (!liveView || liveCase !== c) {
     disposePlanView();
-    liveView = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines });
+    liveView = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines }, anatomyFor(entry(key), c));
     liveCase = c;
   }
   const view = liveView;

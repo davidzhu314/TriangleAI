@@ -16,8 +16,16 @@ describe('sorting nodes into arteries and veins', () => {
     for (const n of ['vein_svc', 'Inferior vena cava', 'left_brachiocephalic_vein', 'V_jugular', 'IVC']) expect(classify(n), n).toBe('vein');
   });
 
+  it('sorts the body context: extras.kind first, then the node names "bone" and "heart"', () => {
+    expect(classify('anything', { kind: 'context' })).toBe('context');
+    expect(classify('bone')).toBe('context');
+    expect(classify('heart')).toBe('context');
+    expect(classify('Bone_ribs')).toBe('context');
+    expect(classify('heart', { kind: 'artery' })).toBe('artery'); // the model's own word wins
+    expect(classify('heartwood')).toBeNull(); // a whole word, not any name that starts with it
+  });
+
   it('leaves what it cannot tell apart', () => {
-    expect(classify('heart')).toBeNull();
     expect(classify('mesh_12')).toBeNull();
   });
 });
@@ -46,13 +54,26 @@ describe('state', () => {
   const fallback = defaultState(0.35);
 
   it('starts hidden, with every part on when shown', () => {
-    expect(fallback).toEqual({ visible: false, arteries: true, veins: true, labels: true, opacity: 0.35 });
+    expect(fallback).toEqual({ visible: false, arteries: true, veins: true, labels: true, body: false, opacity: 0.35 });
   });
 
   it('reads a saved state and repairs bad fields', () => {
-    expect(readState({ visible: true, veins: false, opacity: 2 }, fallback)).toEqual({ visible: true, arteries: true, veins: false, labels: true, opacity: 1 });
+    expect(readState({ visible: true, veins: false, opacity: 2 }, fallback)).toEqual({ visible: true, arteries: true, veins: false, labels: true, body: false, opacity: 1 });
     expect(readState({ arteries: 'yes', opacity: 'x' }, fallback)).toEqual(fallback);
     expect(readState(null, fallback)).toEqual(fallback);
+  });
+
+  it('reads a state saved before the Body toggle existed as body off', () => {
+    const old = { visible: true, arteries: true, veins: false, labels: true, opacity: 0.5 }; // no "body" key
+    expect(readState(old, fallback)).toEqual({ ...old, body: false });
+    expect(readState({ ...old, body: true }, fallback).body).toBe(true);
+    expect(readState({ ...old, body: 'yes' }, fallback).body).toBe(false);
+  });
+
+  it('shows the body context by the Body toggle alone, off by default', () => {
+    expect(shows('context', fallback)).toBe(false);
+    expect(shows('context', { ...fallback, body: true })).toBe(true);
+    expect(shows('context', { ...fallback, visible: true, body: false })).toBe(false); // the vascular switch doesn't move it
   });
 
   it('shows a part only when the layer and its own toggle are on', () => {

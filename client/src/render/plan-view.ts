@@ -9,6 +9,7 @@
 import type { LoadedCase } from '../contracts';
 import type { ArHooks } from './ar';
 import { drawCase, svgEl } from './case-svg';
+import type { AnatomyConfig } from './anatomy-config';
 import { createDualView } from './dual-view';
 import './render.css';
 
@@ -38,7 +39,7 @@ export function drawMarkers(d: ReturnType<typeof drawCase>, layer: SVGGElement, 
   }
 }
 
-export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks): PlanView {
+export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks, anatomy?: Promise<AnatomyConfig | null>): PlanView {
   const d = drawCase(c, `Front view of ${c.title}. Build the route with the list of next branch points.`, 'plan-hatch');
   const route = svgEl('polyline', { points: '', class: 'route-trace' });
   const handles = svgEl('g', { class: 'handles' });
@@ -56,7 +57,7 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
     scene.setHandles(state.pickable, onPick);
     scene.setMarkers(state.entryNode, state.targetNode);
   };
-  const dual = createDualView(c, `3D view of ${c.title}. Drag to turn it; click a branch point to extend the route, or use the list of next branch points.`, d.svg, 'plan-view', ar, () => last && draw3d(last));
+  const dual = createDualView(c, `3D view of ${c.title}. Drag to turn it; click a branch point to extend the route, or use the list of next branch points.`, d.svg, 'plan-view', ar, () => last && draw3d(last), undefined, anatomy);
   const element = dual.element;
 
   const onClick = (ev: Event): void => {

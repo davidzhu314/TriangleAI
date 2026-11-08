@@ -12,13 +12,15 @@ import type { Vec3 } from '../contracts';
 import type { AnatomyConfig } from './anatomy-config';
 import { classify, fitToBox, labelFor, shows, type AnatomyState, type VesselKind } from './anatomy-model';
 import type { CaseScene } from './scene3d';
-import { token } from './tokens';
+import { token, tokenNumber } from './tokens';
 
 export interface AnatomyInfo {
   arteries: number;
   veins: number;
   other: number;
   labels: number;
+  /** Body-context nodes found ("bone", "heart"). */
+  context: string[];
 }
 
 export interface AnatomyLayer {
@@ -28,9 +30,14 @@ export interface AnatomyLayer {
   dispose(): void;
 }
 
-const KIND_TOKEN: Record<VesselKind, string> = { artery: '--color-anatomy-artery', vein: '--color-anatomy-vein' };
+const KIND_TOKEN: Record<'artery' | 'vein', string> = { artery: '--color-anatomy-artery', vein: '--color-anatomy-vein' };
 /** Below the routes (2), markers (3) and handles (4) the case scene draws. */
 const RENDER_ORDER = 1;
+/**
+ * The body context draws first of all, depth-tested and writing no depth: anything nearer (the vessels, risk zones,
+ * routes, handles) covers it, and it never hides them.
+ */
+const CONTEXT_ORDER = -1;
 
 export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host: HTMLElement): AnatomyLayer {
   const holder = new THREE.Group();
@@ -42,11 +49,18 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
     artery: new THREE.MeshStandardMaterial({ transparent: true, depthWrite: false, roughness: 0.7, side: THREE.DoubleSide }),
     vein: new THREE.MeshStandardMaterial({ transparent: true, depthWrite: false, roughness: 0.7, side: THREE.DoubleSide }),
     other: new THREE.MeshStandardMaterial({ transparent: true, depthWrite: false, roughness: 0.7, side: THREE.DoubleSide }),
+    // Body context: soft-lit, translucent, depth-tested, no depth written.
+    bone: new THREE.MeshLambertMaterial({ transparent: true, depthWrite: false, depthTest: true, side: THREE.DoubleSide }),
+    heart: new THREE.MeshLambertMaterial({ transparent: true, depthWrite: false, depthTest: true, side: THREE.DoubleSide }),
   };
   const recolor = (): void => {
     materials.artery.color.set(token(KIND_TOKEN.artery));
     materials.vein.color.set(token(KIND_TOKEN.vein));
     materials.other.color.set(token('--color-scene-vessel'));
+    materials.bone.color.set(token('--color-body-bone'));
+    materials.heart.color.set(token('--color-body-heart'));
+    materials.bone.opacity = tokenNumber('--opacity-body-bone');
+    materials.heart.opacity = tokenNumber('--opacity-body-heart');
   };
   recolor();
   const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -67,8 +81,9 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
 
   const apply = (s: AnatomyState): void => {
     state = s;
-    holder.visible = s.visible;
-    for (const m of Object.values(materials)) m.opacity = s.opacity;
+    holder.visible = s.visible || s.body;
+    // The slider sets the vessels; the body keeps its own token opacities.
+    for (const m of [materials.artery, materials.vein, materials.other]) m.opacity = s.opacity;
     for (const p of parts) {
       const on = shows(p.kind, s);
       p.object.visible = on;
@@ -79,6 +94,7 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
     host.dataset['anatomyVeins'] = String(s.visible && s.veins);
     host.dataset['anatomyLabels'] = String(s.visible && s.labels);
     host.dataset['anatomyOpacity'] = s.opacity.toFixed(2);
+    host.dataset['anatomyBody'] = String(s.body && parts.some((p) => p.kind === 'context'));
   };
 
   const stopFrame = scene.onFrame(() => {
@@ -87,10 +103,10 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
 
   host.dataset['anatomy'] = 'loading';
   const ready = new GLTFLoader().loadAsync(config.url).then((gltf): AnatomyInfo => {
-    if (disposed) return { arteries: 0, veins: 0, other: 0, labels: 0 };
+    if (disposed) return { arteries: 0, veins: 0, other: 0, labels: 0, context: [] };
     const model = gltf.scene;
     // Sort every mesh by its own node, or the nearest named ancestor that says what it is.
-    const info: AnatomyInfo = { arteries: 0, veins: 0, other: 0, labels: 0 };
+    const info: AnatomyInfo = { arteries: 0, veins: 0, other: 0, labels: 0, context: [] };
     const tops: { object: THREE.Object3D; kind: VesselKind | null; text: string }[] = [];
     model.traverse((o) => {
       if (!(o as THREE.Mesh).isMesh) return;
@@ -107,12 +123,18 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
         at = at.parent;
       }
       const mesh = o as THREE.Mesh;
-      mesh.material = kind ? materials[kind] : materials.other;
-      mesh.renderOrder = RENDER_ORDER;
+      if (kind === 'context') {
+        mesh.material = /heart/i.test(named.name) ? materials.heart : materials.bone;
+        mesh.renderOrder = CONTEXT_ORDER;
+        if (!info.context.includes(named.name)) info.context.push(named.name);
+      } else {
+        mesh.material = kind ? materials[kind] : materials.other;
+        mesh.renderOrder = RENDER_ORDER;
+      }
       mesh.raycast = () => undefined; // never picked: clicks reach the branch handles
       if (kind === 'artery') info.arteries++;
       else if (kind === 'vein') info.veins++;
-      else info.other++;
+      else if (kind !== 'context') info.other++;
       if (!tops.some((t) => t.object === named)) tops.push({ object: named, kind, text: labelFor(named.name || mesh.name, named.userData as Record<string, unknown>) });
     });
 
@@ -130,7 +152,7 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
 
     for (const t of tops) {
       let label: CSS2DObject | null = null;
-      if (t.kind && t.text) {
+      if ((t.kind === 'artery' || t.kind === 'vein') && t.text) { // the body context carries no labels: it's background, not a finding
         const el = document.createElement('span');
         el.className = `anatomy-label anatomy-label-${t.kind}`;
         el.textContent = t.text;
@@ -146,6 +168,7 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
     }
     host.dataset['anatomy'] = 'ready';
     host.dataset['anatomyCounts'] = `${info.arteries}/${info.veins}/${info.labels}`;
+    host.dataset['anatomyContext'] = info.context.join(',');
     if (state) apply(state);
     return info;
   });

@@ -7,6 +7,7 @@
  */
 import type { LoadedCase } from '../contracts';
 import { drawCase, svgEl } from './case-svg';
+import type { AnatomyConfig } from './anatomy-config';
 import { createDualView } from './dual-view';
 import { drawMarkers } from './plan-view';
 import './render.css';
@@ -33,7 +34,7 @@ export interface CompareView {
   dispose(): void;
 }
 
-export function createCompareView(c: LoadedCase): CompareView {
+export function createCompareView(c: LoadedCase, anatomy?: Promise<AnatomyConfig | null>): CompareView {
   const d = drawCase(c, `Front view of ${c.title} with the frontier routes and your route. The table below lists the same routes in words.`, 'compare-hatch');
   const lines = svgEl('g', { class: 'frontier-lines' });
   const player = svgEl('polyline', { points: '', class: 'route-trace' });
@@ -53,7 +54,7 @@ export function createCompareView(c: LoadedCase): CompareView {
     scene.setRoute('player', scene.routePoints(state.player.startNode, state.player.edges), { colorToken: '--color-route-player', heavy: true });
     scene.setMarkers(state.entryNode, state.targetNode);
   };
-  const dual = createDualView(c, `3D view of ${c.title} with the frontier routes and your route. Drag to turn it. The table below lists the same routes in words.`, d.svg, 'plan-view', undefined, () => last && draw3d(last), 'close');
+  const dual = createDualView(c, `3D view of ${c.title} with the frontier routes and your route. Drag to turn it. The table below lists the same routes in words.`, d.svg, 'plan-view', undefined, () => last && draw3d(last), 'close', anatomy);
   const element = dual.element;
 
   return {

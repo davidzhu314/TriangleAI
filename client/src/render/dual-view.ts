@@ -58,7 +58,7 @@ export interface DualView {
  * onScene runs once the three.js scene is ready, so the view can draw its current state into it. `startFrame` is
  * where the camera opens (DECISIONS.md 2026-11-07, "3D framing").
  */
-export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void, startFrame: FrameKind = 'whole', anatomy: AnatomyConfig | null = anatomyConfig()): DualView {
+export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void, startFrame: FrameKind = 'whole', anatomy: AnatomyConfig | null | Promise<AnatomyConfig | null> = anatomyConfig()): DualView {
   const element = document.createElement('div');
   element.className = className;
   element.append(flat);
@@ -115,6 +115,7 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
     void Promise.all([import('./scene3d'), ar ? import('./ar') : Promise.resolve(null)]).then(([m, arMod]) => {
       if (disposed) return;
       scene = m.createCaseScene(c, label);
+      const ready3d = scene;
       element.insertBefore(scene.canvas, toolbar.parentNode === element ? toolbar : null); // Drive moves the toolbar into its HUD
       if (scene.closeUp) {
         // Close-up or whole tree: the same segmented control as 3D | Flat.
@@ -137,13 +138,29 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
         toolbar.append(frameGroup);
         frameTo(framed);
       }
-      if (anatomy) {
-        anatomyControls = createAnatomyControls({ scene, config: anatomy, host: element, onResetCamera: resetCamera });
-        toolbar.append(anatomyControls.element);
-      }
+      // The model may still be deciding (a case's own context.glb is probed first): the controls wait for it, so
+      // the placeholder never flashes up on a case that turns out to have its own body context.
+      const ready = scene;
+      void Promise.resolve(anatomy).then((cfg) => {
+        if (!cfg || disposed) return;
+        anatomyControls = createAnatomyControls({ scene: ready, config: cfg, host: element, onResetCamera: resetCamera });
+        const ar = toolbar.querySelector('.ar-enter');
+        toolbar.insertBefore(anatomyControls.element, ar);
+        element.dataset['anatomyModel'] = cfg.context ? 'context' : cfg.placeholder ? 'placeholder' : 'model';
+      });
       if (arMod && ar) toolbar.append(arMod.arButton(scene, ar));
       set(wanted);
       element.dataset['scene'] = 'ready';
+      // Under automation only (navigator.webdriver): where the branch handles are, so a test can click one in 3D.
+      if (navigator.webdriver) {
+        let since = 0;
+        scene.onFrame((dt) => {
+          since += dt;
+          if (since < 200) return;
+          since = 0;
+          element.dataset['handles'] = JSON.stringify(ready3d.handlesOnScreen());
+        });
+      }
       onScene(scene);
     });
   }
