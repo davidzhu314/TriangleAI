@@ -6,13 +6,15 @@
  * three.js is loaded only when a case view opens (a dynamic import), so the Library and the brief stay light. The
  * flat drawing shows until the scene is ready.
  */
-import type { LoadedCase } from '../contracts';
+import type { LoadedCase, Vec3 } from '../contracts';
 import type { ArHooks } from './ar';
 import type { CaseScene } from './scene3d';
 import { webglAvailable } from './tokens';
 import './render.css';
 
 export type ViewKind = '3d' | 'flat';
+/** Where the 3D camera looks: the arch-and-target close-up, or the whole tree (framing.ts). */
+export type FrameKind = 'close' | 'whole';
 const KEY = 'threadsim.view.v1';
 
 export function preferredView(): ViewKind {
@@ -38,11 +40,19 @@ export interface DualView {
   /** Null until the scene has loaded, and always when WebGL isn't available. */
   scene(): CaseScene | null;
   kind(): ViewKind;
+  /**
+   * Zoom toward the route as it is built or driven: the close-up once `p` (the route's end, or the wire tip) is
+   * inside it, the whole tree before. It stops once the user picks Close-up or Whole tree.
+   */
+  follow(p: Vec3 | null): void;
   dispose(): void;
 }
 
-/** onScene runs once the three.js scene is ready, so the view can draw its current state into it. */
-export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void): DualView {
+/**
+ * onScene runs once the three.js scene is ready, so the view can draw its current state into it. `startFrame` is
+ * where the camera opens (DECISIONS.md 2026-11-07, "3D framing").
+ */
+export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void, startFrame: FrameKind = 'whole'): DualView {
   const element = document.createElement('div');
   element.className = className;
   element.append(flat);
@@ -52,12 +62,22 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
   let scene: CaseScene | null = null;
   let disposed = false;
   let wanted: ViewKind = preferredView();
+  let framed: FrameKind = startFrame;
+  let userFramed = false;
+  let frameGroup: HTMLElement | null = null;
 
   const set = (k: ViewKind): void => {
     wanted = k;
     // Until the scene is ready the flat drawing shows, whatever is wanted.
     element.dataset['viewKind'] = scene ? k : 'flat';
     for (const b of toolbar.querySelectorAll<HTMLButtonElement>('[data-view-kind]')) b.setAttribute('aria-pressed', String(b.dataset['viewKind'] === wanted));
+    if (frameGroup) frameGroup.hidden = !scene || k !== '3d';
+  };
+  const frameTo = (f: FrameKind): void => {
+    framed = f;
+    element.dataset['frame'] = f;
+    scene?.frame(f);
+    for (const b of frameGroup?.querySelectorAll<HTMLButtonElement>('[data-frame]') ?? []) b.setAttribute('aria-pressed', String(b.dataset['frame'] === f));
   };
   set(wanted);
 
@@ -84,6 +104,27 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
       if (disposed) return;
       scene = m.createCaseScene(c, label);
       element.insertBefore(scene.canvas, toolbar.parentNode === element ? toolbar : null); // Drive moves the toolbar into its HUD
+      if (scene.closeUp) {
+        // Close-up or whole tree: the same segmented control as 3D | Flat.
+        frameGroup = document.createElement('div');
+        frameGroup.className = 'segmented view-frame';
+        frameGroup.setAttribute('role', 'group');
+        frameGroup.setAttribute('aria-label', 'Camera');
+        for (const [f, text] of [['close', 'Close-up'], ['whole', 'Whole tree']] as const) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'segment';
+          b.dataset['frame'] = f;
+          b.textContent = text;
+          b.addEventListener('click', () => {
+            userFramed = true;
+            frameTo(f);
+          });
+          frameGroup.append(b);
+        }
+        toolbar.append(frameGroup);
+        frameTo(framed);
+      }
       if (arMod && ar) toolbar.append(arMod.arButton(scene, ar));
       set(wanted);
       element.dataset['scene'] = 'ready';
@@ -96,6 +137,11 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
     toolbar,
     scene: () => scene,
     kind: () => (scene ? wanted : 'flat'),
+    follow(p) {
+      if (!scene?.closeUp || userFramed || !p) return;
+      const want: FrameKind = scene.inCloseUp(p) ? 'close' : 'whole';
+      if (want !== framed) frameTo(want);
+    },
     dispose() {
       disposed = true;
       scene?.dispose();

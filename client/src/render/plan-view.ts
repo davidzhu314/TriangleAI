@@ -49,7 +49,10 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
   const draw3d = (state: PlanViewState): void => {
     const scene = dual.scene();
     if (!scene) return;
-    scene.setRoute('player', scene.routePoints(state.entryNode, state.routeEdges), { colorToken: '--color-route-player', heavy: true });
+    const route = scene.routePoints(state.entryNode, state.routeEdges);
+    scene.setRoute('player', route, { colorToken: '--color-route-player', heavy: true });
+    // The camera starts on the whole tree and closes in on the arch once the route gets there.
+    dual.follow(route.at(-1) ?? c.nodes.find((n) => n.id === state.entryNode)?.pos ?? null);
     scene.setHandles(state.pickable, onPick);
     scene.setMarkers(state.entryNode, state.targetNode);
   };
