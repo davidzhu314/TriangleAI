@@ -50,7 +50,7 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
   steps = await load('/client/src/ui/plan/route-state.ts');
   railMod = await load('/client/src/wire/rail-source.ts');
   const { loadCase } = await load<typeof import('../../client/src/case')>('/client/src/case/index.ts');
-  for (const id of ['type-iii', 'fixture-y', 'low-tort']) {
+  for (const id of ['type-iii', 'fixture-y', 'ts-s1404-cta']) {
     const r = await loadCase({ kind: 'files', origin: 'bundled', files: caseFiles(id) });
     if (!r.ok) throw new Error(`${id} did not load`);
     cases.set(id, r.case);
@@ -252,26 +252,50 @@ test('1:00 Compare: the frontier shows its routes, and moving the safety slider 
   const before = order(model.startingWeights(measures));
   expect(await rows()).toEqual(before);
 
+  // At 1440 × 900 the sliders and the whole table, every row and column, are on screen without scrolling.
   const safety = page.locator('input[data-measure=proximityPenalty]');
+  const inView = async (sel: ReturnType<Page['locator']>) => {
+    const b = (await sel.boundingBox())!;
+    return b.y >= 0 && b.y + b.height <= 900 && b.x >= 0 && b.x + b.width <= 1440;
+  };
+  expect(await inView(page.getByTestId('weights')), 'the sliders are above the fold').toBe(true);
+  expect(await inView(page.getByTestId('routes-table').locator('tbody tr').last()), 'the last table row is above the fold').toBe(true);
+  const scroller = page.getByTestId('routes-table').locator('xpath=..');
+  expect(await scroller.evaluate((el) => el.scrollWidth <= el.clientWidth), 'no table column is clipped').toBe(true);
+
   await safety.focus();
   await page.keyboard.press('End');
   const after = order({ ...model.startingWeights(measures), proximityPenalty: Number(await safety.inputValue()) });
   expect(after).not.toEqual(before);
   await expect.poll(rows).toEqual(after);
 
+  // DEMO.md: after the re-rank, the presenter puts the slider back to equal weights before switching, so the route
+  // driven is the one that ranks first at the weights Results scores against.
+  const start = model.startingWeights(measures).proximityPenalty!;
+  await page.keyboard.press('Home');
+  for (let i = 0; i < start; i++) await page.keyboard.press('ArrowRight');
+  await expect(safety).toHaveValue(String(start));
+  await expect.poll(rows).toEqual(before);
+
   // Switch to the highest-ranked route the presenter can drive by holding W alone (the simplest drive to show),
-  // else the highest-ranked one the keys can drive at all.
+  // else the highest-ranked one the keys can drive at all. On this seed that is the right radial route, ranked first.
   const options: { id: string; route: DemoRoute; recipes: KeyRecipe[] }[] = [];
-  for (const id of after) {
+  for (const id of before) {
     const g = groups.find((x) => x.id === id)!;
     const route = { entryId: g.entryId, presetId: g.presetIds[0]!, edges: g.edges };
     options.push({ id, route, recipes: await keyRecipes(c, route.entryId, 'rcca', route.presetId, route.edges) });
   }
   const chosen = options.find((o) => o.recipes[0]?.holdMs === 0) ?? options.find((o) => o.recipes.length > 0)!;
+  expect(chosen.id, 'the route driven ranks first at equal weights').toBe(before[0]);
+  expect(chosen.route.entryId, 'DEMO.md says the right radial route').toBe('rad_r');
   demo = chosen;
+  const entryName = c.entries.find((e) => e.id === chosen.route.entryId)!.name;
+  // The row and the switch button name the entry site, as the presenter says it.
+  await expect(page.locator(`tr[data-route="${chosen.id}"] .row-name`)).toContainText(entryName);
   await page.locator(`tr[data-route="${chosen.id}"]`).click();
+  await expect(page.getByTestId('switch').first()).toContainText(entryName);
   await page.getByTestId('switch').first().click();
-  await expect(page.getByRole('status')).toContainText('Switched to');
+  await expect(page.getByRole('status')).toContainText(`Switched to ${entryName}`);
   await neverSay();
 });
 
@@ -287,22 +311,35 @@ test('1:40 Drive: rail on Type III, X-ray, fluoro, a contrast puff, and the targ
   await page.keyboard.press('KeyC');
   await expect(page.locator('.drive-view')).toHaveClass(/contrast-fading/);
   await driveToTarget(demo!.recipes);
+  // Fluoro stops counting at the target while Space is still held (rehearsal 1, issue 2).
+  const fluoroAtTarget = await page.getByTestId('hud-fluoro').innerText();
+  await page.waitForTimeout(1000);
+  await expect(page.getByTestId('hud-fluoro')).toHaveText(fluoroAtTarget);
   await page.keyboard.up('Space');
   await neverSay();
 });
 
 test('2:20 Results: the score, the line that matters and the replay all come from the live event log', async () => {
   await page.getByTestId('finish-drive').click();
-  await expectResults(cases.get('type-iii')!, 'type-iii');
+  const c = cases.get('type-iii')!;
+  await expectResults(c, 'type-iii');
   await expect(page.getByTestId('replay-driven')).toBeVisible();
+  // The saved log carries no fluoro after the target, and the route driven ranks first at the plan's weights.
+  const saved = (await page.evaluate(() => JSON.parse(sessionStorage.getItem('threadsim.drives.v1') ?? '{}')['type-iii'])) as { plan: { targetId: string; weights: Weights }; log: EventLog };
+  const reachedAt = saved.log.events.find((e) => e.kind === 'target_reached')!.t;
+  expect(saved.log.samples.filter((s) => s.t > reachedAt && s.fluoro)).toEqual([]);
+  const optimized = await engine.optimize({ caseId: c.id, targetId: saved.plan.targetId }, c);
+  const result = await score.scoreAttempt({ log: saved.log, optimized, weights: saved.plan.weights, case: c });
+  expect(result.plan.score, 'the demo route scores the full plan score').toBe(100);
   await neverSay();
 });
 
-test('2:45 Scale: a generated case.zip imports, validates and joins the Library', async () => {
-  const c = cases.get('low-tort')!;
+test('2:45 Scale: the 3D Slicer-exported ts-s1404-cta case.zip imports, validates and joins the Library', async () => {
+  // DEMO.md: the presenter drags in the D3c fixture, zipped from its committed files (slicer/README.md).
+  const c = cases.get('ts-s1404-cta')!;
   await page.goto(app('#/library'));
-  const zip = writeZip(Object.entries(caseFiles('low-tort')));
-  await page.getByTestId('import-input').setInputFiles({ name: 'low-tort-case.zip', mimeType: 'application/zip', buffer: Buffer.from(zip) });
+  const zip = writeZip(Object.entries(caseFiles('ts-s1404-cta')));
+  await page.getByTestId('import-input').setInputFiles({ name: 'ts-s1404-cta.zip', mimeType: 'application/zip', buffer: Buffer.from(zip) });
   await expect(page.getByRole('status').first()).toContainText(`Loaded “${c.title}”`);
   await expect(page.getByText('Imported this session')).toBeVisible();
   await neverSay();

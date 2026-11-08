@@ -3,7 +3,7 @@
 .compare {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--gap);
 }
 
 .finding {
@@ -55,11 +55,31 @@
   overflow: visible;
 }
 
+/* Desktop: the overlay (with the route's warnings) and the sliders side by side, the well as tall as the sliders,
+   so at 1440 × 900 both sit above the fold with the table full width under them. */
 .compare-layout {
   display: grid;
-  grid-template-columns: var(--size-readout) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) var(--size-readout);
   gap: var(--gap);
-  align-items: start;
+  align-items: stretch;
+}
+
+.compare-lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.compare-layout .compare-overlay {
+  flex: 1;
+}
+
+.compare-layout .compare-well {
+  flex: 1;
+  height: auto;
+  min-height: var(--size-palette);
+  contain: size; /* the canvas fills the well; it never sets the row's height */
 }
 
 .compare-weights,
@@ -73,10 +93,17 @@
   border-radius: var(--radius-card);
 }
 
+/* One line per measure: name, slider, share. Desktop rows are 24 px targets (WCAG 2.5.8); phones get 44 px. */
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .weight {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-1) var(--space-3);
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+  gap: var(--space-3);
   align-items: center;
 }
 
@@ -85,16 +112,13 @@
 }
 
 .weight input[type='range'] {
-  grid-column: 1 / -1;
   width: 100%;
-  min-height: var(--size-control);
+  min-height: var(--size-icon-lg);
   margin: 0;
   accent-color: var(--color-brand);
 }
 
 .weight-share {
-  grid-column: 2;
-  grid-row: 1;
   color: var(--color-text);
 }
 
@@ -177,6 +201,12 @@
   .compare-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .compare-layout .compare-well {
+    flex: none;
+    height: calc(var(--size-readout) + var(--space-16) * 2);
+    contain: none;
+  }
 }
 
 /* Phone: the overlay full width, the sliders, then each route as a two-line row. */
@@ -236,7 +266,15 @@
     border-bottom: 0;
   }
 
+  /* Phone: name and share on one line, the slider full width under them. */
+  .weight {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+  }
+
   .weight input[type='range'] {
+    grid-column: 1 / -1;
+    grid-row: 2;
     min-height: var(--size-touch);
   }
 }
