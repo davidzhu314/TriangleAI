@@ -7,6 +7,8 @@
  * flat drawing shows until the scene is ready.
  */
 import type { LoadedCase, Vec3 } from '../contracts';
+import { anatomyConfig, type AnatomyConfig } from './anatomy-config';
+import { createAnatomyControls, type AnatomyControls } from './anatomy-controls';
 import type { ArHooks } from './ar';
 import type { CaseScene } from './scene3d';
 import { webglAvailable } from './tokens';
@@ -45,6 +47,10 @@ export interface DualView {
    * inside it, the whole tree before. It stops once the user picks Close-up or Whole tree.
    */
   follow(p: Vec3 | null): void;
+  /** The anatomy layer's controls, once the scene is ready (null without WebGL, or before). */
+  anatomy(): AnatomyControls | null;
+  /** Put the camera back where the view opened. */
+  resetCamera(): void;
   dispose(): void;
 }
 
@@ -52,7 +58,7 @@ export interface DualView {
  * onScene runs once the three.js scene is ready, so the view can draw its current state into it. `startFrame` is
  * where the camera opens (DECISIONS.md 2026-11-07, "3D framing").
  */
-export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void, startFrame: FrameKind = 'whole'): DualView {
+export function createDualView(c: LoadedCase, label: string, flat: Element, className: string, ar: ArHooks | undefined, onScene: (s: CaseScene) => void, startFrame: FrameKind = 'whole', anatomy: AnatomyConfig | null = anatomyConfig()): DualView {
   const element = document.createElement('div');
   element.className = className;
   element.append(flat);
@@ -65,6 +71,12 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
   let framed: FrameKind = startFrame;
   let userFramed = false;
   let frameGroup: HTMLElement | null = null;
+  let anatomyControls: AnatomyControls | null = null;
+  const resetCamera = (): void => {
+    userFramed = false;
+    if (scene?.closeUp) frameTo(startFrame);
+    else scene?.frame('whole');
+  };
 
   const set = (k: ViewKind): void => {
     wanted = k;
@@ -125,6 +137,10 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
         toolbar.append(frameGroup);
         frameTo(framed);
       }
+      if (anatomy) {
+        anatomyControls = createAnatomyControls({ scene, config: anatomy, host: element, onResetCamera: resetCamera });
+        toolbar.append(anatomyControls.element);
+      }
       if (arMod && ar) toolbar.append(arMod.arButton(scene, ar));
       set(wanted);
       element.dataset['scene'] = 'ready';
@@ -142,8 +158,11 @@ export function createDualView(c: LoadedCase, label: string, flat: Element, clas
       const want: FrameKind = scene.inCloseUp(p) ? 'close' : 'whole';
       if (want !== framed) frameTo(want);
     },
+    anatomy: () => anatomyControls,
+    resetCamera,
     dispose() {
       disposed = true;
+      anatomyControls?.dispose();
       scene?.dispose();
       element.remove();
     },
