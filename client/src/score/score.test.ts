@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { CaseResult, CostVector, EventLog, Frontier, FrontierRoute, NoSafeRoute, Route, Weights } from '../contracts';
+import type { CaseResult, ConstraintViolation, CostVector, EventLog, Frontier, FrontierRoute, NoSafeRoute, Route, Weights } from '../contracts';
 import { createEventLog } from '../contracts';
 import { loadFixtureY } from '../optimize/fixture-y.testutil';
 import { buildGraph } from '../optimize/graph';
@@ -246,6 +246,9 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'plan.turn_too_sharp': { turn_deg: 120, vessel: 'Left subclavian', preset: 'Standard J', max_turn_deg: 80 },
   'plan.forbidden_zone': { zone: 'the dissection in the Aorta' },
   'plan.arch_never_reached': { preset: 'Stiff straight' },
+  'plan.cannot_steer': { takeoff_deg: 73, vessel: 'Left common carotid', preset: 'Soft angled', tip_deg: 45 },
+  'plan.blocked_at': { preset: 'Soft angled', vessel: 'Left branch' },
+  'plan.blocked': { preset: 'Soft angled' },
   'plan.no_safe_route': { target: 'Right branch' },
   'plan.heavy_crossing_shorter': { dl_cm: 2.4, zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
   'plan.heavy_crossing': { zone: 'the plaque in the Right branch', route: 'Soft angled wire through Aorta → Left branch' },
@@ -281,6 +284,7 @@ const SAMPLE_VALUES: Record<TemplateId, Record<string, number | string>> = {
   'assist.complete': { target: 'Left branch' },
   'assist.no_continuation': { target: 'Left branch' },
   'assist.no_safe_route': {},
+  'assist.cannot_steer': {},
 };
 
 describe('feedback templates (§6.4)', () => {
@@ -323,6 +327,12 @@ describe('feedback templates (§6.4)', () => {
     expect(violationLine({ kind: 'arch_never_reached', presetId: 'stiff_straight', target: 'left_branch' }, 'stiff_straight', n).template).toBe(
       'plan.arch_never_reached',
     );
+    // a kind the contract gains later (cannot_steer) is still explained, never dropped
+    const later = (v: object) => violationLine(v as ConstraintViolation, 'soft_angled', n);
+    expect(later({ kind: 'cannot_steer', edge: 'e_left', takeoffDeg: 73, tipDeg: 45, toleranceDeg: 25 }).text).toBe(
+      "Route blocked: the branch into the Left branch leaves at 73°, beyond what the Soft angled wire's 45° tip can point into.",
+    );
+    expect(later({ kind: 'something_new' }).text).toBe("Route blocked: the Soft angled wire can't take this route.");
   });
 
   it('plan lines for heavy crossing (shorter or not), dominated, top contributor and best', () => {
@@ -438,11 +448,19 @@ describe('scoreCase', () => {
     expect(() => scoreCase({ log, optimized: optimizeFor('right_branch'), weights: W, case: c })).toThrow(/target/);
   });
 
-  it('feedback puts the plan line before the drive lines, lowest component first', () => {
-    const r = (JSON.parse(readFileSync(join(LOGS, 'score-prolapse-fixture-y.json'), 'utf8')) as { result: CaseResult }).result;
-    const refs = r.feedback.map((l) => l.formulaRef);
-    expect(refs[0]).toBe('plan.regret');
-    expect(refs.indexOf('drive.fidelity')).toBeLessThan(refs.indexOf('drive.errors'));
+  it('feedback leads with something to change: a "best plan" line goes after the drive lines that took points off', () => {
+    const load = (f: string) => (JSON.parse(readFileSync(join(LOGS, f), 'utf8')) as { result: CaseResult }).result;
+    const pro = load('score-prolapse-fixture-y.json').feedback.map((l) => l.template);
+    expect(pro[0]).toBe('drive.fidelity_drift'); // the lowest drive component, not praise
+    expect(pro.indexOf('plan.best')).toBeGreaterThan(pro.indexOf('drive.back_out'));
+    expect(pro.indexOf('drive.fidelity_drift')).toBeLessThan(pro.indexOf('drive.wrong_branch')); // lowest component first
+    expect(pro.at(-1)).toBe('drive.radiation_within'); // neutral notes stay last
+    // a star lost to the budget is something to change: it leads
+    expect(load('score-over-budget-fixture-y.json').feedback[0]!.template).toBe('result.over_budget');
+    // a clean drive has nothing to change, so the plan line leads
+    expect(load('score-clean-fixture-y.json').feedback[0]!.template).toBe('plan.best');
+    // a plan check that cost points (here: infeasible) still leads
+    expect(load('rail-golden-diamond-j.result.json').feedback[0]!.template).toBe('plan.turn_too_sharp');
     expect(buildFeedback).toBeTypeOf('function');
   });
 

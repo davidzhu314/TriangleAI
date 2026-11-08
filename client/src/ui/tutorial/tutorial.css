@@ -1,0 +1,50 @@
+/* Guided tutorial note: a small card anchored to what it points at. It floats, so it carries the float shadow;
+   nothing behind it is dimmed and nothing stops the screen. */
+.tutorial-note {
+  position: absolute;
+  top: var(--note-top, 0);
+  left: var(--note-left, 0);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--size-palette);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float); /* taste-skill-ignore: the note floats beside the control it points at */
+}
+
+.tutorial-label {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  font-weight: var(--font-weight-medium);
+}
+
+.tutorial-text {
+  margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+}
+
+.tutorial-note .tutorial-skip {
+  align-self: flex-start;
+  color: var(--color-text-inverse);
+  background: transparent;
+  border-color: var(--color-text-inverse);
+}
+
+.tutorial-reopen {
+  align-self: flex-start;
+}
+
+.tutorial-note[data-side='below'] {
+  margin-top: var(--space-2);
+}
+
+.tutorial-note[data-side='above'] {
+  margin-top: calc(var(--space-2) * -1);
+}

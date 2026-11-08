@@ -5,8 +5,36 @@
       "path": "low-tort/"
     },
     {
+      "id": "type-i-plaque",
+      "path": "type-i-plaque/"
+    },
+    {
+      "id": "type-ii",
+      "path": "type-ii/"
+    },
+    {
+      "id": "type-ii-tortuous",
+      "path": "type-ii-tortuous/"
+    },
+    {
       "id": "type-iii",
       "path": "type-iii/"
+    },
+    {
+      "id": "bovine",
+      "path": "bovine/"
+    },
+    {
+      "id": "ts-s1404-cta",
+      "path": "ts-s1404-cta/"
+    },
+    {
+      "id": "ts-s1336-cta",
+      "path": "ts-s1336-cta/"
+    },
+    {
+      "id": "ts-s0727-cta",
+      "path": "ts-s0727-cta/"
     },
     {
       "id": "fixture-y",

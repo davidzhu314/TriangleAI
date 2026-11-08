@@ -1,0 +1,11 @@
+# Handoff — Aroovee A5: Drive screen on a real wire
+
+What landed: `client/src/ui/drive/index.ts` (injected wire factory `getWireSource`, app default `selectTsWireSource` = `import.meta.glob('../../wire/select.ts')`; fallback notice in words; off-route banner; Finish drive; `stop()` + save on finish or exit), `client/src/ui/store.ts` (`saveDrive` / `savedDrive`, session storage `threadsim.drives.v1`), CSS fixes in `ui.css` / `drive.css` / `plan.css`, test harness `tests/e2e/harness/`, spec `tests/e2e/a5-drive-wire.spec.ts`, screenshots in `metrics/aroovee/A5/`.
+How to use: `import { savedDrive } from '../store'` → `savedDrive(caseKey)` returns `{ plan, log }` (`plan.weights` included) for Results. `mountDrive(root, { key, c, plan, getWireSource })` to drive with any `WireSource`.
+Who switches: David — add `client/src/wire/select.ts` exporting `selectWireSource(case)`. A rail-only version (`return new RailWireSource()`) is enough today; the Drive screen picks it up with no change on my side (see `team/requests/to-david-from-aroovee-select-ts.md`). Vaibhav — nothing; your RailWireSource drives the tests as is.
+Mock replaced: none (the "wire not connected" state stays until select.ts lands)
+Contracts version after this handoff: unchanged (1)
+Tests: `pnpm test` (673 passed), `pnpm build`, `pnpm exec playwright test` (31 passed, 1 skipped). The new spec drives `RailWireSource` (manual clock) on fixture-y to the target, checks the HUD against WireState with the recorded arithmetic, then checks the banners (target reached, wall force over the threshold, off the planned route), the fallback notice for each reason with the drive going on in rail, the key → ControlInput mapping, and the ladder (intermediate dims, X-ray hides the wire without fluoro and shows it with fluoro, the puff fades over `--duration-contrast-fade`). Taste lint 0 FAIL. The inspector shows 0 FAIL at 1440/768/390 in light and dark, with a wire present.
+New dependencies: none
+Decisions logged: six Aroovee lines dated 2026-11-07 (injected factory, drive saving, fallback notice, off-route, test harness, rotate in physics)
+Known gaps: **one open item, the select.ts hookup** (David). Until it lands, the app shows "Driving isn't available yet in this build". The 3D views wait on three.js.

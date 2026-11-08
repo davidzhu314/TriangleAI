@@ -31,6 +31,19 @@ export const RADIATION_ZERO_FACTOR = 2;
 /** §6.5 radiation budget (illustrative): stars lost when over the allowance; never below 1 if reached. */
 export const BUDGET_STAR_COST = 1;
 
+/**
+ * A score within this of a whole number is that whole number. Weighted sums and ratios leave
+ * floating-point dust (a perfect drive summed to 99.99999999999999), and screens compare scores
+ * with `< 100` or `=== 100` (DECISIONS.md, "Scores snap to whole numbers").
+ */
+export const SCORE_SNAP_EPS = 1e-9;
+
+/** The score `x`, or the whole number it is within SCORE_SNAP_EPS of. */
+export function snapScore(x: number): number {
+  const r = Math.round(x);
+  return Math.abs(x - r) <= SCORE_SNAP_EPS ? r : x;
+}
+
 /** The gentleness reference drive stops after this much simulation time, s. */
 export const REFERENCE_MAX_S = 300;
 

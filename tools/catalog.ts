@@ -5,7 +5,7 @@
 import type { BundledCaseIndex } from '../client/src/contracts/case';
 import { stableStringify } from './lib/stable-json';
 
-export const BUNDLED_CASE_IDS = ['low-tort', 'type-iii', 'fixture-y'] as const;
+export const BUNDLED_CASE_IDS = ['low-tort', 'type-i-plaque', 'type-ii', 'type-ii-tortuous', 'type-iii', 'bovine', 'ts-s1404-cta', 'ts-s1336-cta', 'ts-s0727-cta', 'fixture-y'] as const;
 
 export function buildCatalog(): string {
   const index: BundledCaseIndex = { cases: BUNDLED_CASE_IDS.map((id) => ({ id, path: `${id}/` })) };

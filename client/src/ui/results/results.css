@@ -1,0 +1,284 @@
+/* Results (DESIGN.md: Results row): a generated report. The finding first and largest, scores beside it, then the
+   remaining lines, the drive table and the replay timeline with the route trace. One column on a phone. */
+
+.results-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--size-readout);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.results-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.results-finding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.finding-lead {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  font-weight: var(--font-weight-medium);
+  max-width: calc(var(--size-readout) * 1.5);
+}
+
+.finding-lead .tip::after {
+  left: 0;
+  right: auto;
+}
+
+.results-scores {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.score-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-rule);
+}
+
+.score-row .figure {
+  font-size: var(--font-size-figure-sm);
+  line-height: var(--line-height-figure-sm);
+}
+
+.stars-line {
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.score-why,
+.budget-note {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.budget-note {
+  color: var(--color-text);
+}
+
+.feedback-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: calc(var(--size-readout) * 1.75);
+}
+
+.feedback-list .tip::after,
+.budget-note .tip::after {
+  left: 0;
+  right: auto;
+}
+
+/* Drive score table (DESIGN.md: Tables). */
+.results-table-scroll {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.results-table th,
+.results-table td {
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-top: var(--border-width) solid var(--color-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.results-table thead th {
+  border-top: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  font-weight: var(--font-weight-regular);
+}
+
+.results-table tbody th {
+  font-weight: var(--font-weight-regular);
+}
+
+.results-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.results-table .row-name {
+  display: block;
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.results-table .row-sub {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+/* Replay timeline: a time axis across the drive's duration, one mark per event. It scrolls sideways only inside
+   its own frame. */
+.timeline-frame {
+  overflow-x: auto;
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.timeline-track {
+  position: relative;
+  min-width: calc(var(--size-touch) * var(--marks, 1) * 1.5);
+  height: var(--size-touch);
+  margin: 0 var(--space-3);
+}
+
+.timeline-axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: var(--border-width) solid var(--color-border-strong);
+}
+
+.timeline-marker {
+  position: absolute;
+  left: var(--at);
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-touch);
+  height: var(--size-touch);
+  margin: 0;
+  padding: 0;
+  translate: -50% -50%;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 0;
+  border-radius: var(--radius-full);
+  cursor: help;
+}
+
+.timeline-marker .icon {
+  width: var(--size-icon);
+  height: var(--size-icon);
+}
+
+.timeline-flagged {
+  color: var(--color-negative);
+}
+
+.timeline-marker:hover {
+  background: var(--color-surface-sunken);
+}
+
+.timeline-marker:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+}
+
+.timeline-marker::after {
+  left: 0;
+  right: auto;
+}
+
+.timeline-scale {
+  display: flex;
+  justify-content: space-between;
+  min-width: calc(var(--size-touch) * var(--marks, 1) * 1.5);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.timeline-key,
+.results-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.results-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.results-swatch svg {
+  display: block;
+  width: var(--size-icon-lg);
+  height: var(--space-2);
+  overflow: visible;
+}
+
+.replay-figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: var(--size-page-max);
+}
+
+.replay-view {
+  box-sizing: border-box;
+  width: 100%;
+  height: calc(var(--size-readout) * 1.25);
+  padding: var(--space-4);
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-card);
+}
+
+.results-advice {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+/* One column, in the order the question asks: the finding and its action, then the scores, then the other lines. */
+@media (max-width: 1100px) {
+  .results-head {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .results-main {
+    display: contents;
+  }
+
+  .results-finding {
+    order: 1;
+  }
+
+  .results-scores {
+    order: 2;
+  }
+
+  .results-main > .block {
+    order: 3;
+  }
+}

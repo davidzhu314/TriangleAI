@@ -1,0 +1,280 @@
+/* Compare screen. Every value is a token; the only raw numbers are the tablet and phone widths
+   (DESIGN.md: Responsive Behavior). Routes carry colour, line pattern and a label in ink. */
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.finding {
+  margin: 0;
+  max-width: var(--size-page-max);
+  color: var(--color-heading);
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+}
+
+.compare-overlay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.compare-well {
+  height: calc(var(--size-readout) + var(--space-16) * 2);
+  background: var(--color-scene-ground);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Labels in ink: route colours 3 and 4 fall to about 4.4:1 on a well (DESIGN.md: Colors). */
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-heading);
+}
+
+.swatch {
+  display: inline-flex;
+  flex: none;
+}
+
+.swatch svg {
+  width: var(--size-icon-lg);
+  height: var(--space-2);
+  overflow: visible;
+}
+
+/* Desktop: the overlay (with the route's warnings) and the sliders side by side, the well as tall as the sliders,
+   so at 1440 × 900 both sit above the fold with the table full width under them. */
+.compare-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--size-readout);
+  gap: var(--gap);
+  align-items: stretch;
+}
+
+.compare-lead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.compare-layout .compare-overlay {
+  flex: 1;
+}
+
+.compare-layout .compare-well {
+  flex: 1;
+  height: auto;
+  min-height: var(--size-palette);
+  contain: size; /* the canvas fills the well; it never sets the row's height */
+}
+
+.compare-weights,
+.compare-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+/* One line per measure: name, slider, share. Desktop rows are 24 px targets (WCAG 2.5.8); phones get 44 px. */
+.weight-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.weight {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.weight label {
+  color: var(--color-heading);
+}
+
+.weight input[type='range'] {
+  width: 100%;
+  min-height: var(--size-icon-lg);
+  margin: 0;
+  accent-color: var(--color-brand);
+}
+
+.weight-share {
+  color: var(--color-text);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.routes {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.routes th,
+.routes td {
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-top: var(--border-width) solid var(--color-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.routes thead th {
+  border-top: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  font-weight: var(--font-weight-regular);
+}
+
+.routes .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.routes tbody th {
+  min-width: var(--size-palette);
+  font-weight: var(--font-weight-regular);
+}
+
+.row-name {
+  display: block;
+  color: var(--color-heading);
+  font-weight: var(--font-weight-medium);
+}
+
+.row-sub {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.routes tbody tr[tabindex] {
+  cursor: pointer;
+}
+
+.routes tbody tr[tabindex]:hover th,
+.routes tbody tr[tabindex]:hover td {
+  background: var(--color-surface-sunken);
+}
+
+.routes .row-selected th,
+.routes .row-selected td,
+.routes .row-selected:hover th,
+.routes .row-selected:hover td {
+  background: var(--color-surface-active);
+}
+
+.routes .row-player th,
+.routes .row-player td {
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+}
+
+.compare-decide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@media (max-width: 1100px) {
+  .compare-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare-layout .compare-well {
+    flex: none;
+    height: calc(var(--size-readout) + var(--space-16) * 2);
+    contain: none;
+  }
+}
+
+/* Phone: the overlay full width, the sliders, then each route as a two-line row. */
+@media (max-width: 640px) {
+  .compare-well {
+    height: var(--size-readout);
+  }
+
+  .compare-weights,
+  .compare-table {
+    padding: var(--space-4);
+  }
+
+  .routes thead {
+    display: none;
+  }
+
+  .routes tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    padding-block: var(--space-3);
+    border-top: var(--border-width) solid var(--color-rule);
+    min-height: var(--size-touch);
+  }
+
+  .routes th,
+  .routes td {
+    padding: 0;
+    border: 0;
+  }
+
+  .routes tbody th {
+    grid-column: 1 / -1;
+  }
+
+  .routes tbody th {
+    min-width: 0;
+  }
+
+  .routes td.num {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+
+  .routes td.num::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-meta);
+  }
+
+  .routes .row-player th,
+  .routes .row-player td {
+    border-bottom: 0;
+  }
+
+  /* Phone: name and share on one line, the slider full width under them. */
+  .weight {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .weight input[type='range'] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: var(--size-touch);
+  }
+}

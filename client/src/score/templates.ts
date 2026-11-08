@@ -10,6 +10,9 @@ export const FEEDBACK_TEMPLATES = {
   'plan.turn_too_sharp': 'Route blocked: the {turn_deg}° turn into the {vessel} is sharper than the {preset} wire can take ({max_turn_deg}°).',
   'plan.forbidden_zone': 'Route blocked: it passes through {zone}, a no-go zone.',
   'plan.arch_never_reached': 'Route blocked: the {preset} wire never reached the arch in the recorded runs.',
+  'plan.cannot_steer': "Route blocked: the branch into the {vessel} leaves at {takeoff_deg}°, beyond what the {preset} wire's {tip_deg}° tip can point into.",
+  'plan.blocked_at': "Route blocked: the {preset} wire can't take the route into the {vessel}.",
+  'plan.blocked': "Route blocked: the {preset} wire can't take this route.",
   'plan.no_safe_route': 'No safe route to the {target} with this entry and wire; every route is blocked or crosses a heavy risk zone.',
   'plan.heavy_crossing_shorter': 'Your route was {dl_cm} cm shorter but crossed {zone}. The {route} avoids it.',
   'plan.heavy_crossing': 'Your route crossed {zone}. The {route} avoids it.',
@@ -45,6 +48,7 @@ export const FEEDBACK_TEMPLATES = {
   'assist.complete': 'Your route already reaches the {target}.',
   'assist.no_continuation': 'No route to the {target} continues from here; undo the last branch.',
   'assist.no_safe_route': 'No safe way on from here with this wire.',
+  'assist.cannot_steer': "This wire can't steer into any of the ways on from here; try another wire or entry.",
 } as const;
 
 export type TemplateId = keyof typeof FEEDBACK_TEMPLATES;

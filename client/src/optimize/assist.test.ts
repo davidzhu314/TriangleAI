@@ -6,7 +6,7 @@ import { planAssist, type PlanAssistInput } from './assist';
 import { loadFixtureY } from './fixture-y.testutil';
 import { buildGraph } from './graph';
 import { gridCase, loadSynthetic, randomCase, rng } from './graphs.testutil';
-import { isSafe, optimizeCase } from './optimizer';
+import { isSafe, optimizeCase, RouteEnumerator } from './optimizer';
 import { measureRanges, rankRoutes } from './rank';
 
 const diamond = loadSynthetic('diamond');
@@ -57,7 +57,8 @@ describe('planAssist', () => {
     const found = ([randomCase(11), gridCase(4, 4), diamond] as LoadedCase[]).flatMap((c) => {
       const g = buildGraph(c);
       return c.targets.flatMap((t) => {
-        const res = optimizeCase(g, { caseId: c.id, targetId: t.id });
+        // synthetic graphs with branches no wire can steer: path search only, without the steering check
+        const res = optimizeCase(g, { caseId: c.id, targetId: t.id }, new RouteEnumerator(g, { steering: false }));
         if (res.kind !== 'frontier') return [];
         return res.candidates.filter(isSafe).flatMap((r) =>
           r.edges.slice(1).map((_, k) => ({ res, r, prefix: r.edges.slice(0, k + 1) })).filter(({ prefix }) =>

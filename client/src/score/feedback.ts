@@ -1,8 +1,13 @@
 /**
- * Feedback lines (spec §6.4), most important first: not reaching the target, then the plan's
- * deciding check, then a star lost to the budget, then the drive components from lowest score up
- * (each one below 100 adds its lines), then the neutral radiation and budget notes. The Results
- * screen's demo step shows only the top line.
+ * Feedback lines (spec §6.4), most important first, so feedback[0] is the one thing to change:
+ * 1. not reaching the target;
+ * 2. the plan's deciding check, unless the plan is already the best at the player's weights
+ *    (`plan.best`, which is praise: it moves to step 5);
+ * 3. a star lost to the radiation budget;
+ * 4. the drive components from lowest score up (each one below 100 adds its lines);
+ * 5. `plan.best`, when that was the plan line;
+ * 6. the neutral radiation and budget notes.
+ * The Results screen shows feedback[0] largest.
  */
 
 import type {
@@ -21,14 +26,17 @@ import { ERROR_PENALTY, FIDELITY_ZERO_M } from './constants';
 import type { ForceReference } from './reference';
 import { feedbackLine, round } from './templates';
 
-/** Display for each measure in plan.top_contributor: name, unit, scale from contract units, decimals. */
-export const MEASURE_DISPLAY: Readonly<Record<MeasureKey, { name: string; unit: string; scale: number; decimals: number }>> = {
+/**
+ * Display for each measure in plan.top_contributor: name, unit, scale from contract units, decimals,
+ * and the unit for a value of exactly 1 where it differs ("1 point", not "1 points").
+ */
+export const MEASURE_DISPLAY: Readonly<Record<MeasureKey, { name: string; unit: string; one?: string; scale: number; decimals: number }>> = {
   lengthM: { name: 'route length', unit: 'cm', scale: 100, decimals: 1 },
-  sharpestTurnDeg: { name: 'the sharpest turn', unit: 'degrees', scale: 1, decimals: 0 },
-  totalTurningDeg: { name: 'total turning', unit: 'degrees', scale: 1, decimals: 0 },
+  sharpestTurnDeg: { name: 'the sharpest turn', unit: 'degrees', one: 'degree', scale: 1, decimals: 0 },
+  totalTurningDeg: { name: 'total turning', unit: 'degrees', one: 'degree', scale: 1, decimals: 0 },
   narrowestRadiusM: { name: 'the narrowest radius', unit: 'mm', scale: 1000, decimals: 1 },
-  heavyCrossings: { name: 'heavy risk zones crossed', unit: 'zones', scale: 1, decimals: 0 },
-  proximityPenalty: { name: 'closeness to risk zones', unit: 'points', scale: 1, decimals: 2 },
+  heavyCrossings: { name: 'heavy risk zones crossed', unit: 'zones', one: 'zone', scale: 1, decimals: 0 },
+  proximityPenalty: { name: 'closeness to risk zones', unit: 'points', one: 'point', scale: 1, decimals: 2 },
   estFluoroS: { name: 'estimated fluoro time', unit: 's', scale: 1, decimals: 1 },
   simPeakForceN: { name: 'simulated peak force', unit: 'N', scale: 1, decimals: 2 },
   simSuccessRate: { name: 'simulated success rate', unit: '%', scale: 100, decimals: 0 },
@@ -82,6 +90,20 @@ export function violationLine(v: ConstraintViolation, presetId: Route['presetId'
       return feedbackLine('plan.forbidden_zone', { zone: n.zone(v.zone) }, 'plan.feasible');
     case 'arch_never_reached':
       return feedbackLine('plan.arch_never_reached', { preset: getPreset(v.presetId).name }, 'plan.feasible');
+    case 'cannot_steer':
+      return feedbackLine(
+        'plan.cannot_steer',
+        { takeoff_deg: round(v.takeoffDeg, 0), vessel: n.vesselOfEdge(v.edge), preset, tip_deg: round(v.tipDeg, 0) },
+        'plan.feasible',
+      );
+    default: {
+      // A violation kind added to the contract after this was written (e.g. cannot_steer before its own
+      // template lands): still explained, never dropped, so a contract bump never breaks the build.
+      const edge = (v as { edge?: unknown }).edge;
+      return typeof edge === 'string'
+        ? feedbackLine('plan.blocked_at', { preset, vessel: n.vesselOfEdge(edge) }, 'plan.feasible')
+        : feedbackLine('plan.blocked', { preset }, 'plan.feasible');
+    }
   }
 }
 
@@ -118,7 +140,8 @@ export function planLines(result: Pick<CaseResult, 'plan'>, player: Route, optim
         return [feedbackLine('plan.top_contributor_turn', { turn_deg: round(t.value, 0), vessel: n.vesselOfEdge(t.edge) }, 'plan.regret')];
       }
       const d = MEASURE_DISPLAY[t.measure];
-      return [feedbackLine('plan.top_contributor', { measure: d.name, value: round(t.value * d.scale, d.decimals), unit: d.unit }, 'plan.regret')];
+      const value = round(t.value * d.scale, d.decimals);
+      return [feedbackLine('plan.top_contributor', { measure: d.name, value, unit: value === 1 && d.one ? d.one : d.unit }, 'plan.regret')];
     }
   }
 }
@@ -201,7 +224,11 @@ export function buildFeedback(r: CaseResult, ctx: FeedbackContext): FeedbackLine
   const n = new Names(ctx.case);
   const lines: FeedbackLine[] = [];
   if (!r.reachedTarget) lines.push(feedbackLine('drive.not_reached', { target: n.target(ctx.log.targetId) }, 'result.stars'));
-  lines.push(...planLines(r, ctx.player, ctx.optimized, n, ctx.log.targetId));
+  // a full-score plan ("your route is the best") is praise, not something to change: it goes after
+  // the drive lines that took points off, so feedback[0] is the one thing to change
+  const plan = planLines(r, ctx.player, ctx.optimized, n, ctx.log.targetId);
+  const planIsPraise = plan.every((l) => l.template === 'plan.best');
+  if (!planIsPraise) lines.push(...plan);
 
   const budget = ctx.case.fluoroBudgetS;
   const budgetValues = () => ({ over_s: round(r.fluoroOverBudgetS, 1), budget_s: round(budget ?? 0, 1) });
@@ -210,6 +237,7 @@ export function buildFeedback(r: CaseResult, ctx: FeedbackContext): FeedbackLine
 
   const order = [...DRIVE_ORDER].sort((a, b) => r.drive[a].score - r.drive[b].score || DRIVE_ORDER.indexOf(a) - DRIVE_ORDER.indexOf(b));
   for (const k of order) if (belowFull(r.drive[k].score)) lines.push(...componentLines(k, r, ctx.log, ctx.reference, n));
+  if (planIsPraise) lines.push(...plan);
 
   if (!belowFull(r.drive.radiation.score) && r.drive.radiation.fluoroS > 0) {
     lines.push(

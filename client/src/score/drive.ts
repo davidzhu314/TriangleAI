@@ -17,6 +17,7 @@ import {
   GENTLENESS_FLOOR_NS,
   GENTLENESS_SPAN,
   RADIATION_ZERO_FACTOR,
+  snapScore,
 } from './constants';
 import type { ForceReference } from './reference';
 
@@ -46,22 +47,85 @@ export function pointSegmentDistance(p: readonly number[], a: readonly number[],
   return Math.hypot(ap0 - t * ab0, ap1 - t * ab1, ap2 - t * ab2);
 }
 
+/** Squared distance from p to segment ab (no square root): the same projection as pointSegmentDistance. */
+function segmentDistance2(p: readonly number[], a: readonly number[], b: readonly number[]): number {
+  const ab0 = b[0]! - a[0]!;
+  const ab1 = b[1]! - a[1]!;
+  const ab2 = b[2]! - a[2]!;
+  const ap0 = p[0]! - a[0]!;
+  const ap1 = p[1]! - a[1]!;
+  const ap2 = p[2]! - a[2]!;
+  const len2 = ab0 * ab0 + ab1 * ab1 + ab2 * ab2;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, (ap0 * ab0 + ap1 * ab1 + ap2 * ab2) / len2)) : 0;
+  const x = ap0 - t * ab0;
+  const y = ap1 - t * ab1;
+  const z = ap2 - t * ab2;
+  return x * x + y * y + z * z;
+}
+
 /** §6.2 fidelity: (1/N) Σ_t min_q ‖tip_t − q‖ over the planned centerline. 0 with no samples. */
 export function meanTipDistanceM(log: EventLog, segments: readonly Segment[]): number {
   if (log.samples.length === 0 || segments.length === 0) return 0;
+  // Exact and fast:
+  // - Prune: a segment can't be nearer than |p − midpoint| − half its length, so it is skipped when
+  //   that bound can't beat the nearest so far (compared squared, with no square roots). Seeding with
+  //   the previous sample's nearest segment (the tip moves little between samples) prunes most.
+  // - Search in squared distance, then take the reported distance with pointSegmentDistance over
+  //   the segments tied (within 1e-9) for nearest, so the value is the same as a full scan's.
+  const n = segments.length;
+  const mid = new Float64Array(3 * n);
+  const half = new Float64Array(n);
+  segments.forEach(([a, b], i) => {
+    mid[3 * i] = (a[0] + b[0]) / 2;
+    mid[3 * i + 1] = (a[1] + b[1]) / 2;
+    mid[3 * i + 2] = (a[2] + b[2]) / 2;
+    half[i] = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) / 2;
+  });
+  const d2 = new Float64Array(n);
+  const near: number[] = [];
   let sum = 0;
+  let seed = 0;
   for (const s of log.samples) {
-    let d = Infinity;
-    for (const [a, b] of segments) {
-      const x = pointSegmentDistance(s.tip, a, b);
-      if (x < d) d = x;
+    const p = s.tip;
+    near.length = 0;
+    let best2 = segmentDistance2(p, segments[seed]![0], segments[seed]![1]);
+    d2[seed] = best2;
+    near.push(seed);
+    let bestD = Math.sqrt(best2);
+    for (let i = 0; i < n; i++) {
+      if (i === seed) continue;
+      const dx = p[0] - mid[3 * i]!;
+      const dy = p[1] - mid[3 * i + 1]!;
+      const dz = p[2] - mid[3 * i + 2]!;
+      const reach = bestD + half[i]! + 1e-12;
+      if (dx * dx + dy * dy + dz * dz >= reach * reach) continue;
+      const x2 = segmentDistance2(p, segments[i]![0], segments[i]![1]);
+      d2[i] = x2;
+      near.push(i);
+      if (x2 < best2) {
+        best2 = x2;
+        bestD = Math.sqrt(x2);
+      }
     }
+    // the reported distance: pointSegmentDistance over the segments tied for nearest
+    let d = Infinity;
+    let bestI = seed;
+    const tie = best2 * (1 + 1e-9) + 1e-30;
+    for (const i of near) {
+      if (d2[i]! > tie) continue;
+      const x = pointSegmentDistance(p, segments[i]![0], segments[i]![1]);
+      if (x < d || (x === d && i < bestI)) {
+        d = x;
+        bestI = i;
+      }
+    }
+    seed = bestI;
     sum += d;
   }
   return sum / log.samples.length;
 }
 
-export const fidelityScore = (meanM: number): number => 100 * (1 - Math.min(1, meanM / FIDELITY_ZERO_M));
+export const fidelityScore = (meanM: number): number => snapScore(100 * (1 - Math.min(1, meanM / FIDELITY_ZERO_M)));
 
 /** 100 at or below the reference, 0 at reference + SPAN × max(reference, floor). */
 export function gentlenessPart(value: number, reference: number, floor: number): number {
@@ -70,14 +134,14 @@ export function gentlenessPart(value: number, reference: number, floor: number):
 }
 
 export function gentlenessScore(peakN: number, cumulativeNs: number, ref: Pick<ForceReference, 'peakForceN' | 'cumulativeForceNs'>): number {
-  return (gentlenessPart(peakN, ref.peakForceN, GENTLENESS_FLOOR_N) + gentlenessPart(cumulativeNs, ref.cumulativeForceNs, GENTLENESS_FLOOR_NS)) / 2;
+  return snapScore((gentlenessPart(peakN, ref.peakForceN, GENTLENESS_FLOOR_N) + gentlenessPart(cumulativeNs, ref.cumulativeForceNs, GENTLENESS_FLOOR_NS)) / 2);
 }
 
 /** 100 within the estimate, 0 at ZERO_FACTOR × the estimate. */
 export function radiationScore(fluoroS: number, estFluoroS: number): number {
   if (fluoroS <= estFluoroS) return 100;
   if (estFluoroS <= 0) return 0;
-  return 100 * (1 - Math.min(1, (fluoroS - estFluoroS) / ((RADIATION_ZERO_FACTOR - 1) * estFluoroS)));
+  return snapScore(100 * (1 - Math.min(1, (fluoroS - estFluoroS) / ((RADIATION_ZERO_FACTOR - 1) * estFluoroS))));
 }
 
 export function errorsScore(wrongBranches: number, prolapses: number, backOuts: number): number {
@@ -96,6 +160,22 @@ export function sampleTotals(log: EventLog): { peakForceN: number; cumulativeFor
     if (s.fluoro) fluoroSamples++;
   }
   return { peakForceN: peak, cumulativeForceNs: cum, fluoroS: fluoroSamples * dt };
+}
+
+/**
+ * The log up to the first target_reached: samples at or before it, and events up to and including it.
+ * The drive is over at the target, so fluoro held, force or wandering after it is not scored
+ * (rehearsal 1: fluoro held 3 s past the target scored radiation 21; DECISIONS.md, "Scoring stops at the target").
+ * A log that never reached the target is returned unchanged.
+ */
+export function upToTarget(log: EventLog): EventLog {
+  const i = log.events.findIndex((e) => e.kind === 'target_reached');
+  if (i < 0) return log;
+  const t = log.events[i]!.t;
+  const samples = log.samples.filter((s) => s.t <= t);
+  const events = log.events.slice(0, i + 1);
+  if (samples.length === log.samples.length && events.length === log.events.length) return log;
+  return { ...log, samples, events };
 }
 
 export function timeOf(log: EventLog): number {
@@ -134,6 +214,6 @@ export function driveScore(log: EventLog, c: LoadedCase, estFluoroS: number, ref
     prolapses,
     backOuts,
   };
-  const score = fidelity.weight * fidelity.score + gentleness.weight * gentleness.score + radiation.weight * radiation.score + errors.weight * errors.score;
+  const score = snapScore(fidelity.weight * fidelity.score + gentleness.weight * gentleness.score + radiation.weight * radiation.score + errors.weight * errors.score);
   return { score, fidelity, gentleness, radiation, errors, timeS: timeOf(log) };
 }

@@ -140,10 +140,10 @@ describe('no safe route: entry and entry + preset suggestions', () => {
 });
 
 /** Every property the frontier and the constraints must hold for one optimize result. */
-function checkInvariants(c: LoadedCase, targetId: string) {
+function checkInvariants(c: LoadedCase, targetId: string, steering = true) {
   const g = buildGraph(c);
-  const res = optimizeCase(g, { caseId: c.id, targetId });
-  const en = new RouteEnumerator(g);
+  const res = optimizeCase(g, { caseId: c.id, targetId }, new RouteEnumerator(g, { steering }));
+  const en = new RouteEnumerator(g, { steering });
   const all: Route[] = [];
   for (const e of g.entries.keys()) for (const p of PRESET_IDS) all.push(...en.routes(e, targetId, p));
   const forbiddenEdges = new Set(
@@ -257,10 +257,11 @@ describe("Yen's k-shortest and large graphs", () => {
     const g = buildGraph(c);
     expect(g.edges.size).toBeGreaterThan(LARGE_GRAPH_EDGES);
     expect(new RouteEnumerator(g).large).toBe(true);
-    const f = opt(c, 't0') as Frontier;
+    // a 90° grid: no wire can steer its branches, so this path-search test runs without the steering check
+    const f = optimizeCase(g, { caseId: c.id, targetId: 't0' }, new RouteEnumerator(g, { steering: false })) as Frontier;
     for (const p of PRESET_IDS) expect(f.candidates.filter((r) => r.presetId === p).length).toBeLessThanOrEqual(10);
     expect(f.kind).toBe('frontier');
-    expect(checkInvariants(c, 't0').frontier).toBeGreaterThan(0);
+    expect(checkInvariants(c, 't0', false).frontier).toBeGreaterThan(0);
   });
 });
 

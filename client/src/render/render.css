@@ -1,0 +1,333 @@
+/* Plan view styles. Every colour, opacity and stroke is a token (styles/tokens.css: "3D scene", Routes, Risk tiers).
+   Strokes that must stay the same on screen at any zoom use vector-effect: non-scaling-stroke with unitless token
+   widths (SVG user units equal screen pixels then). Vessel and zone widths come from the case radii. */
+.plan-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.plan-view-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.vessel {
+  fill: none;
+  stroke: var(--color-scene-vessel);
+  stroke-opacity: var(--opacity-scene-vessel);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.zone {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.zone-forbidden {
+  stroke: var(--color-risk-forbidden);
+  stroke-opacity: var(--opacity-risk-zone);
+}
+
+.hatch-line {
+  stroke: var(--color-risk-heavy);
+  stroke-width: var(--stroke-route);
+  vector-effect: non-scaling-stroke;
+}
+
+.zone-proximity {
+  stroke: var(--color-risk-proximity);
+  stroke-opacity: var(--opacity-risk-zone);
+  stroke-dasharray: var(--dash-route-3);
+}
+
+.route-trace {
+  fill: none;
+  stroke: var(--color-route-player);
+  stroke-width: var(--stroke-route-player);
+  stroke-dasharray: var(--dash-route-player);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.handle {
+  cursor: pointer;
+}
+
+.handle-hit {
+  fill: transparent;
+}
+
+.handle-dot {
+  fill: var(--color-surface);
+  stroke: var(--color-route-player);
+  stroke-width: var(--stroke-route);
+  vector-effect: non-scaling-stroke;
+}
+
+.handle:hover .handle-dot {
+  fill: var(--color-brand-tint);
+}
+
+.marker-entry {
+  fill: var(--color-marker-entry);
+}
+
+.marker-target {
+  fill: none;
+  stroke: var(--color-marker-target);
+  stroke-width: var(--stroke-route-player);
+  vector-effect: non-scaling-stroke;
+}
+
+/* Compare overlay: frontier routes by colour and line pattern; the selected one heavier. */
+.frontier-line {
+  fill: none;
+  stroke-width: var(--stroke-route);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.frontier-selected {
+  stroke-width: var(--stroke-route-player);
+}
+
+.route-1 {
+  stroke: var(--color-route-1);
+  stroke-dasharray: var(--dash-route-1);
+}
+
+.route-2 {
+  stroke: var(--color-route-2);
+  stroke-dasharray: var(--dash-route-2);
+}
+
+.route-3 {
+  stroke: var(--color-route-3);
+  stroke-dasharray: var(--dash-route-3);
+}
+
+.route-4 {
+  stroke: var(--color-route-4);
+  stroke-dasharray: var(--dash-route-4);
+}
+
+/* Drive view (spec §5.5). Front: translucent vessels, ghost trail, opaque wire. X-ray: grey ground, dark wire only
+   while fluoro is held, vessels only during a contrast puff, fading over --duration-contrast-fade. */
+.drive-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.drive-view .plan-view-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ghost-trail {
+  fill: none;
+  stroke: var(--color-scene-ghost);
+  stroke-opacity: var(--opacity-scene-ghost);
+  stroke-width: var(--stroke-route-player);
+  stroke-dasharray: var(--dash-route-2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wire-line {
+  fill: none;
+  stroke: var(--color-scene-wire);
+  stroke-width: var(--stroke-route-player);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wire-tip {
+  fill: var(--color-scene-ghost);
+}
+
+.drive-dim .vessels,
+.drive-dim .zones {
+  opacity: var(--opacity-scene-vessel);
+}
+
+/* X-ray */
+.drive-view[data-mode='xray'] .vessel {
+  stroke: var(--color-xray-ink);
+  stroke-opacity: 0;
+}
+
+.drive-view[data-mode='xray'] .zones,
+.drive-view[data-mode='xray'] .ghost-trail,
+.drive-view[data-mode='xray'] .markers {
+  display: none;
+}
+
+.drive-view[data-mode='xray'] .wire-line,
+.drive-view[data-mode='xray'] .wire-tip {
+  stroke: var(--color-xray-ink);
+  fill: var(--color-xray-ink);
+  opacity: 0;
+}
+
+.drive-view[data-mode='xray'].fluoro-on .wire-line,
+.drive-view[data-mode='xray'].fluoro-on .wire-tip {
+  opacity: 1;
+}
+
+.drive-view[data-mode='xray'] .wire-line {
+  fill: none;
+}
+
+.drive-view[data-mode='xray'].contrast-on .vessel {
+  stroke-opacity: var(--opacity-xray-contrast);
+  transition: none;
+}
+
+.drive-view[data-mode='xray'].contrast-fading .vessel {
+  stroke-opacity: 0;
+  transition: stroke-opacity var(--duration-contrast-fade) linear;
+}
+
+/* Two faces of a case view (dual-view.ts): the three.js canvas by default, the flat 2D drawing as the alternative.
+   Only the chosen face shows; the other stays in the page so switching keeps its state. */
+.scene-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.scene-canvas:active {
+  cursor: grabbing;
+}
+
+[data-view-kind='3d'] > .plan-view-svg,
+[data-view-kind='flat'] > .scene-canvas {
+  display: none;
+}
+
+.view-toolbar {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  z-index: 2; /* above the anatomy labels, so its panels are never covered */
+}
+
+.hud-top-row .view-toolbar {
+  position: static;
+}
+
+.btn.ar-enter[hidden] {
+  display: none;
+}
+
+.view-frame[hidden] {
+  display: none;
+}
+
+/* Anatomy layer controls (feature/vascular-ui): a disclosure panel under the "Anatomy" button. It floats over the
+   view, so it carries the float shadow; nothing behind it is blocked. */
+.anatomy-controls {
+  position: relative;
+}
+
+.anatomy-panel {
+  position: absolute;
+  top: 100%;
+  right: 0; /* opens leftward from the button, over the view rather than off its edge */
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--size-palette);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float); /* taste-skill-ignore: the panel floats over the 3D view */
+}
+
+.anatomy-panel[hidden] {
+  display: none;
+}
+
+.anatomy-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-control);
+  color: var(--color-text);
+}
+
+.anatomy-opacity input {
+  flex: 1;
+  accent-color: var(--color-primary);
+}
+
+.anatomy-row input:disabled,
+.anatomy-row:has(input:disabled) {
+  color: var(--color-text-muted);
+}
+
+.anatomy-reset {
+  align-self: flex-start;
+}
+
+.anatomy-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.anatomy-note:empty {
+  display: none;
+}
+
+/* Labels pinned to the model: the page's type, a pale chip, and a side mark in the vessel's colour so the colour is
+   never the only signal (the words say artery or vein by name). */
+.anatomy-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.anatomy-label {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  border-left: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+  white-space: nowrap;
+}
+
+.anatomy-label-artery {
+  border-left-color: var(--color-anatomy-artery);
+}
+
+.anatomy-label-vein {
+  border-left-color: var(--color-anatomy-vein);
+}
+
+[data-view-kind='flat'] > .anatomy-labels {
+  display: none;
+}

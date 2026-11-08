@@ -14,9 +14,15 @@ Run 2026-11-07 on win32 x64, Node v26.10.0, a laptop, on the main thread after a
 | scoreCase, end to end per golden log | median < 100 ms | 12.635 ms (over-budget log, 2336 samples) | 22.836 ms | Pass | `score/score.timing.test.ts` |
 | Gentleness reference drive alone | logged only | 1.137 ms | — | — | `score/score.timing.test.ts` |
 | Progression function, 50 cases × 1000 records | median < 5 ms | 0.146 ms (nextCase) | 0.261 ms | Pass | `score/progress.timing.test.ts` |
+| measureRoute, generated cases (every frontier-route prefix) ¹ | p95 < 16.7 ms | 0.272 ms (low-tort) | 0.379 ms | Pass | `tests/engine/timing-generated.test.ts` |
+| Optimize, generated cases (cold, buildGraph + both targets) ¹ | median < 50 ms | 4.450 ms (type-iii) | 4.869 ms | Pass | `tests/engine/timing-generated.test.ts` |
+| Rail step, generated cases (`RailWireSource.tick`, every frontier route) ¹ ² | median < 1 ms | 0.031 ms (low-tort) | 0.061 ms | Pass | `tests/engine/timing-generated.test.ts` |
+| scoreCase, generated cases (clean drive of every frontier route) ¹ | median < 100 ms | 15.626 ms (low-tort) | 18.802 ms | Pass | `tests/engine/timing-generated.test.ts` |
 
 No optimisation was needed in V7: every budget passes with a wide margin, so the gentleness reference is not cached (DECISIONS.md, "Gentleness reference cache: not needed").
 
+¹ The generated demo cases, `type-iii` and `low-tort`: Gibran's G1 measurements, on darwin arm64 (Apple M5), Node v22.23.4, 2026-11-08. The other rows are from the win32 x64 laptop above. Per-case detail: `metrics/gibran/d6-timing.md`. These rows close the earlier gap for David's generated cases.
+² Timed around `RailWireSource.tick()`, which also emits the wire state, so it slightly overstates `step()` alone.
+
 **Not covered yet:**
-- **David's generated demo cases** (Type III and low tortuosity, D6-min) aren't on main. Once they land, add them to the optimizer, measureRoute, rail and score timings.
 - **Physics latency and frame time** are measured on the physics and rendering lanes (`metrics/david/`, `metrics/aroovee/`), not here.

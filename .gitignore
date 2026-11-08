@@ -23,3 +23,6 @@ metrics/**/*.log
 .env.*
 .DS_Store
 Thumbs.db
+
+# Vercel CLI project link (never committed)
+.vercel

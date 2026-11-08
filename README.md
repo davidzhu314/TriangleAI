@@ -25,12 +25,201 @@ pip install -r physics/requirements-test.txt
 pytest physics
 ```
 
-Physics setup (CathSim) lives in `physics/README.md` (written in D1). The app runs without it, in rail mode.
+Physics setup (CathSim) and the D5 physics process (`python -m server` in `physics/`, on 127.0.0.1:8765) are in `physics/README.md`. The app runs without it, in rail mode.
+
+## What's in the app
+
+One case is one pass through six screens, each at its own hash route:
+
+| Screen | Route | What it does |
+| --- | --- | --- |
+| Library | `#/library` | The next case, with its stars, then the other cases; drag-and-drop `case.zip` import showing each validation result |
+| Case brief | `#/case/<id>` | Scenario, targets, entry sites, arch type and fluoro budget |
+| Plan | `#/case/<id>/plan` | Pick entry, target and wire preset, build the route by branch points, live cost panel |
+| Compare | `#/case/<id>/compare` | Frontier routes overlaid, weight sliders, keep or switch |
+| Drive | `#/case/<id>/drive` | Front and X-ray views, HUD (vessel, distance, wall force, fluoro), keyboard and gamepad, difficulty ladder |
+| Results | `#/case/<id>/results` | The one thing to change, plan and drive scores, stars, replay timeline, next case |
+
+- **Cases.** The Library lists the bundled cases from `client/public/cases/index.json`:
+  - the generated ladder: `low-tort`, `type-i-plaque`, `type-ii`, `type-ii-tortuous`, `type-iii`, `bovine`;
+  - three planning-only cases exported from real CT angiograms' arteries with 3D Slicer and SlicerVMTK: `ts-s1404-cta`, `ts-s1336-cta` and `ts-s0727-cta` (TotalSegmentator dataset subjects s1404, s1336 and s0727, CC BY 4.0). How to reproduce them is in `slicer/README.md`;
+  - `fixture-y`.
+- **Views.** Plan, Compare and Drive open in 3D (three.js 0.187.0), with the flat SVG front view one click away and as the fallback without WebGL. Results' replay stays 2D.
+- **Driving.** Drive gets its wire from `client/src/wire/select.ts` (D5). Every bundled case drives on the rail wire.
+  - A CathSim phantom served by the physics process drives on live physics. If the socket fails or stalls for 2 s, it falls back to rail with a notice.
+  - Phantom cards appear in the Library only once its probe points at the physics process: `PHYSICS_CASES_URL` in `client/src/ui/physics-probe.ts` is still `null`.
+  - There are no recorded physics runs, so replay mode is not offered.
+- **Design system:** `DESIGN.md`, `client/src/styles/tokens.css` and `theme.css`, light and dark (following the OS setting). Every colour and size in the UI is a token. Icons are in `client/src/assets/icons/`.
+- **Numbers:** every number on screen comes from the engine (`client/src/optimize`, `client/src/score`) or the case file, with a formula tooltip. A missing value shows as a dash.
+- **Mock build:** `VITE_ENGINE=mock pnpm build` runs on the engine mocks and shows a "Mock data" badge.
+
+## Engine (Vaibhav)
+
+The engine is plain TypeScript in `client/src/optimize/`, `client/src/score/` and `client/src/wire/rail*`, with Python cross-checks in `tests/crosscheck/`. **No AI model computes any route, measure, score or feedback number.** Every number comes from code, and every illustrative constant is logged in `DECISIONS.md`.
+
+### What's built
+
+| Milestone | What it delivers | Main files | PR |
+| --- | --- | --- | --- |
+| **V0** | Synthetic test shapes with closed-form answers (straight, 90° arc, helix, Y-branch, junction, diamond, …), and a NumPy version of the spec §4.2 measures | `tests/fixtures/synthetic/`, `tests/crosscheck/` | #1 |
+| **V2-prep** | Measures in TypeScript, and route-level turning that spans branch points | `optimize/measures/` | #1 |
+| **V1** | Mocks in contract shape, so screens could start early, behind a build guard (`VITE_ENGINE=mock`) | `optimize/mock.ts`, `score/mock.ts`, `wire/mock-source.ts` | #6 |
+| **V2** | Route graph, per-edge and per-route measures, in a Web Worker | `optimize/graph.ts`, `measure-route.ts`, `measure.worker.ts` | #9 |
+| **V3** | Optimizer: three illustrative wire presets, route search (DFS, or Yen's k = 10 on big graphs), constraints (too narrow, turn too sharp, forbidden zone), the Pareto frontier with labels, "no safe route" suggestions, weighted re-ranking | `optimize/optimizer.ts`, `frontier.ts`, `rank.ts`, `presets.ts` | #11 |
+| **V4** | Rail wire: a pure 30 Hz step with branch entry by tip direction (25° rule), prolapse, a force proxy with force spikes, back-out, fluoro and contrast; an autopilot; a byte-identical replay | `wire/rail.ts`, `rail-source.ts`, `rail-autopilot.ts` | #14 |
+| **V5** | Scoring: the plan score (feasible / heavy-crossing / frontier caps, then regret), the drive score (fidelity, gentleness, radiation, errors), stars, the radiation budget, feedback sentences, reproducible from the event log | `score/plan.ts`, `drive.ts`, `stars.ts`, `feedback.ts`, `templates.ts`, `score.ts` | #15 |
+| **V6** | Progression: an unlock ladder from case anatomy, adaptive suggestions, course grading (plus the no-safe-route plan-score fix) | `score/progress.ts` | #16 |
+| **V7** | Performance budgets asserted in CI, a voice-review guard on the feedback wording, an engine purity test, and the `ILLUSTRATIVE_CONSTANTS` table for UI labels | `metrics/vaibhav/`, `score/templates.test.ts`, `score/illustrative.ts` | #18 |
+| **Steering** | `steerableAt` checks that a planned route can be steered, sharing its maths with the rail wire; also the D6-min drivability check | `optimize/steerability.ts` | #19 |
+| **Post-lane** | Aroovee's feedback wording, an end-to-end demo-path test, and replay timeline data for the Replay screen | `score/demo-path.test.ts`, `score/replay.ts` | #20 |
+| **Assistant answers** | "Best next artery", "my options" and "how am I doing", from the engine; hints are counted in `ProgressRecord.hintsUsed` | `optimize/assist.ts`, `score/live.ts` | #21 |
+| **Hand gestures and voice** | MediaPipe gestures, push-to-talk, "Hey Cathy" and always-listen (see below) | `client/src/input/` | #22 (draft) |
+
+### What the screens import
+
+Screens import the engine only from these entry points, never from mocks or inner modules:
+
+- **`client/src/optimize`:**
+  - `optimize(request, loadedCase)` and `measureRoute(…)`;
+  - `createMeasureWorker()`, which runs off the main thread;
+  - `createRanker(frontier)`, `rankRoutes(…)` and `WIRE_PRESETS`;
+  - `planAssist(…)` and `steerableAt(…)`.
+- **`client/src/score`:**
+  - `scoreAttempt({ log, optimized, weights, case })`;
+  - `replayTimeline(…)`, `driveAssist(…)` and `planAssistLine(…)`;
+  - progression: `nextCase`, `bestStars`, `ladderTier`, `isUnlocked`, `adaptiveSuggestion`, `courseGrade` and `recordFromResult`;
+  - `ILLUSTRATIVE_CONSTANTS` and `FEEDBACK_TEMPLATES`.
+- **The rail wire:** reached only through David's `wire/select.ts` (`RailWireSource`).
+
+A `VITE_ENGINE=mock` build serves the V1 mocks instead. A real build contains no mock code, which a build test checks.
+
+### Key rules
+
+The full reasoning is in `DECISIONS.md`.
+
+- **Illustrative values.** The wire presets (max turn 110/80/40°), the estimated fluoro time (1 s per cm + 3 s per 90° of turning), the rail constants, the gentleness and radiation curves, and the ladder's tortuosity cut-off are all illustrative. Label them so in the UI, using `ILLUSTRATIVE_CONSTANTS`.
+- **Rail branch entry.** The tip enters a branch within 25° of where it points; otherwise it continues the straightest way.
+- **Plan score.** 0 if infeasible, capped at 40 for a heavy-zone crossing, capped at 80 if off the frontier; otherwise it comes from regret at the player's own weights.
+- **Stars.** Reaching the target earns 1, plan ≥ 70 and drive ≥ 60 earn 2, and both ≥ 85 earn 3. Going over the case's fluoro allowance costs a star, but never takes a finished drive below 1.
+- **Progression.** Finishing any case on a tier opens the next. Stars never gate progress. The demo build uses `'open'` mode.
+
+### Tests and checks
+
+```sh
+pnpm test                                    # typecheck + all unit tests (includes timing budgets)
+pip install -r tests/crosscheck/requirements.txt
+pytest tests/crosscheck                      # NumPy cross-checks (Python 3.12)
+```
+
+Regenerate on purpose, and say so in the PR:
+
+```sh
+UPDATE_FIXTURES=1 pnpm exec vitest run client/src/wire/rail-golden.test.ts    # rail golden replay log
+UPDATE_FIXTURES=1 pnpm exec vitest run client/src/score/score-golden.test.ts  # golden scoring results
+UPDATE_METRICS=1 pnpm exec vitest run client/src/wire/rail.timing.test.ts client/src/score/score.timing.test.ts client/src/score/progress.timing.test.ts
+D6_DIR=client/public/cases pnpm exec vitest run client/src/optimize/d6min-drivability.test.ts   # steering on generated cases
+```
+
+What the tests guard:
+
+- **Measures:** closed-form synthetic fixtures, and TypeScript against NumPy within 0.1 mm and 0.5°.
+- **Rail:** every frontier route reaches its target, and the golden drive replays byte for byte.
+- **Scoring:** every cap rule, drive component, star rule and feedback template, with golden logs that replay to identical results.
+- **Demo path:** `score/demo-path.test.ts` runs Plan → Compare → Drive → Results → progression on real case files, including type-iii.
+- **Hygiene:** the engine reads no clock, randomness or storage, and the feedback wording keeps its placeholders, has no digits and avoids the never-say list.
+
+### Fixtures and metrics
+
+- `tests/fixtures/synthetic/` holds the synthetic shapes with closed-form answers (`generate.py` regenerates them).
+- `tests/fixtures/logs/` holds the golden event logs with their expected results.
+- `metrics/vaibhav/`:
+  - **`v7-summary.md`:** every engine timing against its budget, for the demo Q&A;
+  - **`v2-…`, `v3-…`, `v7-…`:** per-area timing detail;
+  - **`d6min-drivability.md`:** steering on the generated cases;
+  - **`demo-path-timing.md`:** the end-to-end demo-path timing.
+
+### Hand gestures and voice (draft PR #22, after the demo)
+
+These live on the branch `lane/vaibhav-input`. They're tested, CI is green, and nothing in the app imports them yet.
+
+- **Gestures (MediaPipe hands):**
+  - a gun pose (index and middle as the barrel, thumb up, ring and pinky folded): straighten to push, half-curl to hold, curl to pull, twist to rotate;
+  - point and pinch to select a branch, once per pinch.
+  - Tuned on a real webcam clip, which is kept as a replay test: the poses hold through aiming and 90° twists, and 8 pinches give 8 selects.
+- **Voice:**
+  - push-to-talk (hold V), cut off 0.7 s after release;
+  - an optional wake word, "Hey Cathy";
+  - an opt-in always-listen mode that only acts on "Hey Cathy, …", off by default, with a live-mic notice. Chrome streams the audio to Google while it's on.
+- **Status:** David and Aroovee approved all three features for after the demo, including always-listen (off by default, with a live-mic notice). A hint marks the attempt "assisted", with no extra score penalty. The `CLAUDE.md` ownership row for `client/src/input/` waits until #22 merges.
+- **Docs:** the full guide, including the local webcam lab, is `client/src/input/README.md` on that branch.
+
+### Open items
+
+- **Steering in the optimizer:** a `cannot_steer` constraint, so the optimizer never offers a route the rail can't steer. Needs a contract change (`team/requests/to-all-from-vaibhav-contract-steerability.md`).
+- **The §4.4 arch constraint and the two simulated measures:** need real recorded runs. D4 recorded none, because no driver reached a target, so they stay dropped (`DECISIONS.md`).
+- **Ladder tier 4 (whole-body planning):** needs a marker in the case format.
+- **Hand gestures and voice:** approved by David and Aroovee for after the demo; PR #22 is still a draft.
+
+## Changes: design system and screens (Aroovee)
+
+Each milestone has a handoff in `team/handoffs/` and screenshots in `metrics/aroovee/`. All were built on 2026-11-07. A2–A6 merged in PR #17, and A8 in PR #30.
+
+- **A0, design system.**
+  - `DESIGN.md`: the measured system, the screen inventory and the layout.
+  - `client/src/styles/tokens.css` for every colour, size, space, radius, shadow and motion value; `theme.css` for element defaults; `palette.html` showing every token on one page.
+  - The Inter font.
+  - A dark theme that follows the OS setting, with no in-app toggle.
+- **A1, icons and empty states.**
+  - 15 icons on one 24-unit grid with a 1.75 stroke: femoral and radial entries, target, the three wire presets, fluoro, contrast puff, push/pull, rotate, the three risk tiers, and the Physics and Planning-only badges.
+  - Three empty states: no cases, no safe route, physics offline.
+- **A2, shell, Library and Case brief.**
+  - The framed shell with hash routes; on a phone, a top bar and a full-screen menu.
+  - The "Mock data" badge in mock builds.
+  - The Library: the next case with its stars, from V6's progression, then the other cases.
+  - `case.zip` drag-and-drop import, showing every validation result with fixes the player can accept.
+  - The Case brief, from the case file only.
+- **A3, Plan screen.**
+  - Entry, target and wire-preset pickers, with presets labelled illustrative.
+  - A keyboard list of next branch points, with undo and clear.
+  - A 2D front view of the case and the route.
+  - A live cost panel: length, sharpest turn, narrowest radius, heavy zones crossed, closeness to risk zones, estimated fluoro. Each has a formula tooltip.
+  - Warnings in words as the route grows.
+- **A4, Compare screen.**
+  - A one-sentence finding (on the frontier, or which route beats yours and on what).
+  - Up to four frontier routes overlaid by colour, line pattern and label.
+  - Weight sliders, labelled illustrative.
+  - A routes table with formula tooltips.
+  - Keep my route or switch, then Start drive.
+- **A5, Drive screen.**
+  - A HUD showing vessel, distance to target, wall force (illustrative) and fluoro against the budget.
+  - Keyboard, gamepad (0.15 dead zone) and on-screen controls.
+  - Front and X-ray views, with a contrast puff that fades over 1.5 s.
+  - The difficulty ladder.
+  - Banners: target reached, wall force, off route, fluoro over budget. A fallback notice says in words why the physics wire dropped to rail.
+  - Finish or exit saves the drive's event log for Results.
+  - The wire comes only through `select.ts` (on main since D5) or an injected factory.
+- **A6, Results screen.**
+  - The engine's top feedback line, shown as written, with one action beside it (retry the drive, or revise the plan), then the next lines.
+  - The plan score, with the check that set it.
+  - The drive score: a table of fidelity, gentleness, radiation and errors, with time marked "not scored".
+  - Stars, and the star the fluoro allowance took.
+  - A replay timeline with a mark per event, and the driven path over the best route.
+  - Each attempt recorded once.
+  - Next case, Retry drive, Revise plan.
+  - Five more icons: star, force spike, wrong branch, prolapse, back-out.
+- **Tests and checks.**
+  - Playwright end-to-end tests for every screen, in `tests/e2e/`, including a full click-through from Library to Results on fixture-y.
+  - Results tests read Vaibhav's golden scoring logs and never hard-code a number.
+  - Each screen passed Taste Skill v2.1.5's lint and inspector with 0 FAIL at 1440, 768 and 390 px, in light and dark.
+- **Team requests.**
+  - Answered: the `cannot_steer` contract, Vaibhav's feedback voice review, hand input (after the demo), and hands, voice and assistant (after the demo).
+  - Answered by David: `select.ts`, three.js (0.187.0, pinned), and the physics case index (`http://127.0.0.1:8765/cases/index.json`).
+  - Open with Vaibhav: default weights, and the order of the feedback lines.
 
 ## Who owns what
 
-David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
+David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR), Gibran (Teammate 4: engine verification, data and demo QA, including the NumPy cross-checks in `tests/crosscheck/`). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
 
 ## Credits
 
-Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process.
+Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process. The `ts-s1404-cta`, `ts-s1336-cta` and `ts-s0727-cta` cases are derived from the TotalSegmentator dataset (University Hospital Basel, CC BY 4.0; Wasserthal et al., Radiology: AI 2023).

@@ -25,17 +25,56 @@ OUT = HERE / "numpy-synthetic.json"
 OUT_CASES = HERE / "numpy-cases.json"
 
 # Bundled cases cross-checked against the TypeScript (spec 4.9: 0.1 mm / 0.5 deg), with the routes
-# to check. Add generated cases here when D6-min lands.
+# to check. "auto" lists every simple path from every entry to every target (G1, Gibran).
+CASES_DIR = REPO / "client" / "public" / "cases"
 CASES = {
     "fixture-y": {
-        "dir": REPO / "client" / "public" / "cases" / "fixture-y",
+        "dir": CASES_DIR / "fixture-y",
         "routes": {
             "trunk": (["e_aorta"], [False]),
             "to-left": (["e_aorta", "e_left"], [False, False]),
             "to-right": (["e_aorta", "e_right"], [False, False]),
         },
     },
+    "type-iii": {"dir": CASES_DIR / "type-iii", "routes": "auto"},
+    "low-tort": {"dir": CASES_DIR / "low-tort", "routes": "auto"},
 }
+
+# Same cap as the optimizer's DFS (spec 4.5). The generated cases are trees, so each pair has one path.
+PATH_CAP = 50
+
+
+def entry_target_routes(cl, case):
+    """Every simple path from each entry node to each target node, with edges taken in id order.
+
+    Ids are "<entry>-to-<target>", with "-<n>" added from the second path of a pair onwards.
+    `reversed` is True where an edge is walked from its `to` node to its `from` node.
+    """
+    adj = {}
+    for e in sorted(cl["edges"], key=lambda e: e["id"]):
+        adj.setdefault(e["from"], []).append((e["id"], e["to"], False))
+        adj.setdefault(e["to"], []).append((e["id"], e["from"], True))
+    routes = {}
+    for en in case["entries"]:
+        for t in case["targets"]:
+            found = []
+
+            def walk(node, edges, flags, seen):
+                if len(found) >= PATH_CAP:
+                    return
+                if node == t["node"] and edges:
+                    found.append((list(edges), list(flags)))
+                    return
+                for eid, nxt, rev in adj.get(node, []):
+                    if nxt in seen:
+                        continue
+                    walk(nxt, edges + [eid], flags + [rev], seen | {nxt})
+
+            walk(en["node"], [], [], {en["node"]})
+            for i, (edges, flags) in enumerate(found):
+                rid = f"{en['id']}-to-{t['id']}" + (f"-{i + 1}" if i else "")
+                routes[rid] = (edges, flags)
+    return routes
 
 
 def r9(x):
@@ -78,7 +117,8 @@ def render_cases() -> str:
     for name, spec in CASES.items():
         read = lambda f: json.loads((spec["dir"] / f).read_text(encoding="utf-8"))
         case, cl = read("case.json"), read("centerlines.json")
-        routes = {rid: route_of(cl, case, e, r) for rid, (e, r) in spec["routes"].items()}
+        listed = entry_target_routes(cl, case) if spec["routes"] == "auto" else spec["routes"]
+        routes = {rid: route_of(cl, case, e, r) for rid, (e, r) in listed.items()}
         result[name] = {"edges": edges_of(cl, case), "routes": routes}
     return json.dumps(result, indent=1, sort_keys=True) + "\n"
 
