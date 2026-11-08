@@ -30,14 +30,32 @@ async function openPlan(page: Page, aiOn: boolean): Promise<void> {
 
 const ask = (page: Page, question: string) => page.getByRole('group', { name: 'Ask Cathy' }).getByRole('button', { name: question }).click();
 
-test('off by default: nothing is sent, and the box says answers come from the engine', async ({ page }) => {
-  const seen = await stubCathy(page, () => ({ json: { text: 'should not be used' } }));
+test('on by default: a fresh browser sends the question to /api/cathy and shows the privacy line', async ({ page }) => {
+  const seen = await stubCathy(page, (b) => ({ json: { text: `Head for the ${b.facts?.names?.find((n) => /Brachiocephalic|carotid|Aorta/i.test(n)) ?? 'Aorta'} next.` } }));
   await page.addInitScript(() => localStorage.setItem('threadsim.tutorial.v1', 'dismissed'));
   await page.goto('/#/case/type-iii/plan');
+  await expect(page.getByTestId('cathy-note')).toContainText("sent to Anthropic's Claude");
+  await ask(page, 'Best next artery');
+  await expect(page.getByTestId('cathy-source')).toHaveText("Worded by Claude from the route engine's facts.");
+  expect(seen.some((b) => b.kind === 'answer')).toBe(true);
+});
+
+test('with no server answering (before api/cathy is deployed), the answer is the engine line, labelled as such', async ({ page }) => {
+  await page.route('**/api/cathy', (route) => route.fulfill({ status: 404, body: 'Not found' }));
+  await page.addInitScript(() => localStorage.setItem('threadsim.tutorial.v1', 'dismissed'));
+  await page.goto('/#/case/type-iii/plan');
+  await ask(page, 'Best next artery');
+  await expect(page.getByTestId('voice-answer')).toHaveAttribute('data-source', 'template');
+  await expect(page.getByTestId('cathy-source')).toHaveText('From the route engine (Claude unavailable).');
+});
+
+test('turned off in Settings: nothing is sent, the note says so, and answers are labelled as the engine\'s', async ({ page }) => {
+  const seen = await stubCathy(page, () => ({ json: { text: 'should not be used' } }));
+  await openPlan(page, false);
   await expect(page.getByTestId('cathy-note')).toHaveText('Answers come from the route engine, not an AI model.');
   await ask(page, 'Best next artery');
   await expect(page.getByTestId('voice-answer')).not.toBeEmpty();
-  await expect(page.getByTestId('cathy-source')).toHaveCount(0);
+  await expect(page.getByTestId('cathy-source')).toHaveText('From the route engine.');
   await page.waitForTimeout(300);
   expect(seen).toHaveLength(0);
 });
@@ -64,7 +82,7 @@ test('on: an answer with an invented number fails the grounding check, and the t
   await ask(page, 'Best next artery');
   await expect(page.getByTestId('voice-answer')).toHaveAttribute('data-source', 'template');
   await expect(page.getByTestId('voice-answer')).not.toContainText('99.9');
-  await expect(page.getByTestId('cathy-source')).toHaveCount(0);
+  await expect(page.getByTestId('cathy-source')).toHaveText('From the route engine (Claude unavailable).');
 });
 
 test('on: a server error falls back to the template line', async ({ page }) => {
