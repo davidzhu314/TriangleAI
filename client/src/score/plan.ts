@@ -13,10 +13,18 @@ import { dominates, MEASURE_KEYS } from '../optimize/frontier';
 import { measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from '../optimize/rank';
 import { PLAN_CAPS } from './constants';
 
-/** 100·(1 − min(1, R/Rmax)); 100 when Rmax is 0. */
+/**
+ * Regrets this close to zero are floating-point noise, not a real difference: S is a sum of
+ * normalised costs in 0..1, so a true gap is many orders of magnitude larger. Two tied routes once
+ * gave R = Rmax = 5.6e-17, and R/Rmax = 1 scored a best-possible plan 0 (DECISIONS.md, "Regret noise").
+ */
+export const REGRET_EPS = 1e-9;
+const snap = (x: number) => (Math.abs(x) <= REGRET_EPS ? 0 : x);
+
+/** 100·(1 − min(1, R/Rmax)); 100 when Rmax is 0 (or noise). */
 export function regretScore(regret: number, regretMax: number): number {
-  if (regretMax <= 0) return 100;
-  return 100 * (1 - Math.min(1, Math.max(0, regret) / regretMax));
+  if (snap(regretMax) <= 0) return 100;
+  return 100 * (1 - Math.min(1, Math.max(0, snap(regret)) / regretMax));
 }
 
 /** The measure with the largest w_k·(ĉ_k(player) − ĉ_k(best)), when that is above 0. Ties go to measure order. */
@@ -32,7 +40,7 @@ export function topContributor(
     const w = weights[k];
     if (!w || player.cost[k] === undefined) continue;
     const c = w * (normalisedCost(player.cost, k, ranges) - normalisedCost(best, k, ranges));
-    if (c > bestC) {
+    if (c > bestC + REGRET_EPS) {
       bestC = c;
       bestK = k;
     }
@@ -76,8 +84,8 @@ function frontierPlanScore(player: Route, f: Frontier, w: Weights): PlanScore {
   const minS = ranked[0]!.s;
   let maxS = minS;
   for (const r of f.candidates) if (r.feasible) maxS = Math.max(maxS, weightedScore(r.cost, ranges, w));
-  const regret = weightedScore(player.cost, ranges, w) - minS;
-  const regretMax = maxS - minS;
+  const regret = snap(weightedScore(player.cost, ranges, w) - minS);
+  const regretMax = snap(maxS - minS);
   const fromRegret = regretScore(regret, regretMax);
   const base = { regret, regretMax, violations: [] as PlanScore['violations'] };
   const contributor = topContributor(player, best.cost, ranges, w);
