@@ -51,3 +51,37 @@ Added in D1 (physics process only, `physics/requirements-sim.txt`; none of these
 | 3D Slicer | 5.13.0 preview 2026-11-05 (revision fb80933, Intel build) | BSD-style 3D Slicer license | https://www.slicer.org | `slicer/` (offline export only) |
 | SlicerVMTK extension (Extract Centerline) | revision 23190ba | BSD-3-Clause (VMTK) | https://github.com/vmtk/SlicerExtension-VMTK | `slicer/` (offline export only) |
 | ExtraMarkups extension | revision f5c833b | installed with Slicer; not used by the export | https://github.com/chir-set/SlicerExtraMarkups | — |
+
+### Completeness pass (D7)
+
+Licenses here were confirmed from each package's own metadata or license file (the npm `package.json` `license` field, the Python dist-info `LICENSE`/`COPYING`/`LICENCE` files and their classifiers), not guessed.
+
+Physics process, the rest of `physics/requirements-sim.txt` (installed with CathSim; none reach `client/`):
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| Pympler | 1.1 | Apache 2.0 | https://github.com/pympler/pympler | physics process (CathSim import) |
+| PyYAML | 6.0.1 | MIT | https://pyyaml.org | physics process (CathSim config) |
+| pyaml | 23.9.7 | WTFPL v2 | https://github.com/mk-fg/pretty-yaml | physics process (CathSim import) |
+| mergedeep | 1.3.4 | MIT | https://github.com/clarketm/mergedeep | physics process (CathSim config) |
+| Rtree | 1.0.1 | MIT | https://github.com/Toblerity/rtree | physics process (trimesh spatial index) |
+| toolz | 0.12.0 | BSD-3-Clause | https://github.com/pytoolz/toolz | physics process (CathSim import) |
+| Matplotlib | 3.7.2 | Matplotlib License (PSF-based) | https://matplotlib.org | physics process (CathSim import; never renders) |
+| opencv-python | 4.8.0.76 | Apache 2.0 | https://github.com/opencv/opencv-python | physics process (CathSim import) |
+| Rich | 13.5.2 | MIT | https://github.com/Textualize/rich | physics process (CathSim import) |
+| tqdm | 4.66.1 | MPL-2.0 AND MIT | https://tqdm.github.io | physics process (CathSim import) |
+| websockets | 13.1 | BSD-3-Clause | https://github.com/python-websockets/websockets | also `physics/server/` (D5) and its tests (`physics/requirements-test.txt`) |
+
+Test and build tooling (never shipped in the app bundle):
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| pytest | 8.4.2 | MIT | https://docs.pytest.org | `physics/requirements-test.txt`, `tests/crosscheck/requirements.txt` |
+| NumPy | 2.3.4 | BSD-3-Clause | https://numpy.org | `tests/crosscheck/` (NumPy reference measures, test only) |
+| TypeScript | 7.0.2 | Apache 2.0 | https://www.typescriptlang.org | dev: type check |
+| Vite | 8.3.6 | MIT | https://vite.dev | dev: build and dev server |
+| Vitest | 5.1.0 | MIT | https://vitest.dev | dev: unit tests |
+| Playwright (`@playwright/test`) | 1.65.0 | Apache 2.0 | https://playwright.dev | dev: end-to-end tests |
+| `@types/node` | 22.20.5 | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped | dev: types |
+
+Shipped in the client build with no third-party license: the client runtime is exactly `ajv` (and its four dependencies above) and `three` (`pnpm list --prod`). The icons and empty-state art in `client/src/assets/` are drawn in-house (DESIGN.md, Iconography). The generated cases and `fixture-y` in `client/public/cases/` come from ThreadSim's own tools. The only third-party data in `client/public/` is `ts-s1404-cta` (TotalSegmentator, CC BY 4.0, above). No CathSim or other share-alike asset is under `client/`.

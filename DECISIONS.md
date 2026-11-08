@@ -207,3 +207,7 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - Path fidelity prunes segments by a squared-distance bound.
 
   On that case, scoring now takes ~26 ms. All golden results are byte-identical.
+- 2026-11-07 · David · **D7: Slicer script and licensing.**
+  - **Reproduction:** `slicer/export_case.py`, re-run headless in 3D Slicer 5.13.0 with SlicerVMTK 23190ba from the committed inputs in `slicer/cases/ts-s1404-cta/`, reproduces `client/public/cases/ts-s1404-cta/` byte for byte. No script or input change was needed.
+  - **THIRD_PARTY.md:** gained the remaining physics-process packages, the test and build tooling, and a note on what the client build ships. Each license was read from the package's own metadata or license file.
+  - **README:** its stale facts are corrected: `select.ts` landed, three.js is pinned but unused, the bundled cases including `ts-s1404-cta`, Gibran, and the merged PRs. The honesty line is unchanged.
