@@ -261,3 +261,22 @@ body:has(.drive-stage) .hv-self {
 .cathy-sound {
   flex: 0 0 auto;
 }
+
+/* Where Cathy's answer came from, under every answer to a question (Claude's wording, or the engine's own line). */
+.cathy-source {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.cathy-source[data-source='llm']::before {
+  content: '';
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-route-player);
+  vertical-align: middle;
+}
