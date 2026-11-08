@@ -46,6 +46,8 @@ export interface DriveView {
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
   pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
   /** Start a contrast puff: the X-ray silhouette shows, then fades. */
   puff(): void;
   dispose(): void;
@@ -105,6 +107,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anat
     element,
     toolbar,
     pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;

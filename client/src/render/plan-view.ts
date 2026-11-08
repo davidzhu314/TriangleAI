@@ -32,6 +32,8 @@ export interface PlanView {
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
   pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
   update(state: PlanViewState): void;
   dispose(): void;
 }
@@ -78,6 +80,7 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks,
     element,
     toolbar: dual.toolbar,
     pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
     pickAt(x, y) {
       const scene = dual.scene();
       if (scene && dual.kind() === '3d') return scene.pickAt(x, y);

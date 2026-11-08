@@ -34,6 +34,8 @@ export interface CompareView {
   readonly toolbar: HTMLElement;
   /** Pan the view (3D or flat) by a share of its size. */
   pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
   /** Zoom the 3D view; false in the flat view. */
   zoom(factor: number): boolean;
   update(state: CompareViewState): void;
@@ -67,6 +69,7 @@ export function createCompareView(c: LoadedCase, anatomy?: Promise<AnatomyConfig
     element,
     toolbar: dual.toolbar,
     pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;

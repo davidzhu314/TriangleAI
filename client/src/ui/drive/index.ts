@@ -251,9 +251,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_review', 'undo'],
+    actions: ['zoom_in', 'zoom_out', 'reset_view', 'assist_best_next', 'assist_review', 'undo'],
     onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
     onVoice: async (a) => {
+      if (a === 'reset_view') {
+        view.resetView();
+        return null;
+      }
       if (a === 'undo') return 'Undo works on Plan.';
       if (a === 'zoom_in' || a === 'zoom_out') return view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
       const lines = await driveLines();

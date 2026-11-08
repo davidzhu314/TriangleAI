@@ -243,6 +243,10 @@ function draw(sc: Screen): void {
       return liveView?.zoom(action === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
     }
     if (action === 'assist_best_next' || action === 'assist_options') return assistLine(c, graph, sc.state, action === 'assist_best_next' ? 'best' : 'options');
+    if (action === 'reset_view') {
+      liveView?.resetView();
+      return null;
+    }
     if (action === 'undo') {
       // Exactly the Undo button: the same call, and nothing when it would be disabled.
       if (!sc.state.edges.length) return 'Nothing to undo yet.';
@@ -259,7 +263,7 @@ function draw(sc: Screen): void {
     // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_options', 'undo'],
+      actions: ['zoom_in', 'zoom_out', 'reset_view', 'assist_best_next', 'assist_options', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
       onVoice: (a) => voiceNow(a),
       onGesture: (g) => {

@@ -20,6 +20,7 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   assist_options: 'My options',
   assist_review: 'How am I doing',
   undo: 'Undo last step',
+  reset_view: 'Reset view',
 };
 
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {

@@ -272,6 +272,47 @@ test('in 3D the pan gesture turns the case on three axes (two hands roll it), an
   await expect(canvas).toHaveAttribute('data-turned', 'false');
 });
 
+test('"Hey Cathy, reset view" puts a zoomed and turned 3D view back where it opened', async ({ page }) => {
+  await stubSpeech(page);
+  await page.goto('/#/case/type-iii/plan');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await page.locator('button[data-view-kind="3d"]').first().click();
+  const canvas = view.locator('canvas');
+
+  // Where the branch handles sit on screen (webdriver-only, refreshed every 200 ms): read it once it has settled.
+  type Handle = { node: string; x: number; y: number };
+  const handles = async (): Promise<Handle[]> => JSON.parse((await view.getAttribute('data-handles')) ?? '[]') as Handle[];
+  const settled = async (): Promise<Handle[]> => {
+    let last = '';
+    await expect
+      .poll(async () => {
+        const now = JSON.stringify(await handles());
+        const same = now !== '[]' && now === last;
+        last = now;
+        return same;
+      }, { intervals: [300] })
+      .toBe(true);
+    return JSON.parse(last) as Handle[];
+  };
+  const far = (a: Handle[], b: Handle[]): number => Math.max(...a.map((h, i) => Math.hypot(h.x - b[i]!.x, h.y - b[i]!.y)));
+  const opened = await settled();
+
+  // Zoom by voice, and turn the case with the pan gesture.
+  await voiceOn(page);
+  await say(page, 'hey cathy zoom in');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom in');
+  const panHand = (x: number) => synth.syntheticHand({ handedness: 'Right', flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.4 } });
+  for (let i = 0; i < 50; i++) await page.evaluate((f) => window.__threadsimHands!.feed(f as never), synth.frame(i * synth.FRAME_MS, panHand(0.3 + (i > 12 ? (i - 12) * 0.008 : 0))));
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+  expect(far(await settled(), opened)).toBeGreaterThan(20);
+
+  await say(page, 'hey cathy reset view');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Reset view');
+  await expect(canvas).toHaveAttribute('data-turned', 'false');
+  expect(far(await settled(), opened)).toBeLessThan(2);
+});
+
 test('every 3D view has a Reset view button, and it brings the view back', async ({ page }) => {
   await page.addInitScript(() =>
     sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),

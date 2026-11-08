@@ -103,9 +103,16 @@ function draw(sc: Screen): void {
     liveCase = c;
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'undo'],
+      actions: ['zoom_in', 'zoom_out', 'reset_view', 'undo'],
       onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
-      onVoice: (a) => (a === 'undo' ? 'Undo works on Plan.' : created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
+      onVoice: (a) => {
+        if (a === 'reset_view') {
+          created.resetView();
+          return null;
+        }
+        if (a === 'undo') return 'Undo works on Plan.';
+        return created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+      },
     });
     created.toolbar.append(liveHands.controls);
   }
