@@ -161,6 +161,15 @@ export class ChainWireSource implements WireSource {
     return { samples: this.samples, entries: this.entries, imaging: this.imaging };
   }
 
+  /**
+   * The drive so far, as a copy, the same as RailWireSource.logSoFar: what Cathy's mid-drive answers need ("how am I
+   * doing", "best next artery", "am I on the right path"). Review events are added only by `stop()`. Null before start
+   * and after stop.
+   */
+  logSoFar(): EventLog | null {
+    return this.log ? structuredClone(this.log) : null;
+  }
+
   async stop(): Promise<EventLog> {
     this.halt();
     if (!this.log) throw new Error('ChainWireSource.stop: not started');

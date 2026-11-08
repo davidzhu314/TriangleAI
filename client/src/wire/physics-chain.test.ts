@@ -7,7 +7,9 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadCase } from '../case';
 import type { LoadedCase, Vec3, WireEvent } from '../contracts';
-import { optimize } from '../optimize';
+import { defaultWeights, optimize } from '../optimize';
+import { driveAssist } from '../score';
+import { driveCheckLine } from '../score/live';
 import { CONTACT_MIN_N, createChainModel, initialChainState, stepChain, tipPose, type ChainControl, type ChainModel, type ChainState } from './physics-chain';
 import { EXPOSURE_UNITS_PER_FRAME, heldImageAge, heldIsStale, initialImaging, stepImaging, type DeviceSnapshot, type ImagingInput, type ImagingState } from './physics-chain-imaging';
 import { autopilot } from './physics-chain-autopilot';
@@ -222,6 +224,28 @@ describe('chain simulation: ChainWireSource', () => {
     expect(log.samples).toHaveLength(31);
     expect(log.samples.at(-1)!.fluoro).toBe(true);
     expect(log.events.filter((e) => e.kind === 'contrast_puff')).toHaveLength(1);
+  });
+
+  it('gives the drive so far mid-drive, as the rail wire does, so Cathy can answer on Drive in Physics mode', async () => {
+    const c = cases.get('fixture-y')!;
+    const src = new ChainWireSource({ clock: 'manual' });
+    expect(src.logSoFar(), 'null before start').toBeNull();
+    const path = ['e_aorta', 'e_left'];
+    await src.start({ case: c, entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', path });
+    src.control({ push: 1, rotate: 0, fluoro: false, contrastPuff: false });
+    for (let i = 0; i < 60; i++) src.tick();
+    const soFar = src.logSoFar()!;
+    expect(soFar.mode).toBe('chain');
+    expect(soFar.samples.length).toBeGreaterThan(50);
+    soFar.samples.length = 0; // a copy: changing it leaves the drive alone
+    src.tick();
+    expect(src.logSoFar()!.samples.length, 'the drive goes on').toBeGreaterThan(60);
+    const optimized = await optimize({ caseId: c.id, targetId: 'left_branch' }, c);
+    const input = { log: src.logSoFar()!, optimized, weights: defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []), case: c };
+    expect(driveAssist(input).lines.length, 'how am I doing / best next artery').toBeGreaterThan(0);
+    expect(driveCheckLine(input, null).text, 'am I on the right path').toBeTruthy();
+    await src.stop();
+    expect(src.logSoFar(), 'null after stop').toBeNull();
   });
 
   it('speaks contracts v3: chain mode, device selection in ControlInput, the v3 state, sample fields and review events', async () => {

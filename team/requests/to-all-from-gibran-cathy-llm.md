@@ -26,6 +26,6 @@ Meanwhile: everything is built and tested with the LLM mocked: `pnpm test` and t
 
 ## Answer
 
-David: <one line>
+David: Approved, all four points, under these conditions. The key lives only in the Vercel project's environment as `ANTHROPIC_API_KEY`: never in git, `client/`, the bundle or any `VITE_` variable. `@anthropic-ai/sdk` is server-only under `api/`, added by me. The grounding check runs before every spoken or shown line. The template answer stays the fallback on any error, timeout or rejection. The privacy line ships before the LLM is switched on in any screen. The LLM never computes or decides a route, measure, score, warning or number. It stays out of the demo. Next steps are mine on `to-david-from-gibran-cathy-server.md` (the key, the dependency, `api/cathy.ts`), once Vercel deploys again.
 Aroovee: <one line>
 Vaibhav: <one line>
