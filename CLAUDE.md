@@ -36,7 +36,8 @@ The repo is a message bus only when someone opens a session to read it. Each of 
 
 | Folder or file | Owner |
 | --- | --- |
-| `client/src/contracts/`, `client/src/case/`, `client/src/wire/physics*`, `client/src/wire/replay*`, `client/src/wire/select.ts`, `client/public/cases/` | David |
+| `client/src/contracts/`, `client/src/case/`, `client/src/wire/physics*`, `client/src/wire/replay*`, `client/src/wire/select.ts`, `client/public/cases/`, `client/public/models/` | David |
+| `client/src/input/`, `tests/fixtures/hands/` | Vaibhav |
 | `physics/` (including `physics/cases/`, the CathSim-derived packages), `tools/`, `slicer/`, `tests/fixtures/broken/` | David |
 | `package.json`, `pnpm-lock.yaml`, `vite.config.ts`, `vitest.config.*`, `playwright.config.*`, `.github/` (CI, `CODEOWNERS`), `README.md` structure | David, as release manager |
 | `client/src/optimize/`, `client/src/score/`, `client/src/wire/rail*`, `client/src/wire/mock-source.ts` | Vaibhav |

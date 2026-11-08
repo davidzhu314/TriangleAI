@@ -251,3 +251,11 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - S5 also settles "after the demo" for PR #22: it stays a draft until the demo has happened.
 - 2026-11-08 · David · **Merge freeze on main from 2026-11-08 until the demo is over.** Vercel deploys every merge to https://threadsim.vercel.app. During the freeze only demo fixes merge, each with CI green and David's OK. Everything else waits, including the body-context PR #68.
 - 2026-11-08 · David · **AR stays an unverified bonus.** The A7 code stays, but no demo beat uses AR and nobody presents it until it has been verified on a Quest 3. It shows only where immersive-ar is supported.
+- 2026-11-08 · David · **Hands and voice may enter the demo, by integration branch and one scoped merge exception (cut-off 06:00 EST).**
+  - **Reversal:** this reverses the recorded "after the demo" answers (David and Aroovee on `to-all-from-vaibhav-hands-voice-assist.md` and `-mediapipe-hand-input.md`). It is a demo-scope change, so it goes through Aroovee's to-all request.
+  - **Where the work happens:** on `integration/hands-voice`, branched from frozen main at e0ea7cd:
+    - Vaibhav's #22;
+    - David's pinned `@mediapipe/tasks-vision` 1.2.2 and the bundled `hand_landmarker.task`, served from the app so it needs no CDN;
+    - Aroovee's camera and self-view, gestures into Drive, pinch picking on Plan, push-to-talk, the live-mic and audio-to-Google notice, and a new DEMO.md step with its Playwright test.
+  - **Exception:** main stays frozen. One merge of the integration branch is allowed only if CI is green and it has been rehearsed on the branch's Vercel preview by 06:00 EST. Otherwise main is unchanged and the demo is keyboard-only, which stays the fallback in any case.
+  - **Live risks:** voice needs the venue's internet (Chrome streams audio to Google), and hand tracking needs decent light.

@@ -19,6 +19,7 @@
     "fixtures": "UPDATE_FIXTURES=1 vitest run tools"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.2.2",
     "ajv": "8.20.0",
     "three": "0.187.0"
   },

@@ -94,3 +94,10 @@ Shipped in the client build with no third-party license: the client runtime is e
 | Name | Version | License | URL | Where used |
 | --- | --- | --- | --- | --- |
 | BodyParts3D / Anatomography (© DBCLS), via OrganUI Vessels `public/models/vessels.glb` | BodyParts3D 4.3 (FMA3.0); OrganUI commit `74be339badd85f1d3d93e585ed2a5a79c7679342`, GLB SHA-256 `d2dd9911…701d` | **CC BY-SA 2.1 Japan** (share-alike; commercial use allowed). OrganUI's MIT license covers its code only, not the model. Cite Mitsuhashi et al., NAR 37 (2009) D782–D785 | https://lifesciencedb.jp/bp3d/ · https://github.com/organui/vessels-3d | `assets/vascular/` only (31 structures split into 50 nodes, mm RAS, `prepare_vessels.py`). Not imported by `client/`; the license boundary is pending `team/requests/to-all-from-gibran-license-vascular-assets.md` |
+
+## Hands and voice (integration branch, 2026-11-08)
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| MediaPipe Tasks Vision (`@mediapipe/tasks-vision`, runtime; JS and its WASM runtime, served from the app, not a CDN) | 1.2.2 | Apache 2.0 (package metadata) | https://www.npmjs.com/package/@mediapipe/tasks-vision | Hand tracking for the hands input (`client/src/input/`, wired by Aroovee's screens) |
+| MediaPipe Hand Landmarker model (`hand_landmarker.task`, float16, version 1: `hand_detector.tflite` + `hand_landmarks_detector.tflite`), SHA-256 `fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1` | float16/1 | Apache 2.0 (MediaPipe Hand Landmarker model card) | https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task | `client/public/models/hand_landmarker.task`, loaded in the browser; no hand images leave the device |

@@ -3,3 +3,4 @@
 *.zip binary
 DECISIONS.md merge=union
 THIRD_PARTY.md merge=union
+*.task binary
