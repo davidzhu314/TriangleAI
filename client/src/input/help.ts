@@ -7,8 +7,10 @@
 import type { VoiceAction } from './voice/commands';
 
 export interface VoiceHelp {
-  /** What to say after "Hey Cathy", exactly one of the action's phrasings. */
+  /** What to say after "Hey Cathy": one of the action's phrasings (for zoom_to, its pattern). */
   say: string;
+  /** A full example, when `say` is a pattern ("zoom into …"). */
+  example?: string;
   /** What it does, in a few words. */
   does: string;
 }
@@ -24,6 +26,8 @@ export const VOICE_HELP: Readonly<Record<VoiceAction, VoiceHelp>> = {
   assist_options: { say: 'what are my options', does: 'The ways on from here' },
   assist_review: { say: 'how am I doing', does: 'How the drive is going' },
   assist_check: { say: 'am I on the right path', does: 'Whether you are on the plan, or about to leave it' },
+  toggle_fluoro: { say: 'toggle fluoro', does: 'Fluoro on or off (switches itself off after 10 s)' },
+  zoom_to: { say: 'zoom into …', example: 'zoom into the aortic arch', does: 'Zoom to an artery, e.g. the aortic arch' },
   undo: { say: 'undo', does: 'Remove the last step of the route' },
 };
 

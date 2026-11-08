@@ -49,11 +49,21 @@
   overflow-y: auto;
 }
 
-.hud-overview {
+/* Top right: the route overview, with Cathy's box under it */
+.hud-right {
   position: absolute;
   top: var(--space-5);
   right: var(--space-5);
-  width: calc(var(--size-palette) + var(--space-16));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+  max-height: calc(100% - 2 * var(--space-5));
+  overflow-y: auto;
+}
+
+.hud-overview {
+  width: calc((calc(var(--size-palette) + var(--space-16))) * 0.65); /* 35% smaller than before */
 }
 
 .hud-rows {
@@ -289,8 +299,9 @@
 
 /* ---------------------------------------------------------------- route overview, actions */
 .overview-svg {
-  height: calc(var(--space-16) * 2.5);
+  height: calc(var(--space-16) * 2.5 * 0.65); /* 35% smaller than before */
   background: var(--color-scene-ground);
+  cursor: pointer;
   border-radius: var(--radius-control);
 }
 
@@ -349,9 +360,15 @@
     overflow: visible;
   }
 
-  .hud-overview {
+  .hud-right {
     position: static;
     order: 4;
+    align-items: stretch;
+    max-height: none;
+  }
+
+  .hud-overview {
+    position: static;
     width: auto;
   }
 
@@ -376,4 +393,52 @@
   .hud-actions .btn {
     flex: 1;
   }
+}
+
+/* Route overview: click for the drive's mistakes as red dots; click a dot for what went wrong there. */
+.overview-svg:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.overview-svg .mistake-dot {
+  fill: var(--color-negative);
+  stroke: var(--color-surface);
+  stroke-width: calc(var(--stroke-route) * 0.5);
+  cursor: pointer;
+}
+
+.overview-svg .mistake-dot:focus-visible,
+.overview-svg .mistake-dot-active {
+  stroke: var(--color-text);
+  stroke-width: var(--stroke-route);
+  outline: none;
+}
+
+.overview-hint,
+.overview-issue {
+  margin: 0;
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.overview-issue:empty {
+  display: none;
+}
+
+/* Cathy's box on Drive: under the route overview, not over the arteries */
+.hud-cathy:empty {
+  display: none;
+}
+
+.hud-cathy .cathy-box {
+  position: static;
+  width: var(--size-palette);
+  max-width: 100%;
+  pointer-events: auto;
+}
+
+/* the voice fluoro pill: .pill sets display, so [hidden] needs saying */
+.voice-fluoro-badge[hidden] {
+  display: none;
 }

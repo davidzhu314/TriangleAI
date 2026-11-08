@@ -17,6 +17,8 @@ export type VoiceAction =
   | 'assist_options'
   | 'assist_review'
   | 'assist_check'
+  | 'toggle_fluoro'
+  | 'zoom_to'
   | 'undo';
 
 export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = {
@@ -34,6 +36,17 @@ export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = 
   /** "Am I on the right path" (G5): the wrong-branch warning, else "pull back", else where the plan goes next. */
   assist_check: ['am i on the right path', 'am i on the right track', 'is this right', 'is this the right way', 'am i going the right way', 'am i lost', 'right path', 'am i on track'],
   /** Undo the last step: on Plan, remove the last branch added to the route. */
+  /** Fluoro on or off by voice (Drive). Includes how dictation tends to write "fluoro". */
+  toggle_fluoro: [
+    'toggle fluoro', 'toggle fluro', 'toggle flouro', 'toggle floro', 'toggle flora', 'toggle floral', 'toggle fluoride',
+    'toggle flu row', 'toggle flu roe', 'toggle fluoroscopy', 'toggle x ray', 'toggle the fluoro', 'switch fluoro',
+    'flip fluoro', 'fluoro toggle', 'toggle for oh', 'tackle fluoro', 'toggle flurry',
+  ],
+  /**
+   * "Zoom into <artery>": these are the phrases that START it, followed by the artery's name. Matched by
+   * matchZoomTo (./match), never by the whole-phrase scoring, so "zoom into" alone does nothing.
+   */
+  zoom_to: ['zoom into', 'zoom in to', 'zoom in on', 'zoom onto', 'zoom on to', 'zoom to', 'focus on', 'center on'],
   undo: ['undo', 'undo that', 'undo last step', 'undo the last step', 'go back a step', 'take that back', 'remove the last step', 'undue'],
 };
 

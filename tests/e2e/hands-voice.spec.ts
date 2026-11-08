@@ -457,3 +457,90 @@ test("Cathy's box answers without voice or an AI model: question buttons and typ
   await page.getByTestId('cathy-toggle').click();
   await expect(box.locator('.cathy-body')).toBeHidden();
 });
+
+/** Drive on fixture-y with this plan saved and the tutorial dismissed. */
+async function openDrive(page: Page, side: 'left' | 'right' = 'left'): Promise<void> {
+  const plan = side === 'left'
+    ? { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] }
+    : { entryId: 'fem_r', targetId: 'right_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_right'] };
+  await page.addInitScript((p) => {
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': p }));
+    localStorage.setItem('threadsim.tutorial.v1', 'dismissed');
+  }, plan);
+  await page.goto('/#/case/fixture-y/drive');
+  await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
+}
+
+test('Drive: Cathy sits under the route overview, and "Hey Cathy, toggle fluoro" (misheard too) switches fluoro on, off, and off by itself after 10 s', async ({ page }) => {
+  test.setTimeout(120_000);
+  await stubSpeech(page);
+  await openDrive(page);
+  const box = page.getByTestId('cathy-box');
+  await expect(page.locator('.hud-right').getByTestId('cathy-box')).toBeVisible();
+  const overview = await page.locator('.hud-overview').boundingBox();
+  const cathy = await box.boundingBox();
+  expect(cathy!.y).toBeGreaterThan(overview!.y + overview!.height - 1);
+  expect(Math.abs(cathy!.x + cathy!.width - (overview!.x + overview!.width))).toBeLessThan(2); // right edges line up
+
+  await voiceOn(page);
+  const badge = page.getByTestId('voice-fluoro-badge');
+  await expect(badge).toBeHidden();
+  await say(page, 'hey cathy toggle flora');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Toggle fluoro');
+  await expect(badge).toBeVisible();
+  await expect(page.getByTestId('voice-answer')).toContainText('Fluoro on');
+  await say(page, 'hey kathy toggle fluoro');
+  await expect(page.getByTestId('voice-answer')).toHaveText('Fluoro off.');
+  await expect(badge).toBeHidden();
+  await say(page, 'hey cathy toggle flu row');
+  await expect(badge).toBeVisible();
+  await expect(badge).toBeHidden({ timeout: 13_000 }); // off by itself after 10 s
+});
+
+test('Drive: "Hey Cathy, can you zoom into the aortic arch?" frames the arch in 3D', async ({ page }) => {
+  await stubSpeech(page);
+  await openDrive(page);
+  await voiceOn(page);
+  await say(page, 'hey cathy can you zoom into the aortic arch');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom to the aortic arch');
+  await expect(page.getByTestId('voice-answer')).toHaveText('Zoomed to the Aortic arch.');
+  await expect(page.locator('.drive-canvas canvas').first()).toHaveAttribute('data-frame', 'vessel');
+  await say(page, 'hey cathy zoom into the moon');
+  await expect(page.getByTestId('voice-answer')).toHaveText("I can't find “moon” on this case.");
+});
+
+test('Drive: the route overview, clicked, shows the drive mistakes as red dots, and a dot says what went wrong', async ({ browser }) => {
+  test.setTimeout(240_000);
+  let shown = false;
+  for (const side of ['right', 'left'] as const) {
+    for (const twist of [null, 'KeyA', 'KeyD'] as const) {
+      if (shown) break;
+      const page = await browser.newPage();
+      await openDrive(page, side);
+      const toggle = page.getByTestId('overview-toggle');
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.getByTestId('overview-issue')).toHaveText('No mistakes so far.');
+      await page.locator('body').click({ position: { x: 5, y: 5 } });
+      if (twist) {
+        await page.keyboard.down(twist);
+        await page.waitForTimeout(900);
+        await page.keyboard.up(twist);
+      }
+      await page.keyboard.down('KeyW');
+      const dots = page.getByTestId('mistake-dot');
+      for (let i = 0; i < 120 && (await dots.count()) === 0; i++) await page.waitForTimeout(150);
+      await page.keyboard.up('KeyW');
+      if ((await dots.count()) > 0) {
+        shown = true;
+        await dots.first().click();
+        await expect(page.getByTestId('overview-issue')).toContainText(/^At \d+\.\d s: /);
+        await expect(dots.first()).toHaveClass(/mistake-dot-active/);
+        await toggle.click({ position: { x: 3, y: 3 } }); // hide them again
+        await expect(dots).toHaveCount(0);
+      }
+      await page.close();
+    }
+  }
+  expect(shown).toBe(true);
+});

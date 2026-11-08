@@ -9,7 +9,7 @@
  */
 import type { EventLog, LoadedCase, Route, WireFallback, WireSource, WireState } from '../../contracts';
 import { buildGraph, defaultWeights, optimize, routeFor, type RouteGraph } from '../../optimize';
-import { driveAssist, ILLUSTRATIVE_CONSTANTS } from '../../score';
+import { driveAssist, ILLUSTRATIVE_CONSTANTS, mistakeMarkers, type ReplayMarker } from '../../score';
 import { driveCheckLine } from '../../score/live';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
@@ -26,7 +26,8 @@ import { capFluoroAtTarget } from './fluoro-cap';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 import { wireChoice, wireUrl, type WireChoice } from './wire-switch';
 import { GESTURE_HELP, mergeControl, VOICE_HELP, type VoiceAction } from '../../input';
-import { createHandsVoice } from '../hands-voice';
+import { createHandsVoice, zoomToAnswer } from '../hands-voice';
+import { wireLogSoFar } from '../../wire/rail-source';
 
 type SelectModule = { selectWireSource?: (c: LoadedCase) => Promise<WireSource> };
 /** Empty until David adds select.ts; Vite resolves the glob at build time, so a missing file is not an error. */
@@ -68,14 +69,82 @@ interface Live {
 
 const fmt = (v: number, decimals: number): string => v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-function routeOverview(c: LoadedCase, startNode: string | undefined, edges: readonly string[]): { el: HTMLElement; setWire: (points: string) => void } {
-  const d = drawCase(c, 'Route overview: the planned route and where the wire is.', 'overview-hatch');
+/**
+ * The route overview (top right). Click it to show the drive's mistakes so far as red dots where they happened
+ * (mistakeMarkers: wrong branches, prolapses, back-outs, force spikes); click a dot for what went wrong there.
+ * Click the card again to hide them.
+ */
+function routeOverview(
+  c: LoadedCase,
+  startNode: string | undefined,
+  edges: readonly string[],
+): { el: HTMLElement; setWire: (points: string) => void; setMistakes: (m: readonly ReplayMarker[]) => void; showing: () => boolean } {
+  const d = drawCase(c, 'Route overview: the planned route and where the wire is. Click to show mistakes.', 'overview-hatch');
   const plan = svgEl('polyline', { points: d.routePoints(startNode, edges), class: 'route-trace' });
   const wire = svgEl('polyline', { points: '', class: 'wire-line' });
-  d.svg.append(plan, wire);
-  const el = h('section', { class: 'hud-card hud-overview', 'aria-label': 'Route overview' }, h('p', { class: 'hud-title' }, 'Route overview'), h('div', { class: 'overview-svg' }));
-  el.querySelector('.overview-svg')?.append(d.svg);
-  return { el, setWire: (points) => wire.setAttribute('points', points) };
+  const dots = svgEl('g', { class: 'mistake-dots' });
+  d.svg.append(plan, wire, dots);
+  const vb = d.svg.viewBox.baseVal;
+  const r = Math.max(vb.width, vb.height) * 0.025 || 4;
+  const hint = h('p', { class: 'hud-note overview-hint' }, 'Click to show mistakes.');
+  const issue = h('p', { class: 'overview-issue', role: 'status', 'aria-live': 'polite', 'data-testid': 'overview-issue' });
+  const svgBox = h('div', { class: 'overview-svg', role: 'button', tabindex: '0', 'aria-pressed': 'false', 'data-testid': 'overview-toggle' });
+  svgBox.append(d.svg);
+  const el = h('section', { class: 'hud-card hud-overview', 'aria-label': 'Route overview' }, h('p', { class: 'hud-title' }, 'Route overview'), svgBox, hint, issue);
+  let on = false;
+  let marks: readonly ReplayMarker[] = [];
+  const draw = (): void => {
+    dots.replaceChildren();
+    if (!on) return;
+    marks.forEach((m, i) => {
+      const dot = svgEl('circle', {
+        cx: (m.tip[0] * 1000).toFixed(2),
+        cy: (-m.tip[1] * 1000).toFixed(2),
+        r: r.toFixed(2),
+        class: 'mistake-dot',
+        tabindex: '0',
+        role: 'button',
+        'aria-label': `Mistake ${i + 1}: ${m.label}`,
+        'data-testid': 'mistake-dot',
+      });
+      const show = (ev: Event): void => {
+        ev.stopPropagation();
+        issue.textContent = `At ${m.t.toFixed(1)} s: ${m.label}`;
+        for (const x of dots.querySelectorAll('.mistake-dot')) x.classList.toggle('mistake-dot-active', x === dot);
+      };
+      dot.addEventListener('click', show);
+      dot.addEventListener('keydown', (ev) => {
+        if ((ev as KeyboardEvent).key === 'Enter' || (ev as KeyboardEvent).key === ' ') show(ev);
+      });
+      dots.append(dot);
+    });
+    if (!marks.length) issue.textContent = 'No mistakes so far.';
+  };
+  const toggle = (): void => {
+    on = !on;
+    svgBox.setAttribute('aria-pressed', String(on));
+    el.classList.toggle('overview-mistakes-on', on);
+    hint.textContent = on ? 'Click a red dot for what went wrong. Click the map to hide them.' : 'Click to show mistakes.';
+    issue.textContent = '';
+    draw();
+  };
+  svgBox.addEventListener('click', toggle);
+  svgBox.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      toggle();
+    }
+  });
+  return {
+    el,
+    setWire: (points) => wire.setAttribute('points', points),
+    setMistakes: (m) => {
+      if (m.length === marks.length && m.every((x, i) => x.t === marks[i]!.t)) return; // only a change redraws
+      marks = m;
+      draw();
+    },
+    showing: () => on,
+  };
 }
 
 function noPlan(root: HTMLElement, key: string, c: LoadedCase): void {
@@ -210,7 +279,11 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     h('div', { class: 'control-row' }, labelled(icon, label), h('div', { class: 'control-keys' }, keys));
   // The voice commands Drive answers (also the hands-free hookup's list below), and the help for both hands and
   // voice, from client/src/input/help.ts so the card can't drift from what the commands and gestures do.
-  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'assist_check', 'undo'];
+  // Voice fluoro (DECISIONS.md, "Voice fluoro toggle"): the spec's fluoro is hold-to-activate so the budget is never
+  // spent by accident; by voice it is a toggle that switches itself off after VOICE_FLUORO_MS and at the target.
+  const VOICE_FLUORO_MS = 10_000;
+  let voiceFluoroUntil: number | null = null;
+  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'zoom_to', 'reset_view', 'toggle_fluoro', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'assist_check', 'undo'];
   const helpRow = (what: string, how: string, tag?: string): HTMLElement =>
     h('li', { class: 'help-row' }, h('span', { class: 'help-what' }, what, tag ? h('span', { class: 'help-tag' }, tag) : null), h('span', { class: 'help-how' }, how));
   const handsHelp = h(
@@ -296,11 +369,27 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     const weights = plan.weights ?? defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
     return driveCheckLine({ log, optimized, weights, case: c }, null).text;
   };
+  // Cathy's box sits under the route overview (top right), clear of the arteries
+  const cathySlot = h('div', { class: 'hud-cathy', 'data-testid': 'drive-cathy-slot' });
+  const voiceFluoroBadge = h('span', { class: 'pill pill-warning voice-fluoro-badge', hidden: true, role: 'status', 'data-testid': 'voice-fluoro-badge' }, 'Fluoro on (voice)');
   const hands = createHandsVoice({
     host: view.element,
+    cathyHost: cathySlot,
     actions: driveVoice,
     onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
-    onVoice: async (a) => {
+    onVoice: async (a, m) => {
+      if (a === 'zoom_to') return zoomToAnswer(c, m, (edges) => view.zoomTo(edges));
+      if (a === 'toggle_fluoro') {
+        if (voiceFluoroUntil !== null) {
+          voiceFluoroUntil = null;
+          sync();
+          return 'Fluoro off.';
+        }
+        if (live.state?.atTarget) return 'At the target: fluoro stays off.';
+        voiceFluoroUntil = performance.now() + VOICE_FLUORO_MS;
+        sync();
+        return `Fluoro on. It switches off by itself after ${VOICE_FLUORO_MS / 1000} s, or say “toggle fluoro” again.`;
+      }
       if (a === 'hide_labels' || a === 'show_labels') {
         if (view.bodyContext()) return 'No vessel names on this case.';
         return view.setLabels(a === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
@@ -318,7 +407,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return lines.join(' ') || null;
     },
   });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls), notice, banner);
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -334,7 +423,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   );
   const actions = h('div', { class: 'hud-actions' }, restart, exit, finish);
 
-  const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), overview.el, actions);
+  const stage = h('div', { class: 'drive-stage', 'data-testid': 'drive-stage' }, h('div', { class: 'drive-canvas' }, view.element), top, h('div', { class: 'hud-left' }, casePanel, controls), h('div', { class: 'hud-right' }, overview.el, cathySlot), actions);
   const body = h('div', { class: 'drive' }, h('h1', { class: 'visually-hidden' }, `Drive: ${c.title}`), stage);
   renderShell(root, { crumbs: [{ label: 'Library', href: href.library() }, { label: c.title, href: href.brief(key) }, { label: 'Drive' }], layout: 'focus', body }, null);
 
@@ -344,6 +433,15 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     banner.className = tone ? `drive-banner drive-banner-${tone}` : 'drive-banner';
   }
 
+  /** The drive's mistakes so far onto the route overview (shown only while the overview is clicked on). */
+  let mistakesAt = 0;
+  function refreshMistakes(): void {
+    mistakesAt = performance.now();
+    const log = wireLogSoFar(source);
+    if (log) overview.setMistakes(mistakeMarkers(log, c));
+  }
+  overview.el.addEventListener('click', () => refreshMistakes());
+
   function sync(): void {
     const s = live.state;
     for (const b of controls.querySelectorAll<HTMLElement>('[data-control]')) {
@@ -351,6 +449,8 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       b.setAttribute('aria-pressed', String(k !== 'puff' && held.has(k)));
     }
     const fluoroOn = s ? s.fluoro : held.has('fluoro');
+    voiceFluoroBadge.hidden = voiceFluoroUntil === null;
+    if (overview.showing() && performance.now() - mistakesAt > 500) refreshMistakes();
     view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], catheter: s?.devices?.catheter ?? [], tip: s?.tip ?? null, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
     // The wire's own state says which mode is driving: after a fallback it reports rail.
     const wireMode = s?.mode ?? fellBackTo ?? source?.mode;
@@ -417,6 +517,12 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     if (padPuff(lastPad, pad)) triggerPuff();
     lastPad = pad;
     const keys = controlFrame(held, pad, puffPending);
+    // "Hey Cathy, toggle fluoro": on until said again, 10 s at most, and never past the target
+    if (voiceFluoroUntil !== null && (performance.now() >= voiceFluoroUntil || live.state?.atTarget)) {
+      voiceFluoroUntil = null;
+      sync();
+    }
+    if (voiceFluoroUntil !== null) keys.fluoro = true;
     const g = hands.gesture();
     const frame = g ? mergeControl(g, keys) : keys;
     puffPending = false;

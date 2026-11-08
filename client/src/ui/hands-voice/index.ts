@@ -11,7 +11,8 @@
  *   typed question with the same matcher as voice, and her latest answer, from voice too. Every answer is the screen's
  *   engine template (`onVoice`): deterministic, no AI model and no network.
  */
-import { createBrowserRecognizer, createWakeListener, matchCommand, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
+import type { LoadedCase } from '../../contracts';
+import { createBrowserRecognizer, createWakeListener, matchCommand, resolveVesselTarget, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
 import { h } from '../dom';
 import { readSettings } from '../settings-store';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
@@ -28,7 +29,18 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   reset_view: 'Reset view',
   hide_labels: 'Hide names',
   show_labels: 'Show names',
+  toggle_fluoro: 'Toggle fluoro',
+  zoom_to: 'Zoom to an artery',
 };
+
+/** "Hey Cathy, zoom into <artery>": find it on this case and frame it. */
+export function zoomToAnswer(c: LoadedCase, match: VoiceMatch | undefined, zoomTo: (edges: readonly string[]) => boolean): string | null {
+  const said = match && match.action === 'zoom_to' ? match.target : undefined;
+  if (!said) return 'Say which artery, for example “zoom into the aortic arch”.';
+  const t = resolveVesselTarget(said, c);
+  if (!t) return `I can't find “${said}” on this case.`;
+  return zoomTo(t.edges) ? `Zoomed to the ${t.label}.` : 'Zoom works in the 3D view.';
+}
 
 /** Cathy's questions, in the order her buttons show them; a screen gets the ones it answers. */
 const QUESTIONS: readonly VoiceAction[] = ['assist_check', 'assist_best_next', 'assist_options', 'assist_review'];
@@ -98,6 +110,8 @@ const ERROR_WORDS: Readonly<Record<TrackerError, string>> = {
 };
 
 export interface HandsVoiceOptions {
+  /** Where Cathy's box goes; the view (`host`) by default. Drive puts it under the 3D / Flat switch. */
+  cathyHost?: HTMLElement;
   /** The view element: the self-view, caption and pointer dot float inside it. */
   host: HTMLElement;
   /** Every gesture frame while the camera is on (null when it turns off). */
@@ -108,7 +122,8 @@ export interface HandsVoiceOptions {
    */
   onPan?: (dx: number, dy: number, roll: number) => void;
   /** A recognised command: return the answer to show under the caption, or null. */
-  onVoice: (action: VoiceAction) => string | null | Promise<string | null>;
+  /** `match` carries what was said; for zoom_to, `match.target` is the artery ("aortic arch"). */
+  onVoice: (action: VoiceAction, match?: VoiceMatch) => string | null | Promise<string | null>;
   /** Which commands this screen answers; others get "not on this screen". */
   actions: readonly VoiceAction[];
 }
@@ -127,7 +142,7 @@ declare global {
   }
 }
 
-export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: HandsVoiceOptions): HandsVoice {
+export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, actions }: HandsVoiceOptions): HandsVoice {
   let tracker: HandTracker | null = null;
   let latest: GestureOutput | null = null;
   let latestAt = 0;
@@ -158,13 +173,13 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
    * Run an action through the screen and show the exchange in the box. With `quiet`, an action that succeeds without
    * words (a zoom by voice) leaves the box as it was.
    */
-  const respond = async (action: VoiceAction, asked: string, into: HTMLElement, quiet = false): Promise<void> => {
+  const respond = async (action: VoiceAction, asked: string, into: HTMLElement, quiet = false, match?: VoiceMatch): Promise<void> => {
     const youAsked = h('p', { class: 'cathy-asked' }, asked);
     if (!actions.includes(action)) {
       into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, `“${ACTION_WORDS[action]}” isn't available on this screen.`));
       return;
     }
-    const text = await onVoice(action);
+    const text = await onVoice(action, match);
     if (!text && quiet) return;
     into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text ?? 'Done.'));
   };
@@ -188,7 +203,7 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
       field.value = '';
       const m = matchCommand([{ transcript: typed, confidence: 1 }]);
       const action = m.action ?? typedQuestion(typed, questions);
-      if (action) void respond(action, typed, cathyOut);
+      if (action) void respond(action, typed, cathyOut, false, m.action ? m : undefined);
       else
         cathyOut.replaceChildren(
           h('p', { class: 'cathy-asked' }, typed),
@@ -207,7 +222,7 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
     };
     toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
     cathyBox = h('aside', { class: 'cathy-box', 'aria-label': 'Cathy, the assistant', 'data-testid': 'cathy-box' }, toggle, body);
-    host.append(cathyBox);
+    (cathyHost ?? host).append(cathyBox);
     setOpen(readOpen());
   }
 
@@ -261,20 +276,21 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
   // ---- voice: a switch that listens for "Hey Cathy, …" (Vaibhav's wake listener), off by default
   const recognizer = createBrowserRecognizer();
   const answer = async (m: VoiceMatch): Promise<void> => {
-    const heard = h('p', { class: 'hv-heard' }, m.action ? `Heard: “${m.heard}” → ${ACTION_WORDS[m.action]}` : `Heard: “${m.heard}”. No command matched.`);
+    const words = m.action === 'zoom_to' && m.target ? `Zoom to the ${m.target}` : m.action ? ACTION_WORDS[m.action] : '';
+    const heard = h('p', { class: 'hv-heard' }, m.action ? `Heard: “${m.heard}” → ${words}` : `Heard: “${m.heard}”. No command matched.`);
     caption.replaceChildren(heard);
     host.dataset['voiceAction'] = m.action ?? 'none';
     if (!m.action) return;
     // With Cathy's box on this screen, every answer goes there; the caption keeps what was heard.
     if (cathyBox) {
-      await respond(m.action, `“${m.heard}”`, cathyOut, true);
+      await respond(m.action, `“${m.heard}”`, cathyOut, true, m);
       return;
     }
     if (!actions.includes(m.action)) {
       caption.append(h('p', { class: 'hv-answer' }, `“${ACTION_WORDS[m.action]}” isn't available on this screen.`));
       return;
     }
-    const text = await onVoice(m.action);
+    const text = await onVoice(m.action, m);
     if (text) caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text));
   };
   const onState = (state: WakeState): void => {

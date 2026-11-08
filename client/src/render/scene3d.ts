@@ -72,6 +72,8 @@ export interface CaseScene {
   readonly closeUp: Box | null;
   /** Point the camera at the close-up or the whole tree, easing over --duration-slow (instant with reduced motion). */
   frame(kind: 'close' | 'whole'): void;
+  /** Ease the camera onto these edges ("Hey Cathy, zoom into the aortic arch"); false when none of them exist. */
+  frameEdges(edgeIds: readonly string[]): boolean;
   /** Whether a point (metres) is inside the close-up. */
   inCloseUp(p: Vec3): boolean;
   /** Swap between the full mesh and the simplified tubes (AR frame budget). */
@@ -386,6 +388,24 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       const ms = reducedMotion() ? 0 : tokenMs('--duration-slow');
       tween = { from: [controls.target.clone(), camera.position.clone()], to, t: 0, ms };
       canvas.dataset['frame'] = kind;
+    },
+    frameEdges(edgeIds) {
+      const pts = c.edges.filter((e) => edgeIds.includes(e.id)).flatMap((e) => e.points);
+      if (pts.length === 0) return false;
+      const box: Box = {
+        min: [0, 1, 2].map((k) => Math.min(...pts.map((p) => p[k]!))) as unknown as Box['min'],
+        max: [0, 1, 2].map((k) => Math.max(...pts.map((p) => p[k]!))) as unknown as Box['max'],
+      };
+      // the case may be turned by the hand: frame where the edges are now
+      content.updateMatrixWorld(true);
+      const at = content.localToWorld(new THREE.Vector3(...centre(box)));
+      const span = Math.max(extent(box), size * 0.08);
+      const dist = (span / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.6;
+      const dir = camera.position.clone().sub(controls.target).normalize();
+      const ms = reducedMotion() ? 0 : tokenMs('--duration-slow');
+      tween = { from: [controls.target.clone(), camera.position.clone()], to: [at, at.clone().add(dir.multiplyScalar(dist))], t: 0, ms };
+      canvas.dataset['frame'] = 'vessel';
+      return true;
     },
     inCloseUp(p) {
       return !!closeUp && inside(closeUp, p);

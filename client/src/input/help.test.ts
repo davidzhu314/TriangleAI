@@ -8,14 +8,16 @@ describe('voice and gesture help', () => {
     for (const a of VOICE_ACTIONS) {
       const help = VOICE_HELP[a];
       expect(help, a).toBeDefined();
-      expect(VOICE_COMMANDS[a].includes(help.say.toLowerCase()), `${a}: "${help.say}"`).toBe(true);
+      const phrase = help.example ? VOICE_COMMANDS[a].find((p) => help.example!.toLowerCase().startsWith(p)) : help.say.toLowerCase();
+      expect(phrase && VOICE_COMMANDS[a].includes(phrase), `${a}: "${help.say}"`).toBe(true);
     }
   });
 
   it('saying "Hey Cathy, <phrase shown>" runs that very action', () => {
     for (const a of VOICE_ACTIONS) {
-      const m = matchCommand([{ transcript: `Hey Cathy, ${VOICE_HELP[a].say}`, confidence: 0.9 }]);
-      expect(m.action, VOICE_HELP[a].say).toBe(a);
+      const said = VOICE_HELP[a].example ?? VOICE_HELP[a].say;
+      const m = matchCommand([{ transcript: `Hey Cathy, ${said}`, confidence: 0.9 }]);
+      expect(m.action, said).toBe(a);
     }
   });
 
