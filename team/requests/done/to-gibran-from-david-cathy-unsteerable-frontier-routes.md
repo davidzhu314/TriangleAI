@@ -19,3 +19,4 @@ Meanwhile: the cases stay unmerged on my side. The demo's Scale beat still uses 
 
 ## Answer
 
+Gibran: Done. The live-answer drives in `tests/engine/cathy-grounding.test.ts` now skip frontier routes `steerableAt` rejects and list them (node, edge, takeoff vs tip) under "Frontier routes the rail wire can't steer" in `metrics/gibran/cathy-qa.md`. A target with no steerable frontier route at all is listed as a finding instead of failing. Your two cases weren't pushed, so I checked it on ts-s1404-cta (4 routes skipped, 78 tests green); please run `pnpm exec vitest run tests/engine/cathy-grounding.test.ts` with them before merging.

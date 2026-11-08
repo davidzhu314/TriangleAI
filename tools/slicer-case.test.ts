@@ -1,7 +1,7 @@
 /**
- * D3c: the first 3D Slicer export, client/public/cases/ts-s1404-cta/. The committed files are the
- * output of slicer/export_case.py, which needs Slicer + SlicerVMTK, so CI checks the committed output.
- * It must import through the real loader and validator with no manual edits.
+ * The 3D Slicer exports: client/public/cases/ts-<subject>-cta/ (D3c's ts-s1404-cta, then ts-s1336-cta and
+ * ts-s0727-cta). The committed files are the output of slicer/export_case.py, which needs Slicer + SlicerVMTK,
+ * so CI checks the committed output. Each must import through the real loader and validator with no manual edits.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -16,24 +16,26 @@ import { MESH_TRIANGLE_BUDGET } from '../client/src/contracts/validation';
 import { writeZip } from './lib/zip';
 import { BUNDLED_CASE_IDS } from './catalog';
 
-const ID = 'ts-s1404-cta';
-const DIR = join(import.meta.dirname, '../client/public/cases', ID);
+/** TotalSegmentator subjects, in catalog order. */
+const SUBJECTS = ['s1404', 's1336', 's0727'] as const;
+const IDS = SUBJECTS.map((s) => `ts-${s}-cta`);
 const FILES = ['case.json', 'centerlines.json', 'vessels.glb'] as const;
-const bytes = (f: string) => new Uint8Array(readFileSync(join(DIR, f)));
-const json = <T>(f: string) => JSON.parse(readFileSync(join(DIR, f), 'utf8')) as T;
-const files = (): CaseSource => ({ kind: 'files', origin: 'bundled', files: Object.fromEntries(FILES.map((f) => [f, bytes(f)])) as never });
-
-async function load(source: CaseSource = files()): Promise<LoadedCase> {
-  const r = await loadCase(source);
-  if (!r.ok) throw new Error(JSON.stringify(r.results, null, 2));
-  return r.case;
-}
 
 const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateCase = ajv.compile(schema);
 const validateCenterlines = ajv.compile({ $ref: 'urn:threadsim:case:1#/$defs/centerlines' });
 
-describe(`${ID} (3D Slicer + SlicerVMTK export)`, () => {
+describe.each(SUBJECTS.map((subject) => [`ts-${subject}-cta`, subject] as const))('%s (3D Slicer + SlicerVMTK export)', (ID, subject) => {
+  const DIR = join(import.meta.dirname, '../client/public/cases', ID);
+  const bytes = (f: string) => new Uint8Array(readFileSync(join(DIR, f)));
+  const json = <T>(f: string) => JSON.parse(readFileSync(join(DIR, f), 'utf8')) as T;
+  const files = (): CaseSource => ({ kind: 'files', origin: 'bundled', files: Object.fromEntries(FILES.map((f) => [f, bytes(f)])) as never });
+  async function load(source: CaseSource = files()): Promise<LoadedCase> {
+    const r = await loadCase(source);
+    if (!r.ok) throw new Error(JSON.stringify(r.results, null, 2));
+    return r.case;
+  }
+
   it('matches case.schema.json, is a CT case under CC BY 4.0 with attribution, in mm and RAS', () => {
     const c = json<CaseJson>('case.json');
     expect(validateCase(c), JSON.stringify(validateCase.errors)).toBe(true);
@@ -43,7 +45,7 @@ describe(`${ID} (3D Slicer + SlicerVMTK export)`, () => {
     expect(c.axes).toBe('RAS');
     expect(c.source.kind).toBe('ct');
     expect(c.source.license).toBe('CC BY 4.0');
-    expect(c.source.dataset).toMatch(/TotalSegmentator.*s1404.*zenodo\.10047263/);
+    expect(c.source.dataset).toMatch(new RegExp(`TotalSegmentator.*subject ${subject},.*zenodo\\.10047263`));
     expect(c.physics).toEqual({ available: false });
     expect(c.entries.map((e) => e.id)).toEqual(['fem_r', 'fem_l']);
     expect(c.targets.map((t) => t.id)).toEqual(['rcca', 'lcca']);
@@ -101,8 +103,10 @@ describe(`${ID} (3D Slicer + SlicerVMTK export)`, () => {
     expect(JSON.stringify(c)).not.toMatch(/\b(age|sex|gender|birth|patient|scanner|manufacturer)\b/i);
   });
 
-  it('is listed in the catalog just before fixture-y', () => {
-    expect(BUNDLED_CASE_IDS.at(-2)).toBe(ID);
-    expect(BUNDLED_CASE_IDS.at(-1)).toBe('fixture-y');
+  it('is listed in the catalog with the other Slicer cases, outside the ladder, just before fixture-y', () => {
+    const list: readonly string[] = BUNDLED_CASE_IDS;
+    expect(list.slice(-1 - IDS.length, -1)).toEqual(IDS);
+    expect(list.indexOf(ID)).toBe(list.length - 1 - IDS.length + IDS.indexOf(ID));
+    expect(list.at(-1)).toBe('fixture-y');
   });
 });

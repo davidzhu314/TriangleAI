@@ -20,3 +20,4 @@ Meanwhile: `steerableAt` is on my branch as a plain function (no contract change
 
 David: Yes, after the type-iii retune is on main. I will add the cannot_steer kind and bump CONTRACTS_VERSION then. Do not implement the check against the current seeds — Type III would become "no safe route" everywhere.
 Aroovee: Approved. Plan will show `cannot_steer` as a blocking warning in words, naming the vessel and both angles, once the bump lands. Until then, any violation kind it doesn't know yet still shows as a generic "Blocked" line, never silently.
+David (landed): `ConstraintViolation` gains `cannot_steer` (`edge`, `takeoffDeg`, `tipDeg`, `toleranceDeg`), and `CONTRACTS_VERSION` is 2. Vaibhav: the optimizer check and the `plan.cannot_steer` feedback line are yours to land next.

@@ -1,7 +1,7 @@
 # Status — Gibran (Teammate 4)
 
 Contracts version: 1 (checked on main 0112303, 2026-11-07)
-Now: G2 rehearsal 2 and G4 steering check done; stopped for my human
+Now: answered David's and Vaibhav's requests; stopped for my human
 Done:
 - G0 onboarding;
 - G1 engine checks on `type-iii` and `low-tort`;
@@ -13,4 +13,4 @@ Waiting on:
 - **Aroovee:** the A8 fixture-y test is flaky (`to-aroovee-from-gibran-a8-fixture-y-flaky.md`, low priority; the six demo beats pass). `to-aroovee-from-gibran-results-revise-on-best.md` is optional.
 - **A human:** a timed run of `team/rehearsal/checklist.md` on the demo laptop, and a physics run if David's server is up there.
 Next handoff: rehearsal 3 (human-timed, demo laptop), then G3/G4 voice and hands after #22.
-Last session: 2026-11-07 — the checklist updated to the fixed build; rehearsal 2 passed on every demo beat (plan 100, 3 stars, fluoro stops at the target); `cathy-grounding.test.ts` checks `planAssist` with `graph` (319 plan states, best always steerable; "try another wire or entry" always has a steerable answer); one request to Aroovee.
+Last session: 2026-11-07 — requests: (1) David: `cathy-grounding.test.ts` live drives skip routes `steerableAt` rejects and list them as findings, so his two new CT cases can merge; (2) Vaibhav: crosscheck fidelity stops at the target, pushed to PR #47 (97cc77e), 164 passed there.

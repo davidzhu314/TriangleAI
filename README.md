@@ -42,9 +42,9 @@ One case is one pass through six screens, each at its own hash route:
 
 - **Cases.** The Library lists the bundled cases from `client/public/cases/index.json`:
   - the generated ladder: `low-tort`, `type-i-plaque`, `type-ii`, `type-ii-tortuous`, `type-iii`, `bovine`;
-  - `ts-s1404-cta`, a planning-only case exported from a real CT angiogram's arteries with 3D Slicer and SlicerVMTK (TotalSegmentator dataset, CC BY 4.0). How to reproduce it is in `slicer/README.md`;
+  - three planning-only cases exported from real CT angiograms' arteries with 3D Slicer and SlicerVMTK: `ts-s1404-cta`, `ts-s1336-cta` and `ts-s0727-cta` (TotalSegmentator dataset subjects s1404, s1336 and s0727, CC BY 4.0). How to reproduce them is in `slicer/README.md`;
   - `fixture-y`.
-- **Views are 2D for now.** Plan, Compare, Drive and Results draw the case as a flat front view in SVG. three.js 0.187.0 is pinned as a dependency, but no screen uses it yet.
+- **Views.** Plan, Compare and Drive open in 3D (three.js 0.187.0), with the flat SVG front view one click away and as the fallback without WebGL. Results' replay stays 2D.
 - **Driving.** Drive gets its wire from `client/src/wire/select.ts` (D5). Every bundled case drives on the rail wire.
   - A CathSim phantom served by the physics process drives on live physics. If the socket fails or stalls for 2 s, it falls back to rail with a notice.
   - Phantom cards appear in the Library only once its probe points at the physics process: `PHYSICS_CASES_URL` in `client/src/ui/physics-probe.ts` is still `null`.
@@ -222,4 +222,4 @@ David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail w
 
 ## Credits
 
-Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process. The `ts-s1404-cta` case is derived from the TotalSegmentator dataset (University Hospital Basel, CC BY 4.0; Wasserthal et al., Radiology: AI 2023).
+Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process. The `ts-s1404-cta`, `ts-s1336-cta` and `ts-s0727-cta` cases are derived from the TotalSegmentator dataset (University Hospital Basel, CC BY 4.0; Wasserthal et al., Radiology: AI 2023).

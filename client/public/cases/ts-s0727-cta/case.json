@@ -1,0 +1,85 @@
+{
+  "axes": "RAS",
+  "difficulty": "intermediate",
+  "entries": [
+    {
+      "id": "fem_r",
+      "name": "Right femoral",
+      "node": "n_fem_r"
+    },
+    {
+      "id": "fem_l",
+      "name": "Left femoral",
+      "node": "n_fem_l"
+    }
+  ],
+  "fluoro_budget_s": 240,
+  "id": "ts-s0727-cta",
+  "physics": {
+    "available": false
+  },
+  "riskZones": [],
+  "scenario": "Teaching scenario: a real CT angiogram's arteries, from both groins to both common carotids. Plan a route on real anatomy. Planning only: there is no physics wire for this case.",
+  "schema": "threadsim.case/1",
+  "source": {
+    "dataset": "TotalSegmentator dataset v2.0.1 (small subset), subject s0727, University Hospital Basel; Wasserthal et al., Radiology: AI 2023; https://doi.org/10.5281/zenodo.10047263. Arterial masks converted with 3D Slicer 5.13.0 and SlicerVMTK by ThreadSim slicer/export_case.py.",
+    "kind": "ct",
+    "license": "CC BY 4.0"
+  },
+  "targets": [
+    {
+      "id": "rcca",
+      "name": "Right common carotid",
+      "node": "n_rcca"
+    },
+    {
+      "id": "lcca",
+      "name": "Left common carotid",
+      "node": "n_lcca"
+    }
+  ],
+  "title": "CT angiogram s0727, groin to carotid (planning only)",
+  "units": "mm",
+  "vessels": [
+    {
+      "id": "aorta",
+      "kind": "artery",
+      "name": "Aorta"
+    },
+    {
+      "id": "bca",
+      "kind": "artery",
+      "name": "Brachiocephalic trunk"
+    },
+    {
+      "id": "rcca",
+      "kind": "artery",
+      "name": "Right common carotid"
+    },
+    {
+      "id": "lcca",
+      "kind": "artery",
+      "name": "Left common carotid"
+    },
+    {
+      "id": "r_subclavian",
+      "kind": "artery",
+      "name": "Right subclavian"
+    },
+    {
+      "id": "l_subclavian",
+      "kind": "artery",
+      "name": "Left subclavian"
+    },
+    {
+      "id": "r_iliac",
+      "kind": "artery",
+      "name": "Right iliac to common femoral"
+    },
+    {
+      "id": "l_iliac",
+      "kind": "artery",
+      "name": "Left iliac to common femoral"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ import type { CaseResult, EventLog, FrontierRoute, LoadedCase, OptimizeResult, W
 import { buildGraph } from '../optimize/graph';
 import { normaliseWeights, measureRanges, rankRoutes } from '../optimize/rank';
 import { steerableAt } from '../optimize/steerability';
-import { driveScore } from './drive';
+import { driveScore, upToTarget } from './drive';
 import { buildFeedback } from './feedback';
 import { planScore } from './plan';
 import { forceReference, type ForceReference } from './reference';
@@ -54,7 +54,8 @@ export function referenceFor(input: ScoreInput): ForceReference {
 }
 
 export function scoreCase(input: ScoreInput): CaseResult {
-  const { log, optimized } = input;
+  const { optimized } = input;
+  const log = upToTarget(input.log); // nothing after the target is scored
   const c = input.case;
   if (log.caseId !== c.id || optimized.caseId !== c.id) {
     throw new Error(`score: case mismatch (log ${log.caseId}, optimizer ${optimized.caseId}, case ${c.id})`);

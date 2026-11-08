@@ -23,7 +23,8 @@ Steps, all in Slicer and SlicerVMTK:
 5. Name each edge by the segment most of its points lie in. Resample it to equal steps of about 1 mm.
    Radii are VMTK's maximum inscribed sphere radius.
 6. Export each segment's closed surface to one GLB node named by vessel id, decimated to under 90k
-   triangles in total.
+   triangles in total, weighted to keep more detail in the arch branches and carotids and less in the
+   iliacs (DETAIL_WEIGHT).
 7. Write case.json, centerlines.json and vessels.glb (millimetres, RAS), and optionally zip them.
 """
 import argparse
@@ -39,6 +40,9 @@ import slicer
 import vtk
 
 TRIANGLE_TARGET = 90_000  # under the 100k import budget (spec §3.1)
+# Decimation weight per vessel: more detail near the arch and the targets, less in the iliacs. A vessel keeps
+# min(1, k * weight) of its triangles, with k chosen so the total stays under TRIANGLE_TARGET. Unlisted: 1.
+DETAIL_WEIGHT = {"bca": 4.0, "rcca": 4.0, "lcca": 4.0, "r_subclavian": 2.0, "l_subclavian": 2.0, "r_iliac": 0.5, "l_iliac": 0.5}
 SNAP_MAX_MM = 20.0
 DECIMALS = 4
 
@@ -70,6 +74,21 @@ def tree_surface(seg):
     return poly, labels, ras_to_ijk
 
 
+def keep_fractions(counts):
+    """Fraction of triangles each vessel keeps: min(1, k * DETAIL_WEIGHT), summing to TRIANGLE_TARGET at most."""
+    w = {v: DETAIL_WEIGHT.get(v, 1.0) for v in counts}
+    if sum(counts.values()) <= TRIANGLE_TARGET:
+        return {v: 1.0 for v in counts}
+    lo, hi = 0.0, 1.0 / min(w.values())
+    for _ in range(60):  # bisection on k; deterministic
+        k = (lo + hi) / 2
+        if sum(n * min(1.0, k * w[v]) for v, n in counts.items()) > TRIANGLE_TARGET:
+            hi = k
+        else:
+            lo = k
+    return {v: min(1.0, lo * w[v]) for v in counts}
+
+
 def vessel_meshes(seg, vessel_ids):
     seg.CreateClosedSurfaceRepresentation()
     polys = {}
@@ -78,13 +97,13 @@ def vessel_meshes(seg, vessel_ids):
         p = vtk.vtkPolyData()
         seg.GetClosedSurfaceRepresentation(sid, p)
         polys[v] = p
-    total = sum(p.GetNumberOfPolys() for p in polys.values())
-    reduction = max(0.0, 1.0 - TRIANGLE_TARGET / total) if total else 0.0
+    keep = keep_fractions({v: polys[v].GetNumberOfPolys() for v in vessel_ids})
     meshes = []
     for v in vessel_ids:
         tri = vtk.vtkTriangleFilter()
         tri.SetInputData(polys[v])
         src = tri
+        reduction = 1.0 - keep[v]
         if reduction > 0:
             dec = vtk.vtkQuadricDecimation()
             dec.SetInputConnection(tri.GetOutputPort())

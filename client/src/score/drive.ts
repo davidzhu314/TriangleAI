@@ -162,6 +162,22 @@ export function sampleTotals(log: EventLog): { peakForceN: number; cumulativeFor
   return { peakForceN: peak, cumulativeForceNs: cum, fluoroS: fluoroSamples * dt };
 }
 
+/**
+ * The log up to the first target_reached: samples at or before it, and events up to and including it.
+ * The drive is over at the target, so fluoro held, force or wandering after it is not scored
+ * (rehearsal 1: fluoro held 3 s past the target scored radiation 21; DECISIONS.md, "Scoring stops at the target").
+ * A log that never reached the target is returned unchanged.
+ */
+export function upToTarget(log: EventLog): EventLog {
+  const i = log.events.findIndex((e) => e.kind === 'target_reached');
+  if (i < 0) return log;
+  const t = log.events[i]!.t;
+  const samples = log.samples.filter((s) => s.t <= t);
+  const events = log.events.slice(0, i + 1);
+  if (samples.length === log.samples.length && events.length === log.events.length) return log;
+  return { ...log, samples, events };
+}
+
 export function timeOf(log: EventLog): number {
   const reached = log.events.find((e) => e.kind === 'target_reached');
   return reached ? reached.t : (log.samples.at(-1)?.t ?? 0);

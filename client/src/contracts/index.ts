@@ -4,7 +4,7 @@
  * CONTRACTS_VERSION was 'unset' before D0b; D0b set it to 1. Each merged contract change bumps it. Every session compares it with its
  * status file and reads the contract diff when it changes. Only David edits this folder.
  */
-export const CONTRACTS_VERSION: number | 'unset' = 1;
+export const CONTRACTS_VERSION: number | 'unset' = 2;
 
 export * from './physics-protocol';
 export * from './events';

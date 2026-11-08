@@ -1,0 +1,1574 @@
+{
+ "attribution": "BodyParts3D / Anatomography, © The Database Center for Life Science. CC BY-SA 2.1 Japan. Adapted by OrganUI. Selected, split by side and converted to millimetre RAS by ThreadSim.",
+ "axes": "RAS",
+ "boundsMm": {
+  "max": [
+   279.502,
+   154.73,
+   1539.22
+  ],
+  "min": [
+   -279.507,
+   -10.068,
+   470.422
+  ]
+ },
+ "bytes": 778920,
+ "file": "bodyparts3d-aortic.glb",
+ "fromSource": "BodyParts3D source (LPS: +x left, +y posterior, +z superior, mm) -> RAS: (x, y, z) -> (-x, -y, z). OrganUI's display transform (recentre, x0.004, axes [x, z, -y]) is inverted exactly from its manifest.",
+ "license": "CC-BY-SA-2.1-JP (this GLB and this file are adaptations; see assets/vascular/LICENSE.md)",
+ "limitations": [
+  "A single adult reference body (BodyParts3D), not a patient; anatomy is illustrative and unreviewed by a clinician.",
+  "Surface meshes only: no centerlines or radii, so this is not a ThreadSim case package (centerlines.json and case.json are still needed).",
+  "Vessels are open tubes simplified by OrganUI (meshoptimizer ratio 0.2); thin vessels keep their path but lose surface detail.",
+  "The source neck is uneven: the external carotid and external jugular exist only on the right, and the left carotid has a gap at its division.",
+  "OrganUI divided the descending aorta at z = 1090 mm (source); the cut is open, not capped.",
+  "Share-alike: anything adapted from this mesh must stay CC BY-SA 2.1 JP with attribution."
+ ],
+ "modifications": [
+  "Selected 31 of OrganUI's 52 structures: the aorta and its arch, neck, arm and pelvic branches, the visceral trunks and renal arteries, and the great veins.",
+  "Split OrganUI's left-right pairs into one node per side, by connected component and the side of its centroid. A pair whose two sides touch across the midline (the brachiocephalic veins, which meet at the superior vena cava) stays one node with side 'both'.",
+  "Inverted OrganUI's recentre and scale, and converted to millimetres in RAS axes.",
+  "Welded identical vertices, dropped degenerate triangles, removed materials and node extras. No further simplification; no anatomy invented or reshaped."
+ ],
+ "nodes": "One mesh node per vessel and side; node name = vessel id. No materials, extras, extensions or node transforms.",
+ "orientation": "RAS: +x patient right, +y anterior, +z superior. Origin: BodyParts3D's source origin (z = 0 near the soles; x = 0 on the midline), not recentred.",
+ "scale": "1 glTF unit = 1 mm (ThreadSim's loader converts to metres and Y-up once: (x, y, z) -> (-x, z, y) / 1000)",
+ "schema": "threadsim.vascular-asset/1",
+ "sha256": "c111c817a525da4a6170b84fed2d44788091af739bad53ed63a05400c5a04d12",
+ "source": {
+  "adaptedBy": {
+   "codeLicense": "MIT (code only; does not relicense the model)",
+   "commit": "74be339badd85f1d3d93e585ed2a5a79c7679342",
+   "file": "public/models/vessels.glb",
+   "manifestSha256": "361bfb6cb69ece471f020392e63e4bd7b924e507fd0ddd15e4b4aa53a8da9a13",
+   "repository": "https://github.com/organui/vessels-3d",
+   "sha256": "d2dd99113eda9ccf39d8a9bff7d6c9d07252867cabdcaf7bc1c3454a2883701d"
+  },
+  "citation": "Mitsuhashi N, et al. BodyParts3D: 3D structure database for anatomical concepts. Nucleic Acids Res. 2009;37:D782-D785. doi:10.1093/nar/gkn613",
+  "dataset": "BodyParts3D / Anatomography",
+  "license": "CC-BY-SA-2.1-JP",
+  "licenseLegalCode": "https://creativecommons.org/licenses/by-sa/2.1/jp/legalcode",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en",
+  "meshMirror": {
+   "commit": "fd527e6f4daf732fd814314d9257df5877b844bc",
+   "repository": "https://github.com/olivercase/body_parts_3d_api"
+  },
+  "sourceLicenseStatement": "https://lifesciencedb.jp/bp3d/info/index.html#License",
+  "variant": "Object set 4.3, ontology tree FMA3.0; official IS-A concept-to-element mapping",
+  "version": "4.3"
+ },
+ "triangles": 35180,
+ "units": "mm",
+ "vessels": [
+  {
+   "boundsMm": {
+    "max": [
+     6.822,
+     137.439,
+     1281.9
+    ],
+    "min": [
+     -28.943,
+     106.662,
+     1234.06
+    ]
+   },
+   "fma": "FMA3736",
+   "id": "ascending_aorta",
+   "kind": "artery",
+   "name": "Ascending aorta",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA3736"
+   ],
+   "sourceElements": [
+    "FJ3413"
+   ],
+   "sourceStructure": "ascending-aorta",
+   "triangles": 392
+  },
+  {
+   "boundsMm": {
+    "max": [
+     6.796,
+     137.163,
+     1317.09
+    ],
+    "min": [
+     -34.838,
+     49.845,
+     1281.9
+    ]
+   },
+   "fma": "FMA3768",
+   "id": "aortic_arch",
+   "kind": "artery",
+   "name": "Aortic arch",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA3768"
+   ],
+   "sourceElements": [
+    "FJ3411"
+   ],
+   "sourceStructure": "aortic-arch",
+   "triangles": 618
+  },
+  {
+   "boundsMm": {
+    "max": [
+     1.333,
+     118.515,
+     1281.89
+    ],
+    "min": [
+     -34.696,
+     45.153,
+     1065.19
+    ]
+   },
+   "fma": "FMA87217",
+   "id": "thoracic_aorta",
+   "kind": "artery",
+   "name": "Thoracic (descending) aorta",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA3784"
+   ],
+   "sourceElements": [
+    "FJ3427"
+   ],
+   "sourceStructure": "thoracic-aorta",
+   "triangles": 550
+  },
+  {
+   "boundsMm": {
+    "max": [
+     2.411,
+     131.113,
+     1120.67
+    ],
+    "min": [
+     -16.579,
+     91.652,
+     946.787
+    ]
+   },
+   "fma": "FMA3789",
+   "id": "abdominal_aorta",
+   "kind": "artery",
+   "name": "Abdominal aorta",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA3784"
+   ],
+   "sourceElements": [
+    "FJ3427"
+   ],
+   "sourceStructure": "abdominal-aorta",
+   "triangles": 362
+  },
+  {
+   "boundsMm": {
+    "max": [
+     15.233,
+     115.59,
+     1337.2
+    ],
+    "min": [
+     -14.774,
+     97.777,
+     1304.03
+    ]
+   },
+   "fma": "FMA69316",
+   "id": "brachiocephalic_trunk",
+   "kind": "artery",
+   "name": "Brachiocephalic trunk",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA69316"
+   ],
+   "sourceElements": [
+    "FJ4715"
+   ],
+   "sourceStructure": "brachiocephalic-trunk",
+   "triangles": 430
+  },
+  {
+   "boundsMm": {
+    "max": [
+     49.077,
+     114.733,
+     1539.22
+    ],
+    "min": [
+     8.614,
+     86.801,
+     1330.6
+    ]
+   },
+   "fma": "FMA69325",
+   "id": "r_carotid_arteries",
+   "kind": "artery",
+   "name": "Right carotid arteries (common, internal, external)",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA69325",
+    "FMA75866",
+    "FMA66531",
+    "FMA69326",
+    "FMA75867"
+   ],
+   "sourceElements": [
+    "FJ4986",
+    "FJ4993",
+    "FJ4989",
+    "FJ1682M",
+    "FJ3483"
+   ],
+   "sourceStructure": "carotid-arteries",
+   "triangles": 832
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -9.842,
+     114.555,
+     1537.7
+    ],
+    "min": [
+     -37.465,
+     94.04,
+     1307.4
+    ]
+   },
+   "fma": "FMA69325",
+   "id": "l_carotid_arteries",
+   "kind": "artery",
+   "name": "Left carotid arteries (common, internal, external)",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA69325",
+    "FMA75866",
+    "FMA66531",
+    "FMA69326",
+    "FMA75867"
+   ],
+   "sourceElements": [
+    "FJ4986",
+    "FJ4993",
+    "FJ4989",
+    "FJ1682M",
+    "FJ3483"
+   ],
+   "sourceStructure": "carotid-arteries",
+   "triangles": 572
+  },
+  {
+   "boundsMm": {
+    "max": [
+     31.918,
+     97.203,
+     1505.5
+    ],
+    "min": [
+     -0.34,
+     58.765,
+     1355.57
+    ]
+   },
+   "fma": "FMA76260",
+   "id": "r_vertebral_arteries",
+   "kind": "artery",
+   "name": "Right vertebral artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA76261",
+    "FMA76262"
+   ],
+   "sourceElements": [
+    "FJ5015",
+    "FJ1725M"
+   ],
+   "sourceStructure": "vertebral-arteries",
+   "triangles": 576
+  },
+  {
+   "boundsMm": {
+    "max": [
+     0.365,
+     86.871,
+     1505.94
+    ],
+    "min": [
+     -33.563,
+     58.575,
+     1398.41
+    ]
+   },
+   "fma": "FMA76260",
+   "id": "l_vertebral_arteries",
+   "kind": "artery",
+   "name": "Left vertebral artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA76261",
+    "FMA76262"
+   ],
+   "sourceElements": [
+    "FJ5015",
+    "FJ1725M"
+   ],
+   "sourceStructure": "vertebral-arteries",
+   "triangles": 462
+  },
+  {
+   "boundsMm": {
+    "max": [
+     82.176,
+     112.221,
+     1353.03
+    ],
+    "min": [
+     9.809,
+     94.355,
+     1331.08
+    ]
+   },
+   "fma": "FMA69317",
+   "id": "r_subclavian_arteries",
+   "kind": "artery",
+   "name": "Right subclavian artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA69318",
+    "FMA69319"
+   ],
+   "sourceElements": [
+    "FJ3579",
+    "FJ3479"
+   ],
+   "sourceStructure": "subclavian-arteries",
+   "triangles": 280
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -17.686,
+     105.634,
+     1356.38
+    ],
+    "min": [
+     -86.546,
+     86.848,
+     1307.31
+    ]
+   },
+   "fma": "FMA69317",
+   "id": "l_subclavian_arteries",
+   "kind": "artery",
+   "name": "Left subclavian artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA69318",
+    "FMA69319"
+   ],
+   "sourceElements": [
+    "FJ3579",
+    "FJ3479"
+   ],
+   "sourceStructure": "subclavian-arteries",
+   "triangles": 384
+  },
+  {
+   "boundsMm": {
+    "max": [
+     151.412,
+     106.345,
+     1339.78
+    ],
+    "min": [
+     77.027,
+     80.119,
+     1258.25
+    ]
+   },
+   "fma": "FMA22654",
+   "id": "r_axillary_arteries",
+   "kind": "artery",
+   "name": "Right axillary artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA22655",
+    "FMA22656"
+   ],
+   "sourceElements": [
+    "FJ2268",
+    "FJ2216"
+   ],
+   "sourceStructure": "axillary-arteries",
+   "triangles": 358
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -76.935,
+     106.403,
+     1339.78
+    ],
+    "min": [
+     -151.285,
+     80.257,
+     1258.18
+    ]
+   },
+   "fma": "FMA22654",
+   "id": "l_axillary_arteries",
+   "kind": "artery",
+   "name": "Left axillary artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA22655",
+    "FMA22656"
+   ],
+   "sourceElements": [
+    "FJ2268",
+    "FJ2216"
+   ],
+   "sourceStructure": "axillary-arteries",
+   "triangles": 366
+  },
+  {
+   "boundsMm": {
+    "max": [
+     217.428,
+     88.954,
+     1274.34
+    ],
+    "min": [
+     143.087,
+     72.388,
+     1020.65
+    ]
+   },
+   "fma": "FMA22689",
+   "id": "r_brachial_arteries",
+   "kind": "artery",
+   "name": "Right brachial artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA22691",
+    "FMA22692"
+   ],
+   "sourceElements": [
+    "FJ2271",
+    "FJ2219"
+   ],
+   "sourceStructure": "brachial-arteries",
+   "triangles": 632
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -143.043,
+     88.894,
+     1274.33
+    ],
+    "min": [
+     -217.418,
+     72.425,
+     1020.61
+    ]
+   },
+   "fma": "FMA22689",
+   "id": "l_brachial_arteries",
+   "kind": "artery",
+   "name": "Left brachial artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA22691",
+    "FMA22692"
+   ],
+   "sourceElements": [
+    "FJ2271",
+    "FJ2219"
+   ],
+   "sourceStructure": "brachial-arteries",
+   "triangles": 684
+  },
+  {
+   "boundsMm": {
+    "max": [
+     279.502,
+     127.115,
+     1024.42
+    ],
+    "min": [
+     213.611,
+     83.18,
+     791.182
+    ]
+   },
+   "fma": "FMA66621",
+   "id": "r_radial_arteries",
+   "kind": "artery",
+   "name": "Right radial artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA66625",
+    "FMA66626"
+   ],
+   "sourceElements": [
+    "FJ2294",
+    "FJ2242"
+   ],
+   "sourceStructure": "radial-arteries",
+   "triangles": 1198
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -213.614,
+     127.082,
+     1024.44
+    ],
+    "min": [
+     -279.507,
+     83.157,
+     791.218
+    ]
+   },
+   "fma": "FMA66621",
+   "id": "l_radial_arteries",
+   "kind": "artery",
+   "name": "Left radial artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA66625",
+    "FMA66626"
+   ],
+   "sourceElements": [
+    "FJ2294",
+    "FJ2242"
+   ],
+   "sourceStructure": "radial-arteries",
+   "triangles": 1848
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -1.104,
+     130.787,
+     1089.83
+    ],
+    "min": [
+     -12.24,
+     107.594,
+     1077.65
+    ]
+   },
+   "fma": "FMA14812",
+   "id": "celiac_trunk",
+   "kind": "artery",
+   "name": "Celiac trunk",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA14812"
+   ],
+   "sourceElements": [
+    "FJ3421"
+   ],
+   "sourceStructure": "celiac-trunk",
+   "triangles": 238
+  },
+  {
+   "boundsMm": {
+    "max": [
+     60.887,
+     151.188,
+     1054.67
+    ],
+    "min": [
+     -8.582,
+     112.053,
+     909.407
+    ]
+   },
+   "fma": "FMA66358",
+   "id": "superior_mesenteric_artery",
+   "kind": "artery",
+   "name": "Superior mesenteric artery",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA66358"
+   ],
+   "sourceElements": [
+    "FJ3644"
+   ],
+   "sourceStructure": "superior-mesenteric-artery",
+   "triangles": 734
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -4.193,
+     136.719,
+     986.232
+    ],
+    "min": [
+     -18.456,
+     113.273,
+     899.05
+    ]
+   },
+   "fma": "FMA66359",
+   "id": "inferior_mesenteric_artery",
+   "kind": "artery",
+   "name": "Inferior mesenteric artery",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA66359"
+   ],
+   "sourceElements": [
+    "FJ3442"
+   ],
+   "sourceStructure": "inferior-mesenteric-artery",
+   "triangles": 446
+  },
+  {
+   "boundsMm": {
+    "max": [
+     74.231,
+     120.149,
+     1059.13
+    ],
+    "min": [
+     -12.919,
+     77.86,
+     980.585
+    ]
+   },
+   "fma": "FMA66363",
+   "id": "r_renal_arteries",
+   "kind": "artery",
+   "name": "Right renal artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA66363",
+    "FMA66364",
+    "FMA70486",
+    "FMA70487",
+    "FMA70489",
+    "FMA70490"
+   ],
+   "sourceElements": [
+    "FJ3576",
+    "FJ3476",
+    "FJ3558",
+    "FJ3559",
+    "FJ3560",
+    "FJ3561",
+    "FJ3562",
+    "FJ3563",
+    "FJ3458",
+    "FJ3459",
+    "FJ3460",
+    "FJ3461",
+    "FJ3462",
+    "FJ3463",
+    "FJ3573",
+    "FJ3574",
+    "FJ3575",
+    "FJ3473",
+    "FJ3474",
+    "FJ3475"
+   ],
+   "sourceStructure": "renal-arteries",
+   "triangles": 2438
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -3.757,
+     120.232,
+     1075.1
+    ],
+    "min": [
+     -81.616,
+     68.685,
+     996.881
+    ]
+   },
+   "fma": "FMA66363",
+   "id": "l_renal_arteries",
+   "kind": "artery",
+   "name": "Left renal artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA66363",
+    "FMA66364",
+    "FMA70486",
+    "FMA70487",
+    "FMA70489",
+    "FMA70490"
+   ],
+   "sourceElements": [
+    "FJ3576",
+    "FJ3476",
+    "FJ3558",
+    "FJ3559",
+    "FJ3560",
+    "FJ3561",
+    "FJ3562",
+    "FJ3563",
+    "FJ3458",
+    "FJ3459",
+    "FJ3460",
+    "FJ3461",
+    "FJ3462",
+    "FJ3463",
+    "FJ3573",
+    "FJ3574",
+    "FJ3575",
+    "FJ3473",
+    "FJ3474",
+    "FJ3475"
+   ],
+   "sourceStructure": "renal-arteries",
+   "triangles": 2510
+  },
+  {
+   "boundsMm": {
+    "max": [
+     37.503,
+     130.066,
+     964.665
+    ],
+    "min": [
+     -10.177,
+     105.044,
+     903.462
+    ]
+   },
+   "fma": "FMA69382",
+   "id": "r_common_iliac_arteries",
+   "kind": "artery",
+   "name": "Right common iliac artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA69383",
+    "FMA69384"
+   ],
+   "sourceElements": [
+    "FJ3565",
+    "FJ3464"
+   ],
+   "sourceStructure": "common-iliac-arteries",
+   "triangles": 218
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -0.908,
+     129.72,
+     964.635
+    ],
+    "min": [
+     -35.984,
+     90.635,
+     901.733
+    ]
+   },
+   "fma": "FMA69382",
+   "id": "l_common_iliac_arteries",
+   "kind": "artery",
+   "name": "Left common iliac artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA69383",
+    "FMA69384"
+   ],
+   "sourceElements": [
+    "FJ3565",
+    "FJ3464"
+   ],
+   "sourceStructure": "common-iliac-arteries",
+   "triangles": 248
+  },
+  {
+   "boundsMm": {
+    "max": [
+     36.031,
+     112.467,
+     910.766
+    ],
+    "min": [
+     27.235,
+     27.452,
+     850.365
+    ]
+   },
+   "fma": "FMA18809",
+   "id": "r_internal_iliac_arteries",
+   "kind": "artery",
+   "name": "Right internal iliac artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA18809",
+    "FMA70187"
+   ],
+   "sourceElements": [
+    "FJ3569",
+    "FJ3468"
+   ],
+   "sourceStructure": "internal-iliac-arteries",
+   "triangles": 252
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -22.271,
+     101.452,
+     909.866
+    ],
+    "min": [
+     -33.539,
+     11.72,
+     845.338
+    ]
+   },
+   "fma": "FMA18809",
+   "id": "l_internal_iliac_arteries",
+   "kind": "artery",
+   "name": "Left internal iliac artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA18809",
+    "FMA70187"
+   ],
+   "sourceElements": [
+    "FJ3569",
+    "FJ3468"
+   ],
+   "sourceStructure": "internal-iliac-arteries",
+   "triangles": 268
+  },
+  {
+   "boundsMm": {
+    "max": [
+     61.287,
+     144.498,
+     913.54
+    ],
+    "min": [
+     27.458,
+     77.797,
+     803.613
+    ]
+   },
+   "fma": "FMA69389",
+   "id": "r_external_iliac_arteries",
+   "kind": "artery",
+   "name": "Right external iliac artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA69390",
+    "FMA69391"
+   ],
+   "sourceElements": [
+    "FJ3567",
+    "FJ3466"
+   ],
+   "sourceStructure": "external-iliac-arteries",
+   "triangles": 382
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -25.536,
+     152.944,
+     912.336
+    ],
+    "min": [
+     -65.442,
+     78.136,
+     809.832
+    ]
+   },
+   "fma": "FMA69389",
+   "id": "l_external_iliac_arteries",
+   "kind": "artery",
+   "name": "Left external iliac artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA69390",
+    "FMA69391"
+   ],
+   "sourceElements": [
+    "FJ3567",
+    "FJ3466"
+   ],
+   "sourceStructure": "external-iliac-arteries",
+   "triangles": 446
+  },
+  {
+   "boundsMm": {
+    "max": [
+     65.993,
+     142.786,
+     830.085
+    ],
+    "min": [
+     37.954,
+     85.667,
+     470.422
+    ]
+   },
+   "fma": "FMA20730",
+   "id": "r_femoral_arteries",
+   "kind": "artery",
+   "name": "Right femoral artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA20731",
+    "FMA20732"
+   ],
+   "sourceElements": [
+    "FJ2143",
+    "FJ2074"
+   ],
+   "sourceStructure": "femoral-arteries",
+   "triangles": 310
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -37.867,
+     142.601,
+     830.324
+    ],
+    "min": [
+     -65.91,
+     85.408,
+     470.504
+    ]
+   },
+   "fma": "FMA20730",
+   "id": "l_femoral_arteries",
+   "kind": "artery",
+   "name": "Left femoral artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA20731",
+    "FMA20732"
+   ],
+   "sourceElements": [
+    "FJ2143",
+    "FJ2074"
+   ],
+   "sourceStructure": "femoral-arteries",
+   "triangles": 304
+  },
+  {
+   "boundsMm": {
+    "max": [
+     84.961,
+     137.417,
+     821.842
+    ],
+    "min": [
+     46.96,
+     88.754,
+     512.174
+    ]
+   },
+   "fma": "FMA20741",
+   "id": "r_deep_femoral_arteries",
+   "kind": "artery",
+   "name": "Right deep femoral artery",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA20796",
+    "FMA20797"
+   ],
+   "sourceElements": [
+    "FJ2203",
+    "FJ2094"
+   ],
+   "sourceStructure": "deep-femoral-arteries",
+   "triangles": 1232
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -47.03,
+     137.408,
+     822.011
+    ],
+    "min": [
+     -84.969,
+     88.758,
+     512.179
+    ]
+   },
+   "fma": "FMA20741",
+   "id": "l_deep_femoral_arteries",
+   "kind": "artery",
+   "name": "Left deep femoral artery",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA20796",
+    "FMA20797"
+   ],
+   "sourceElements": [
+    "FJ2203",
+    "FJ2094"
+   ],
+   "sourceStructure": "deep-femoral-arteries",
+   "triangles": 1222
+  },
+  {
+   "boundsMm": {
+    "max": [
+     26.635,
+     127.276,
+     1309.81
+    ],
+    "min": [
+     4.109,
+     103.587,
+     1274.81
+    ]
+   },
+   "fma": "FMA4720",
+   "id": "superior_vena_cava",
+   "kind": "vein",
+   "name": "Superior vena cava",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA4720"
+   ],
+   "sourceElements": [
+    "FJ3645"
+   ],
+   "sourceStructure": "superior-vena-cava",
+   "triangles": 578
+  },
+  {
+   "boundsMm": {
+    "max": [
+     26.698,
+     128.625,
+     1190.5
+    ],
+    "min": [
+     2.153,
+     103.552,
+     950.995
+    ]
+   },
+   "fma": "FMA10951",
+   "id": "inferior_vena_cava",
+   "kind": "vein",
+   "name": "Inferior vena cava",
+   "side": "midline",
+   "sourceConcepts": [
+    "FMA10951"
+   ],
+   "sourceElements": [
+    "FJ3659",
+    "FJ3441"
+   ],
+   "sourceStructure": "inferior-vena-cava",
+   "triangles": 616
+  },
+  {
+   "boundsMm": {
+    "max": [
+     31.966,
+     132.357,
+     1349.86
+    ],
+    "min": [
+     -28.007,
+     109.377,
+     1295.88
+    ]
+   },
+   "fma": "FMA66647",
+   "id": "brachiocephalic_veins",
+   "kind": "vein",
+   "name": "Right and left brachiocephalic veins",
+   "side": "both",
+   "sourceConcepts": [
+    "FMA66647",
+    "FMA4761"
+   ],
+   "sourceElements": [
+    "FJ3583",
+    "FJ3482"
+   ],
+   "sourceStructure": "brachiocephalic-veins",
+   "triangles": 1290
+  },
+  {
+   "boundsMm": {
+    "max": [
+     52.232,
+     112.138,
+     1496.55
+    ],
+    "min": [
+     15.443,
+     69.198,
+     1337.68
+    ]
+   },
+   "fma": "FMA50818",
+   "id": "r_jugular_veins",
+   "kind": "vein",
+   "name": "Right jugular veins (internal; external on the right only)",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA50818",
+    "FMA4762",
+    "FMA13111"
+   ],
+   "sourceElements": [
+    "FJ5105",
+    "FJ3485",
+    "FJ5082"
+   ],
+   "sourceStructure": "jugular-veins",
+   "triangles": 986
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -18.108,
+     122.114,
+     1380.43
+    ],
+    "min": [
+     -30.776,
+     111.701,
+     1337.41
+    ]
+   },
+   "fma": "FMA50818",
+   "id": "l_jugular_veins",
+   "kind": "vein",
+   "name": "Left jugular veins (internal; external on the right only)",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA50818",
+    "FMA4762",
+    "FMA13111"
+   ],
+   "sourceElements": [
+    "FJ5105",
+    "FJ3485",
+    "FJ5082"
+   ],
+   "sourceStructure": "jugular-veins",
+   "triangles": 248
+  },
+  {
+   "boundsMm": {
+    "max": [
+     86.829,
+     121.793,
+     1351.55
+    ],
+    "min": [
+     22.518,
+     108.497,
+     1327.73
+    ]
+   },
+   "fma": "FMA4725",
+   "id": "r_subclavian_veins",
+   "kind": "vein",
+   "name": "Right subclavian vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA4755",
+    "FMA4763"
+   ],
+   "sourceElements": [
+    "FJ3587",
+    "FJ3486"
+   ],
+   "sourceStructure": "subclavian-veins",
+   "triangles": 266
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -19.381,
+     121.076,
+     1353.47
+    ],
+    "min": [
+     -94.258,
+     105.442,
+     1325.31
+    ]
+   },
+   "fma": "FMA4725",
+   "id": "l_subclavian_veins",
+   "kind": "vein",
+   "name": "Left subclavian vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA4755",
+    "FMA4763"
+   ],
+   "sourceElements": [
+    "FJ3587",
+    "FJ3486"
+   ],
+   "sourceStructure": "subclavian-veins",
+   "triangles": 292
+  },
+  {
+   "boundsMm": {
+    "max": [
+     157.167,
+     115.169,
+     1335.07
+    ],
+    "min": [
+     75.077,
+     91.405,
+     1232.91
+    ]
+   },
+   "fma": "FMA13329",
+   "id": "r_axillary_veins",
+   "kind": "vein",
+   "name": "Right axillary vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA13330",
+    "FMA13331"
+   ],
+   "sourceElements": [
+    "FJ2269",
+    "FJ2217"
+   ],
+   "sourceStructure": "axillary-veins",
+   "triangles": 434
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -74.926,
+     115.126,
+     1335.02
+    ],
+    "min": [
+     -157.032,
+     91.423,
+     1232.9
+    ]
+   },
+   "fma": "FMA13329",
+   "id": "l_axillary_veins",
+   "kind": "vein",
+   "name": "Left axillary vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA13330",
+    "FMA13331"
+   ],
+   "sourceElements": [
+    "FJ2269",
+    "FJ2217"
+   ],
+   "sourceStructure": "axillary-veins",
+   "triangles": 416
+  },
+  {
+   "boundsMm": {
+    "max": [
+     73.356,
+     117.223,
+     1058.22
+    ],
+    "min": [
+     8.989,
+     78.736,
+     980.881
+    ]
+   },
+   "fma": "FMA14334",
+   "id": "r_renal_veins",
+   "kind": "vein",
+   "name": "Right renal vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA14335",
+    "FMA14336"
+   ],
+   "sourceElements": [
+    "FJ3577",
+    "FJ3578",
+    "FJ3477",
+    "FJ3478"
+   ],
+   "sourceStructure": "renal-veins",
+   "triangles": 2012
+  },
+  {
+   "boundsMm": {
+    "max": [
+     15.769,
+     132.426,
+     1074.6
+    ],
+    "min": [
+     -80.976,
+     67.762,
+     997.612
+    ]
+   },
+   "fma": "FMA14334",
+   "id": "l_renal_veins",
+   "kind": "vein",
+   "name": "Left renal vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA14335",
+    "FMA14336"
+   ],
+   "sourceElements": [
+    "FJ3577",
+    "FJ3578",
+    "FJ3477",
+    "FJ3478"
+   ],
+   "sourceStructure": "renal-veins",
+   "triangles": 2256
+  },
+  {
+   "boundsMm": {
+    "max": [
+     35.881,
+     123.448,
+     965.174
+    ],
+    "min": [
+     -26.248,
+     76.906,
+     900.591
+    ]
+   },
+   "fma": "FMA14333",
+   "id": "common_iliac_veins",
+   "kind": "vein",
+   "name": "Right and left common iliac veins",
+   "side": "both",
+   "sourceConcepts": [
+    "FMA21387",
+    "FMA21388"
+   ],
+   "sourceElements": [
+    "FJ3566",
+    "FJ3465"
+   ],
+   "sourceStructure": "common-iliac-veins",
+   "triangles": 770
+  },
+  {
+   "boundsMm": {
+    "max": [
+     38.812,
+     105.154,
+     914.723
+    ],
+    "min": [
+     16.811,
+     -0.626,
+     788.82
+    ]
+   },
+   "fma": "FMA18884",
+   "id": "r_internal_iliac_veins",
+   "kind": "vein",
+   "name": "Right internal iliac vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA18887",
+    "FMA18888"
+   ],
+   "sourceElements": [
+    "FJ3570",
+    "FJ3571",
+    "FJ3572",
+    "FJ3607",
+    "FJ3608",
+    "FJ3609",
+    "FJ3469",
+    "FJ3470",
+    "FJ3471"
+   ],
+   "sourceStructure": "internal-iliac-veins",
+   "triangles": 820
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -11.572,
+     89.908,
+     914.392
+    ],
+    "min": [
+     -25.818,
+     -10.068,
+     789.45
+    ]
+   },
+   "fma": "FMA18884",
+   "id": "l_internal_iliac_veins",
+   "kind": "vein",
+   "name": "Left internal iliac vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA18887",
+    "FMA18888"
+   ],
+   "sourceElements": [
+    "FJ3570",
+    "FJ3571",
+    "FJ3572",
+    "FJ3607",
+    "FJ3608",
+    "FJ3609",
+    "FJ3469",
+    "FJ3470",
+    "FJ3471"
+   ],
+   "sourceStructure": "internal-iliac-veins",
+   "triangles": 506
+  },
+  {
+   "boundsMm": {
+    "max": [
+     52.122,
+     151.591,
+     905.549
+    ],
+    "min": [
+     24.808,
+     62.444,
+     795.661
+    ]
+   },
+   "fma": "FMA18883",
+   "id": "r_external_iliac_veins",
+   "kind": "vein",
+   "name": "Right external iliac vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA18885",
+    "FMA18886"
+   ],
+   "sourceElements": [
+    "FJ3568",
+    "FJ3484"
+   ],
+   "sourceStructure": "external-iliac-veins",
+   "triangles": 664
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -13.692,
+     150.513,
+     905.21
+    ],
+    "min": [
+     -57.135,
+     68.311,
+     804.442
+    ]
+   },
+   "fma": "FMA18883",
+   "id": "l_external_iliac_veins",
+   "kind": "vein",
+   "name": "Left external iliac vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA18885",
+    "FMA18886"
+   ],
+   "sourceElements": [
+    "FJ3568",
+    "FJ3484"
+   ],
+   "sourceStructure": "external-iliac-veins",
+   "triangles": 616
+  },
+  {
+   "boundsMm": {
+    "max": [
+     73.779,
+     154.73,
+     806.828
+    ],
+    "min": [
+     32.18,
+     84.141,
+     483.742
+    ]
+   },
+   "fma": "FMA21185",
+   "id": "r_femoral_veins",
+   "kind": "vein",
+   "name": "Right femoral vein",
+   "side": "right",
+   "sourceConcepts": [
+    "FMA21188",
+    "FMA21189"
+   ],
+   "sourceElements": [
+    "FJ2144",
+    "FJ2102"
+   ],
+   "sourceStructure": "femoral-veins",
+   "triangles": 318
+  },
+  {
+   "boundsMm": {
+    "max": [
+     -31.872,
+     154.296,
+     806.819
+    ],
+    "min": [
+     -73.948,
+     83.95,
+     483.749
+    ]
+   },
+   "fma": "FMA21185",
+   "id": "l_femoral_veins",
+   "kind": "vein",
+   "name": "Left femoral vein",
+   "side": "left",
+   "sourceConcepts": [
+    "FMA21188",
+    "FMA21189"
+   ],
+   "sourceElements": [
+    "FJ2144",
+    "FJ2102"
+   ],
+   "sourceStructure": "femoral-veins",
+   "triangles": 300
+  }
+ ]
+}

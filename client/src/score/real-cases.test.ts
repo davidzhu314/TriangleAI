@@ -24,6 +24,7 @@ import { snapScore } from './constants';
 import { regretScore } from './plan';
 import { forceReference } from './reference';
 import { referenceFor, scoreCase } from './score';
+import { upToTarget } from './drive';
 
 const CASES = join(import.meta.dirname, '../../public/cases');
 
@@ -157,6 +158,52 @@ describe('scores snap to whole numbers (request from Gibran)', () => {
     expect(r.plan.score).toBe(100);
     expect(r.drive.score).toBe(100);
     for (const k of ['fidelity', 'gentleness', 'radiation', 'errors'] as const) expect(r.drive[k].score, k).toBe(100);
+  });
+});
+
+describe('rehearsal 1 findings (Gibran, team/rehearsal/2026-11-07.md)', () => {
+  /** An autopilot drive to the target, then `extraTicks` more frames with fluoro still held. */
+  async function heldPastTarget(c: LoadedCase, targetId: string, r: Route, extraTicks: number): Promise<EventLog> {
+    const src = new RailWireSource({ clock: 'manual', autoDrive: true });
+    let at = false;
+    src.onState((s) => (at = s.atTarget));
+    await src.start({ case: c, entryId: r.entryId, targetId, presetId: r.presetId, path: r.edges });
+    src.control({ push: 0, rotate: 0, fluoro: true, contrastPuff: false });
+    for (let i = 0; i < 200 * 30 && !at; i++) src.tick();
+    for (let i = 0; i < extraTicks; i++) src.tick();
+    return src.stop();
+  }
+
+  it('fluoro held after the target is reached is not scored', async () => {
+    const c = await bundled('type-iii');
+    const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: 'rcca' }) as Frontier;
+    const r = best(f);
+    const clean = scoreCase({ log: await heldPastTarget(c, 'rcca', r, 0), optimized: f, weights: DEFAULT_WEIGHTS, case: c });
+    const held = await heldPastTarget(c, 'rcca', r, 90); // 3 s more at 30 Hz, as on stage
+    const reachedT = held.events.find((e) => e.kind === 'target_reached')!.t;
+    expect(held.samples.at(-1)!.t).toBeGreaterThan(reachedT + 2.5); // the log really does run on
+    const scored = scoreCase({ log: held, optimized: f, weights: DEFAULT_WEIGHTS, case: c });
+    expect(scored.drive).toEqual(clean.drive);
+    expect(scored.stars).toBe(clean.stars);
+    expect(upToTarget(held).samples.every((s) => s.t <= reachedT)).toBe(true);
+  });
+
+  it('a log that never reached the target is scored whole', async () => {
+    const c = await bundled('type-iii');
+    const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: 'rcca' }) as Frontier;
+    const log = await autopilotLog(c, 'rcca', best(f), 2); // 2 s: nowhere near the target
+    expect(log.events.some((e) => e.kind === 'target_reached')).toBe(false);
+    expect(upToTarget(log)).toBe(log);
+  });
+
+  it('a top contributor of exactly 1 reads "1 point", not "1 points"', async () => {
+    const c = await bundled('type-iii');
+    const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: 'rcca' }) as Frontier;
+    const w = { ...DEFAULT_WEIGHTS, proximityPenalty: 1 }; // risk slider far up, as in the scripted Compare beat
+    const radial = f.routes.find((r) => r.entryId === 'rad_r')!;
+    const res = scoreCase({ log: await autopilotLog(c, 'rcca', radial), optimized: f, weights: w, case: c });
+    const lead = res.feedback.find((l) => l.template === 'plan.top_contributor')!;
+    expect(lead.text).toBe('Most of your penalty came from closeness to risk zones: 1 point.');
   });
 });
 
