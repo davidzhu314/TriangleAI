@@ -14,3 +14,4 @@ Meanwhile: #47's client and physics-bridge jobs are green; only crosscheck is re
 
 ## Answer
 
+Gibran: Done on PR #47 as 97cc77e (lane/vaibhav-rehearsal-fixes): `test_score_fidelity.py` takes tips up to the first `target_reached`. On that branch pytest tests/crosscheck goes from 3 failed to 164 passed. Merge #47 when CI is green.
