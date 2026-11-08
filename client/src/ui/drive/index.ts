@@ -209,7 +209,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     h('div', { class: 'control-row' }, labelled(icon, label), h('div', { class: 'control-keys' }, keys));
   // The voice commands Drive answers (also the hands-free hookup's list below), and the help for both hands and
   // voice, from client/src/input/help.ts so the card can't drift from what the commands and gestures do.
-  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'assist_best_next', 'assist_review', 'undo'];
+  const driveVoice: VoiceAction[] = ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'undo'];
   const helpRow = (what: string, how: string, tag?: string): HTMLElement =>
     h('li', { class: 'help-row' }, h('span', { class: 'help-what' }, what, tag ? h('span', { class: 'help-tag' }, tag) : null), h('span', { class: 'help-how' }, how));
   const handsHelp = h(
@@ -292,6 +292,10 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     actions: driveVoice,
     onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
     onVoice: async (a) => {
+      if (a === 'hide_labels' || a === 'show_labels') {
+        if (view.bodyContext()) return 'No vessel names on this case.';
+        return view.setLabels(a === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
+      }
       if (a === 'reset_view') {
         view.resetView();
         return null;
