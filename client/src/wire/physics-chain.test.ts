@@ -110,6 +110,29 @@ describe('chain simulation: device', () => {
     expect([...taken].sort()).toEqual(['e_left', 'e_right']);
   });
 
+  it('loads the wall when the turned tip is pushed into it, far more than turning a free tip does', async () => {
+    const m = await model('low-tort', 'rcca');
+    const there = run(m, initialChainState(m), { push: 1, rotate: 0, device: 'wire' }, 30 * 15); // in the aorta
+    const peakOf = (s: ChainState, control: ChainControl, steps: number): number => {
+      let peak = 0;
+      for (let i = 0; i < steps; i++) {
+        const out = stepChain(m, s, control, DT);
+        s = out.state;
+        peak = Math.max(peak, out.peakLoadN);
+      }
+      return peak;
+    };
+    const spinning = peakOf(there, { push: 0, rotate: 1, device: 'wire' }, 90);
+    let pushedIn = 0;
+    for (let k = 0; k < 8; k++) {
+      const th = (k * Math.PI) / 4;
+      const aimed = run(m, { ...there, roll: { ...there.roll, wire: { base: th, tip: th } } }, { push: 0, rotate: 0, device: 'wire' }, 20);
+      pushedIn = Math.max(pushedIn, peakOf(aimed, { push: 1, rotate: 0, device: 'wire' }, 60));
+    }
+    expect(spinning, 'a free tip turning in the lumen presses on nothing much').toBeLessThan(0.2);
+    expect(pushedIn, 'pushed with its shape turned into the wall').toBeGreaterThan(Math.max(0.35, 2.5 * spinning));
+  });
+
   it('loads the wall when pushed against resistance, and the educational risk index rises with it', async () => {
     const m = await model('fixture-y', 'left_branch');
     let s = initialChainState(m);

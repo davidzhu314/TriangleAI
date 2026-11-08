@@ -74,6 +74,10 @@ export interface ChainParams {
   stickMaxRad: number;
   /** Torsion: tip roll lag time constant, seconds. */
   rollLagS: number;
+  /** Load at the tip when it is pushed into the wall with its shape fully straightened and not advancing, N. */
+  tipPushN: number;
+  /** Share of the tip's shape a wall straightens while the tip just glides along it (no push into the wall), 0..1. */
+  glideShare: number;
 }
 
 const WIRE_RELAX: Record<string, number> = { low: 0.15, medium: 0.25, high: 0.45 };
@@ -96,6 +100,8 @@ export function chainParams(presetId: WirePresetId): ChainParams {
     stickRadPerN: 4,
     stickMaxRad: Math.PI / 2,
     rollLagS: 0.12,
+    tipPushN: 1.6,
+    glideShare: 0.25,
   };
 }
 
@@ -156,6 +162,8 @@ export interface ChainState {
   prolapsed: boolean;
   feedHistory: { t: number; total: number; s: number }[];
   riskEnergy: number;
+  /** How far the wall holds the leading shaped tip away from its own shape, as a share of its tip angle (0..1). */
+  tipForced: number;
 }
 
 export interface ChainControl {
@@ -313,6 +321,7 @@ export function initialChainState(model: ChainModel): ChainState {
     prolapsed: false,
     feedHistory: [],
     riskEnergy: 0,
+    tipForced: 0,
   };
   for (let i = 0; i < 20; i++) relaxAndSweep(model, state, 1);
   updateProgress(model, state);
@@ -423,7 +432,7 @@ function feed(model: ChainModel, state: ChainState, dTotal: number): void {
  * part of the way to its rest bend (the shape, turned by the tip roll). Either way, wherever the next node would leave
  * the lumen, the link is re-aimed so the node stays inside and slides along the wall. Sets nodes, bends and loads.
  */
-function relaxAndSweep(model: ChainModel, state: ChainState, share: number): void {
+function relaxAndSweep(model: ChainModel, state: ChainState, share: number, push = 0): void {
   const p = model.params;
   const h = p.spacingM;
   const n = state.bend.length;
@@ -436,6 +445,7 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
   const linkLen = (i: number): number => (i === n - 2 ? state.last : h);
   const prev = state.nodes;
   const base = n - 1 - tipJoints(model, state);
+  let tipForced = 0;
   nodes[1] = add(model.sheath, scale(t, linkLen(0)));
   let qPrev = model.lumen.query(nodes[1]);
   for (let j = 1; j + 1 < n; j++) {
@@ -528,6 +538,7 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
       const forced = Math.hypot(bend[0] - rest[0], bend[1] - rest[1]);
       const conform = vesselTurn(qPrev, q);
       load[j + 1] = m.bendN * Math.max(0, forced - conform) + p.wallNPerM * Math.max(0, q.dist - room);
+      if (j + 1 > base) tipForced += Math.max(0, forced - conform);
     }
     qPrev = q;
     state.bend[j] = bend;
@@ -535,6 +546,8 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
     t = t2;
     nrm = n2;
   }
+  const lead = leadingDevice(state) === 'wire' ? p.wire : p.catheter;
+  state.tipForced = clamp(tipForced / Math.max(1e-6, (lead.tipAngleDeg * Math.PI) / 180), 0, 1);
   state.nodes = nodes;
   state.load = load;
 }
@@ -547,6 +560,11 @@ function relaxAndSweep(model: ChainModel, state: ChainState, share: number): voi
 const MIN_HEADWAY = 0.2;
 function headway(model: ChainModel, q: LumenQuery, u: Vec3): number {
   return dot(u, unit(sub(q.seg.b, q.seg.a))) * (model.edgeAway.get(q.seg.edge) ?? 1);
+}
+
+/** The device whose tip leads. */
+function leadingDevice(state: ChainState): DeviceId {
+  return state.inserted.wire >= state.inserted.catheter ? 'wire' : 'catheter';
 }
 
 /** The angle between the centreline directions at two lumen queries, radians (either edge orientation). */
@@ -678,6 +696,9 @@ export const PROGRESS_WINDOW_M = 0.005;
 /** Thresholds (illustrative). */
 export const CONTACT_MIN_N = 0.05;
 export const SPIKE_N = 0.5;
+/** Share of the push-into-wall load that counts even while the tip still slides forward. */
+const STALL_FLOOR = 0.5;
+
 /** How far outside every planned vessel the tip must be for a wrong branch, metres. */
 export const WRONG_BRANCH_M = 0.002;
 export const PROLAPSE_FEED_M = 0.015;
@@ -730,17 +751,30 @@ export function stepChain(model: ChainModel, prev: ChainState, control: ChainCon
     state.inserted[dev] = Math.max(dev === 'wire' ? 0.005 : 0, state.inserted[dev] + (push * p.speedMps * dt) / p.substeps);
     const after = Math.max(state.inserted.wire, state.inserted.catheter);
     if (after !== before) feed(model, state, after - before);
-    relaxAndSweep(model, state, 1 / p.substeps);
+    relaxAndSweep(model, state, 1 / p.substeps, push);
   }
 
   state.t = prev.t + dt;
   updateProgress(model, state);
 
-  // Contacts and the educational risk index.
+  // Pushing a shaped tip into the wall: the wall holds the tip away from its shape (it points into the wall), and the
+  // push does not turn into progress along the vessel. Both have to be true: a tip gliding along a wall is straightened
+  // a little anyway (only the share beyond `glideShare` counts), and a tip that slides on is not digging in.
+  let ramN = 0;
+  if (push > 0) {
+    const into = clamp((state.tipForced - p.glideShare) / (1 - p.glideShare), 0, 1);
+    const fed = push * p.speedMps * dt;
+    const stall = clamp(1 - (state.s - prev.s) / fed, 0, 1);
+    ramN = p.tipPushN * push * into * (STALL_FLOOR + (1 - STALL_FLOOR) * stall);
+  }
+
+  // Contacts and the educational risk index. The push into the wall counts at the tip, but not in `state.load`, which
+  // feeds the solver (so reporting it does not change how the device moves).
   const arc = arcs(state, p.spacingM);
   const contacts: ContactSample[] = [];
   let peak = 0;
-  state.load.forEach((f, i) => {
+  const loads = state.load.map((f, i) => (i === state.load.length - 1 ? f + ramN : f));
+  loads.forEach((f, i) => {
     if (f < CONTACT_MIN_N) return;
     peak = Math.max(peak, f);
     contacts.push({ node: i, arcM: arc[i]!, edge: model.lumen.query(state.nodes[i]!).seg.edge, loadN: f, device: material(model, state, arc[i]!).device });
