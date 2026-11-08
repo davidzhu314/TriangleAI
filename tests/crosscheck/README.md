@@ -1,4 +1,4 @@
-# tests/crosscheck — NumPy reference measures (owner: Vaibhav)
+# tests/crosscheck — NumPy reference measures (owner: Gibran; written by Vaibhav in V0)
 
 Independent NumPy implementation of the spec §4.2 per-edge measures. The closed-form answers in `tests/fixtures/synthetic/*/expected.json` are the truth. This code and the app's TypeScript (V2) are both tested against them. On real anatomy, where no closed form exists, the TypeScript is cross-checked against this code within 0.1 mm and 0.5° (spec §4.9).
 
@@ -55,7 +55,11 @@ The `routes` in `expected.json` carry these closed forms. `y-branch` has a 30°,
 
 ## Bundled cases
 
-`numpy-cases.json` holds NumPy's measures of the bundled cases. Today that is fixture-y's three edges and its routes: the trunk alone, entry → left and entry → right. `client/src/optimize/measure-route.test.ts` checks the TypeScript against it within 0.1 mm / 0.5° (spec §4.9). Add the generated cases to `CASES` in `dump_numpy.py` when D6-min lands.
+`numpy-cases.json` holds NumPy's measures of the bundled cases, within 0.1 mm / 0.5° (spec §4.9):
+- **fixture-y:** its three edges, and its routes: the trunk alone, entry → left and entry → right. `client/src/optimize/measure-route.test.ts` checks the TypeScript against it.
+- **type-iii and low-tort (G1):** every edge, and every simple path from each entry to each target (`"routes": "auto"` in `CASES`; ids are `<entry>-to-<target>`). Both cases are trees, so each pair has one path. `tests/engine/crosscheck-generated.test.ts` checks the TypeScript (loadCase → buildGraph → measureRoute) against them, and checks that every frontier route the optimizer offers is among the routes NumPy measured.
+
+To add a bundled case, add it to `CASES` in `dump_numpy.py` and to `G1_CASES` in `tests/engine/engine.testutil.ts`, then rerun `dump_numpy.py`.
 
 ## TypeScript port
 

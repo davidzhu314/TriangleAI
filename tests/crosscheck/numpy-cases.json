@@ -76,5 +76,403 @@
     "theta_sum_deg": 0.0
    }
   }
+ },
+ "low-tort": {
+  "edges": {
+   "e_aorta_asc": {
+    "L_mm": 79.199048343,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 13.0872,
+    "theta_max_deg": 13.703335807,
+    "theta_sum_deg": 77.440465717
+   },
+   "e_aorta_desc": {
+    "L_mm": 320.646305038,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 9.0,
+    "theta_max_deg": 9.528908914,
+    "theta_sum_deg": 46.039279684
+   },
+   "e_arch_distal": {
+    "L_mm": 13.998004897,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 12.6954,
+    "theta_max_deg": 18.553876744,
+    "theta_sum_deg": 44.640267104
+   },
+   "e_arch_proximal": {
+    "L_mm": 19.998830849,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 12.8567,
+    "theta_max_deg": 11.562744653,
+    "theta_sum_deg": 40.809984845
+   },
+   "e_bca": {
+    "L_mm": 39.748884155,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 5.5,
+    "theta_max_deg": 6.432646484,
+    "theta_sum_deg": 17.452380165
+   },
+   "e_l_arm": {
+    "L_mm": 70.499962671,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 1.3,
+    "theta_max_deg": 50.653430329,
+    "theta_sum_deg": 122.832534326
+   },
+   "e_l_iliac": {
+    "L_mm": 101.034436668,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.75,
+    "theta_max_deg": 6.280501519,
+    "theta_sum_deg": 22.403009841
+   },
+   "e_lcca": {
+    "L_mm": 126.483183977,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 11.974038209,
+    "theta_sum_deg": 39.189110916
+   },
+   "e_r_arm": {
+    "L_mm": 67.389307718,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 1.3,
+    "theta_max_deg": 7.792602389,
+    "theta_sum_deg": 30.190054005
+   },
+   "e_r_iliac": {
+    "L_mm": 204.434392976,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.75,
+    "theta_max_deg": 7.204292942,
+    "theta_sum_deg": 53.304307248
+   },
+   "e_rcca": {
+    "L_mm": 113.846029408,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": null,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 5.99019987,
+    "theta_sum_deg": 28.87060416
+   }
+  },
+  "routes": {
+   "fem_r-to-lcca": {
+    "L_mm": 665.561886887,
+    "edges": [
+     "e_r_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_lcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 58.231378058,
+    "theta_sum_deg": 228.054957621
+   },
+   "fem_r-to-rcca": {
+    "L_mm": 712.672447322,
+    "edges": [
+     "e_r_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_arch_proximal",
+     "e_bca",
+     "e_rcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 68.398451134,
+    "theta_sum_deg": 314.333779524
+   }
+  }
+ },
+ "type-iii": {
+  "edges": {
+   "e_aorta_asc": {
+    "L_mm": 91.936116917,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 44.127807529,
+    "r_min_mm": 13.0419,
+    "theta_max_deg": 8.987620097,
+    "theta_sum_deg": 45.432432724
+   },
+   "e_aorta_desc": {
+    "L_mm": 347.861315176,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 72.067292303,
+    "r_min_mm": 9.0,
+    "theta_max_deg": 10.627920558,
+    "theta_sum_deg": 56.110609367
+   },
+   "e_arch_distal": {
+    "L_mm": 7.999732494,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 65.242760345,
+    "r_min_mm": 12.6251,
+    "theta_max_deg": 6.384558582,
+    "theta_sum_deg": 12.769117163
+   },
+   "e_arch_proximal": {
+    "L_mm": 31.995448762,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 44.160755078,
+    "r_min_mm": 12.7085,
+    "theta_max_deg": 26.958106779,
+    "theta_sum_deg": 93.628118683
+   },
+   "e_bca": {
+    "L_mm": 41.564985499,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 13.931159851,
+    "r_min_mm": 5.5,
+    "theta_max_deg": 36.514368238,
+    "theta_sum_deg": 90.960957133
+   },
+   "e_l_arm": {
+    "L_mm": 317.041142243,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 72.067292303,
+    "r_min_mm": 1.3,
+    "theta_max_deg": 40.03000148,
+    "theta_sum_deg": 205.656330786
+   },
+   "e_l_iliac": {
+    "L_mm": 214.304446553,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 368.600584477,
+    "r_min_mm": 3.75,
+    "theta_max_deg": 21.041169627,
+    "theta_sum_deg": 246.375970872
+   },
+   "e_lcca": {
+    "L_mm": 126.310256618,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 64.123769488,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 4.644589916,
+    "theta_sum_deg": 22.403753912
+   },
+   "e_r_arm": {
+    "L_mm": 313.121928916,
+    "overlapping_zones": [
+     "r_vertebral_origin"
+    ],
+    "proximity_clearance_mm": 0.0,
+    "r_min_mm": 1.3,
+    "theta_max_deg": 9.289661734,
+    "theta_sum_deg": 110.927053618
+   },
+   "e_r_iliac": {
+    "L_mm": 281.605359271,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 368.600584477,
+    "r_min_mm": 3.75,
+    "theta_max_deg": 120.087239429,
+    "theta_sum_deg": 591.731649011
+   },
+   "e_rcca": {
+    "L_mm": 115.353883377,
+    "overlapping_zones": [],
+    "proximity_clearance_mm": 13.931159851,
+    "r_min_mm": 3.5,
+    "theta_max_deg": 14.090144169,
+    "theta_sum_deg": 60.359785054
+   }
+  },
+  "routes": {
+   "fem_l-to-lcca": {
+    "L_mm": 696.475750841,
+    "edges": [
+     "e_l_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_lcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 47.195523244,
+    "theta_sum_deg": 381.627806388
+   },
+   "fem_l-to-rcca": {
+    "L_mm": 759.079811861,
+    "edges": [
+     "e_l_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_arch_proximal",
+     "e_bca",
+     "e_rcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 61.040385661,
+    "theta_sum_deg": 621.95144627
+   },
+   "fem_r-to-lcca": {
+    "L_mm": 763.776663559,
+    "edges": [
+     "e_r_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_lcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 120.084522713,
+    "theta_sum_deg": 716.050866308
+   },
+   "fem_r-to-rcca": {
+    "L_mm": 826.380724579,
+    "edges": [
+     "e_r_iliac",
+     "e_aorta_desc",
+     "e_arch_distal",
+     "e_arch_proximal",
+     "e_bca",
+     "e_rcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 3.5,
+    "reversed": [
+     true,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 120.082132558,
+    "theta_sum_deg": 956.366650418
+   },
+   "rad_l-to-lcca": {
+    "L_mm": 451.351131355,
+    "edges": [
+     "e_l_arm",
+     "e_arch_distal",
+     "e_lcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 1.3,
+    "reversed": [
+     true,
+     false,
+     false
+    ],
+    "theta_max_deg": 71.0348621,
+    "theta_sum_deg": 300.657957634
+   },
+   "rad_l-to-rcca": {
+    "L_mm": 513.955192375,
+    "edges": [
+     "e_l_arm",
+     "e_arch_distal",
+     "e_arch_proximal",
+     "e_bca",
+     "e_rcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 0.0,
+    "r_min_mm": 1.3,
+    "reversed": [
+     true,
+     false,
+     false,
+     false,
+     false
+    ],
+    "theta_max_deg": 71.0348621,
+    "theta_sum_deg": 537.339295911
+   },
+   "rad_r-to-lcca": {
+    "L_mm": 512.992619795,
+    "edges": [
+     "e_r_arm",
+     "e_bca",
+     "e_arch_proximal",
+     "e_lcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 1.0,
+    "r_min_mm": 1.3,
+    "reversed": [
+     true,
+     true,
+     true,
+     false
+    ],
+    "theta_max_deg": 123.969195352,
+    "theta_sum_deg": 531.468457188
+   },
+   "rad_r-to-rcca": {
+    "L_mm": 428.475812293,
+    "edges": [
+     "e_r_arm",
+     "e_rcca"
+    ],
+    "heavy_crossings": 0,
+    "proximity_penalty": 1.0,
+    "r_min_mm": 1.3,
+    "reversed": [
+     true,
+     false
+    ],
+    "theta_max_deg": 58.412672256,
+    "theta_sum_deg": 215.144626645
+   }
+  }
  }
 }
