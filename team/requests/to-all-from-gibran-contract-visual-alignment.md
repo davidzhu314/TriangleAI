@@ -51,6 +51,10 @@ Meanwhile: nothing merges. `feature/vascular-integration` holds only my folders 
 
 ## Answer
 
-David: <one line>
+David: Yes, with these decisions:
+- **Config, not contract:** no `CONTRACTS_VERSION` bump.
+- **Path:** the client bundles the reviewed values in `client/src/render/anatomy-alignment/`, and `anatomy-alignment.test.ts` keeps them byte-identical to `tests/fixtures/engine/vascular-alignment/`.
+- **Renderer:** composes `RAS_MM_TO_YUP_M · alignment`, hides the model on a case with no alignment (saying so), and shows the recorded coverage in the panel. I did this in Aroovee's render folder at my own request.
+- **Licence:** unchanged. The CC BY-SA model stays in `assets/vascular/` and out of `client/` in git until after the demo, so it shows only where someone points `VITE_ANATOMY_GLB` at a local copy.
 Aroovee: <one line>
 Vaibhav: <one line>

@@ -4,13 +4,14 @@
  * - A bundled case with a context.glb beside its vessels.glb (David exports one for the real CT cases, from the same
  *   scan): the case's own body context, placed exactly with the case's mesh.toWorld, never fitted or stretched. The
  *   generic placeholder is never drawn on such a case.
- * - Any other case (generated, imported, or no file): the app's usual model (the placeholder, or VITE_ANATOMY_GLB).
+ * - Any other case (generated, imported, or no file): the app's usual model (the placeholder, or VITE_ANATOMY_GLB,
+ *   placed with the case's visual alignment, or not shown where the case has none: alignedAnatomy).
  *
  * The probe is quiet: a missing file, a server error or a response that isn't a GLB just means "no body context". It
  * logs nothing and shows no notice. (The browser's own network panel may still list a 404 for the request.)
  */
 import type { LoadedCase } from '../contracts';
-import { anatomyConfig, type AnatomyConfig } from '../render/anatomy-config';
+import { alignedAnatomy, anatomyConfig, type AnatomyConfig } from '../render/anatomy-config';
 import type { CatalogEntry } from './store';
 
 const probes = new Map<string, Promise<string | null>>();
@@ -42,5 +43,5 @@ export function contextGlb(e: CatalogEntry | undefined, c: LoadedCase): Promise<
 export async function anatomyFor(e: CatalogEntry | undefined, c: LoadedCase): Promise<AnatomyConfig> {
   const blobUrl = await contextGlb(e, c);
   if (blobUrl) return { url: blobUrl, fit: 'none', toWorld: c.mesh.toWorld, placeholder: false, context: true };
-  return anatomyConfig();
+  return alignedAnatomy(anatomyConfig(), c.id);
 }
