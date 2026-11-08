@@ -5,8 +5,8 @@
  *   (David's Vercel function, which holds ANTHROPIC_API_KEY), and the LLM layer in `client/src/input/voice/cathy-llm.ts`
  *   grounds every answer against the engine's facts, falling back to the template line on any error, timeout,
  *   refusal or mismatch.
- * - Off by default (Settings, "Cathy's AI wording"). Off means no transport: no request leaves the page, and Cathy
- *   answers exactly as before.
+ * - On by default (Settings, "Cathy's AI wording"; DECISIONS.md 2026-11-08). Off means no transport: no request
+ *   leaves the page, and Cathy answers with the engine's own lines. Every answer to a question says which it was.
  * - The LLM never computes or decides a route, measure, score or number: the engine supplies every fact.
  */
 import type { CathyLlmOptions, CathyRequest, CathyTransport } from '../../input/voice/cathy-llm';

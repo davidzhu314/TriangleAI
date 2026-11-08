@@ -14,7 +14,7 @@ export interface Settings {
   voice: boolean;
   /** Cathy reads her answers aloud (speech synthesis); the caption shows them either way. */
   speak: boolean;
-  /** Cathy's AI wording (Claude, through /api/cathy): off by default; facts always come from the engine. */
+  /** Cathy's AI wording (Claude, through /api/cathy): on by default (DECISIONS.md); facts always come from the engine. */
   cathyAi: boolean;
   theme: ThemeChoice;
   /** Which sections of the command list on the Settings screen are shown. */
@@ -23,7 +23,7 @@ export interface Settings {
   showKeys: boolean;
 }
 
-export const DEFAULT_SETTINGS: Readonly<Settings> = { hands: true, voice: true, speak: true, cathyAi: false, theme: 'system', showGestures: true, showVoice: true, showKeys: true };
+export const DEFAULT_SETTINGS: Readonly<Settings> = { hands: true, voice: true, speak: true, cathyAi: true, theme: 'system', showGestures: true, showVoice: true, showKeys: true };
 
 export const SETTINGS_KEY = 'threadsim.settings.v1';
 

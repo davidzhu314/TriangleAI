@@ -229,14 +229,26 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
         return;
       }
     }
+    // A question's answer always says where it came from; a command's confirmation ("Zoomed to …") doesn't.
+    if (text && QUESTIONS.includes(action)) {
+      showAnswer(into, youAsked, text, false);
+      return;
+    }
     into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text ?? 'Done.'));
     say(text ?? 'Done.');
   };
-  /** Show an answer in the box; one worded by Claude says so under it. */
+  /**
+   * Where an answer came from, said under it every time: Claude's wording (grounded in the engine's facts), or the
+   * engine's own line, saying why when AI wording is on but Claude didn't answer (off, slow, error, failed check).
+   */
+  function sourceLine(worded: boolean): HTMLElement {
+    const words = worded ? "Worded by Claude from the route engine's facts." : cathyAiOn() ? 'From the route engine (Claude unavailable).' : 'From the route engine.';
+    return h('p', { class: 'cathy-source', 'data-testid': 'cathy-source', 'data-source': worded ? 'llm' : 'template' }, words);
+  }
+  /** Show a question's answer in the box, with its true source under it. */
   const showAnswer = (into: HTMLElement, youAsked: HTMLElement, text: string, worded: boolean): void => {
     const answerEl = h('p', { class: 'hv-answer', 'data-testid': 'voice-answer', 'data-source': worded ? 'llm' : 'template' }, text);
-    if (worded) into.replaceChildren(youAsked, answerEl, h('p', { class: 'cathy-source', 'data-testid': 'cathy-source' }, "Worded by Claude from the route engine's facts."));
-    else into.replaceChildren(youAsked, answerEl);
+    into.replaceChildren(youAsked, answerEl, sourceLine(worded));
     say(text);
   };
   /**
@@ -376,7 +388,8 @@ export function createHandsVoice({ host, cathyHost, onGesture, onPan, onVoice, a
     }
     const text = await onVoice(m.action, m);
     if (text) {
-      caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text));
+      caption.append(h('p', { class: 'hv-answer', 'data-testid': 'voice-answer', ...(QUESTIONS.includes(m.action) ? { 'data-source': 'template' } : {}) }, text));
+      if (QUESTIONS.includes(m.action)) caption.append(sourceLine(false)); // no box here: the engine's line, labelled
       say(text);
     }
   };
