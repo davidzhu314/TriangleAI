@@ -121,6 +121,44 @@ const ARCH: Record<ArchType, ArchShape> = {
  */
 const BOVINE = { fromApex: 2, dirs: { bca: [0.8, 0.25, 0.55] as Vec3, lcca: [0.4, 0.05, 0.92] as Vec3 }, lccaPath: [[-14, 4, 50], [-26, 6, 120]] as Vec3[] };
 
+// ---------------------------------------------------------------- vessel width profile (realistic teaching anatomy)
+// Shapes from standard anatomy, as multipliers on the linear taper. Polynomials only (no Math.sin or Math.exp), so the
+// output stays byte-identical across Node versions, like tube.ts.
+
+/** Smooth bump, 1 at x = 0 falling to 0 at |x| = 1: (1 − x²)². */
+const bump = (x: number): number => (Math.abs(x) >= 1 ? 0 : (1 - x * x) ** 2);
+/** Smooth step from 0 (x ≤ 0) to 1 (x ≥ 1). */
+const smoothstep = (x: number): number => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
+
+/** Widening where a branch leaves its parent. Kept modest: a wider mouth catches a wire sliding past it. */
+const ORIGIN_FLARE = 0.08;
+
+interface ProfileContext {
+  /** The aortic isthmus, just past the left subclavian origin, as a share of the aorta from the bifurcation. */
+  isthmus: number;
+}
+
+/** Fraction runs from a vessel's origin (0) to its far end (1); the aorta runs from the bifurcation (0) to the root (1). */
+export function radiusProfile(v: VesselId, frac: number, ctx: ProfileContext): number {
+  switch (v) {
+    case 'aorta':
+      return (
+        1 +
+        0.24 * bump((frac - 0.988) / 0.016) - // sinuses of Valsalva at the root
+        0.05 * bump((frac - 0.962) / 0.012) - // sinotubular junction
+        0.08 * bump((frac - (ctx.isthmus - 0.012)) / 0.02) // isthmus, just distal to the left subclavian
+      );
+    case 'rcca':
+    case 'lcca':
+      return 1 + ORIGIN_FLARE * bump(frac / 0.06) + 0.22 * bump((frac - 0.94) / 0.08); // origin flare, carotid bulb at the end
+    case 'r_iliac':
+    case 'l_iliac':
+      return 1 + 0.12 * bump(frac / 0.05) - 0.12 * smoothstep((frac - 0.26) / 0.08); // common → external iliac
+    default:
+      return 1 + ORIGIN_FLARE * bump(frac / 0.06); // origin flare
+  }
+}
+
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (a: Vec3, k: number): Vec3 => [a[0] * k, a[1] * k, a[2] * k];
 const unit = (a: Vec3): Vec3 => scale(a, 1 / Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]));
@@ -185,7 +223,12 @@ export function generateArch(p: ArchParams): GeneratedCase {
     return id;
   };
 
-  const radiusAt = (v: VesselId, frac: number) => roundTo((diam[v][0] + (diam[v][1] - diam[v][0]) * frac) / 2, DECIMALS);
+  // Radius: the linear taper between the vessel's end diameters, shaped by the anatomy profile (radiusProfile). No
+  // random wall irregularity: even ±3 % bumps tipped which branch a femoral wire takes at the arch in the chain
+  // simulation, turning a drivable route into an undrivable one.
+  const anatomy: ProfileContext = { isthmus: 0 };
+  const radiusAt = (v: VesselId, frac: number) =>
+    roundTo(((diam[v][0] + (diam[v][1] - diam[v][0]) * frac) / 2) * radiusProfile(v, frac, anatomy), DECIMALS);
 
   /** Add edges along one spline, split at `splits` (arc lengths), between the given node ids. */
   const addSplit = (
@@ -216,6 +259,7 @@ export function generateArch(p: ArchParams): GeneratedCase {
   const L = aortaCs[aortaCs.length - 1]!;
   const sAt = { lsca: sApex + arch.lsca, lcca: sApex + arch.lcca, bca: p.bovine ? sApex + BOVINE.fromApex : sApex + arch.bca };
   const at = (s: number) => round3(pointAt(aorta, aortaCs, s));
+  anatomy.isthmus = sAt.lsca / L;
   node('n_aortic_bif', round3(aorta[0]!), 'branch');
   node('n_lsca_o', at(sAt.lsca), 'branch');
   if (p.bovine) {

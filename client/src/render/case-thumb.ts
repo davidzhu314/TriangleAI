@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedCase } from '../contracts';
+import { vesselSurface } from './case-surface';
 import { boxOf, centre, closeUpBox } from './framing';
 import { token, webglAvailable } from './tokens';
 
@@ -32,6 +33,10 @@ const MARGIN = 0.1;
  * height lower, so the arch's curve (what tells one arch type from another) sits in the frame, not on its edge.
  */
 const AIM_BELOW = 0.18;
+
+/** A generated case's smooth surface: cells per side of its cube, and the cube's side as a multiple of the frame. */
+const SURFACE_CELLS = 176;
+const SURFACE_REACH = 1.9;
 
 const cache = new Map<string, Promise<string | null>>();
 let renderer: THREE.WebGLRenderer | null = null;
@@ -77,23 +82,32 @@ async function draw(c: LoadedCase): Promise<string | null> {
   lights(scene, vessel);
   const material = new THREE.MeshPhysicalMaterial({ color: vessel, roughness: 0.42, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.35, sheen: 0.25, sheenColor: new THREE.Color(0xffffff) });
 
-  const gltf = await new GLTFLoader().parseAsync(c.mesh.glb.slice(0), '');
-  const holder = new THREE.Group();
-  holder.matrixAutoUpdate = false;
-  holder.matrix.fromArray(c.mesh.toWorld);
-  gltf.scene.traverse((o) => {
-    const m = o as THREE.Mesh;
-    if (m.isMesh) {
-      m.material = material;
-      m.geometry.computeVertexNormals();
-    }
-  });
-  holder.add(gltf.scene);
   // Frame the close-up (the arch and its branches) or, without one, the whole tree; turn about its centre.
   const frame = closeUpBox(c) ?? boxOf(c.edges.flatMap((e) => e.points));
   if (!frame) return null;
   const [cx, cy0, cz] = centre(frame);
   const cy = cy0 - (frame.max[1] - frame.min[1]) * AIM_BELOW;
+
+  // The vessels in the world frame (metres, Y up). A CT case: its own segmented mesh. A generated case: one smooth
+  // surface built from its centerlines (case-surface.ts), joined at the junctions the way a segmentation is, over a cube
+  // wide enough for everything the turned camera sees.
+  const holder = new THREE.Group();
+  holder.matrixAutoUpdate = false;
+  if (c.source.kind === 'ct') {
+    const gltf = await new GLTFLoader().parseAsync(c.mesh.glb.slice(0), '');
+    holder.matrix.fromArray(c.mesh.toWorld);
+    gltf.scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) {
+        m.material = material;
+        m.geometry.computeVertexNormals();
+      }
+    });
+    holder.add(gltf.scene);
+  } else {
+    const extent = Math.max(frame.max[0] - frame.min[0], (frame.max[1] - frame.min[1]) * (1 + 2 * AIM_BELOW), frame.max[2] - frame.min[2]);
+    holder.add(vesselSurface(c, { n: SURFACE_CELLS, centre: [cx, cy, cz], side: extent * SURFACE_REACH }, material));
+  }
   const pivot = new THREE.Group();
   pivot.add(holder);
   scene.add(pivot);

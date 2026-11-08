@@ -126,6 +126,8 @@ export interface ChainModel {
   /** +1 where an edge runs away from the entry (from → to), −1 where it runs toward it. */
   edgeAway: Map<string, number>;
   planEdges: ReadonlySet<string>;
+  /** The vessel each plan edge belongs to, in plan order (a junction where it changes is a branch to take). */
+  planVessels: readonly string[];
   /** The planned path as one polyline from the entry, with cumulative arc length, for progress. */
   planPoints: Vec3[];
   planArc: number[];
@@ -294,6 +296,7 @@ export function createChainModel(c: LoadedCase, entryId: string, targetId: strin
     edgeLength: new Map(c.edges.map((e) => [e.id, e.lengthM])),
     edgeAway: awayFromEntry(c, entry.node),
     planEdges: new Set(plan),
+    planVessels: plan.map((id) => edges.get(id)!.vessel),
     planPoints,
     planArc,
   };
