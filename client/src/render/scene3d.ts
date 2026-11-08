@@ -73,6 +73,10 @@ export interface CaseScene {
   setBackground(colorToken: string | null): void;
   /** Raycast the handles from normalised device coordinates (or a ray, in AR). */
   pick(ray: THREE.Raycaster): string | null;
+  /** The branch handle under a point of the canvas, given as 0..1 of its width and height (hands-free pinch). */
+  pickAt(x: number, y: number): string | null;
+  /** Move the camera toward (factor < 1) or away from (factor > 1) what it looks at. */
+  zoom(factor: number): void;
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -373,6 +377,30 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
     },
     setBackground(colorToken) {
       scene.background = colorToken ? color(colorToken) : null;
+    },
+    pickAt(x, y) {
+      const ray = new THREE.Raycaster();
+      ray.setFromCamera(new THREE.Vector2(x * 2 - 1, 1 - y * 2), camera);
+      // Handles are small: a pinch near one counts, so try the exact point, then a ring around it.
+      const hit = api.pick(ray);
+      if (hit) return hit;
+      let best: { id: string; d: number } | null = null;
+      const r = canvas.getBoundingClientRect();
+      for (const h of handles.children) {
+        const v = h.getWorldPosition(new THREE.Vector3()).project(camera);
+        const d = Math.hypot(((v.x + 1) / 2 - x) * r.width, ((1 - v.y) / 2 - y) * r.height);
+        if (d < (best?.d ?? Infinity)) best = { id: h.userData['node'] as string, d };
+      }
+      // Within about a fingertip's width on screen (a touch target).
+      return best && best.d <= tokenNumber('--size-touch') ? best.id : null;
+    },
+    zoom(factor) {
+      const to = camera.position.clone().sub(controls.target).multiplyScalar(factor);
+      const min = size * 0.05;
+      const max = size * 6;
+      to.setLength(Math.min(max, Math.max(min, to.length())));
+      camera.position.copy(controls.target).add(to);
+      controls.update();
     },
     pick(ray) {
       const hit = ray.intersectObjects(handles.children, false)[0];

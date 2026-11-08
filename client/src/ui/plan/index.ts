@@ -6,7 +6,10 @@
  */
 import type { LoadedCase, Route, WirePreset, WirePresetId } from '../../contracts';
 import './plan.css';
-import { buildGraph, WIRE_PRESETS, type RouteGraph } from '../../optimize';
+import { buildGraph, defaultWeights, optimize, planAssist, WIRE_PRESETS, type RouteGraph } from '../../optimize';
+import { planAssistLine } from '../../score';
+import type { VoiceAction } from '../../input';
+import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { createPlanView, type PlanView } from '../../render/plan-view';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
@@ -37,10 +40,24 @@ let liveView: PlanView | null = null;
 let liveCase: LoadedCase | null = null;
 let pickNow: (node: string) => void = () => undefined;
 let panelLines: string[] = [];
+/** Hands-free input for the live view: kept and disposed with it. */
+let liveHands: HandsVoice | null = null;
+/** The current route for voice answers (updated on every redraw, like pickNow). */
+let voiceNow: (action: VoiceAction) => Promise<string | null> = async () => null;
 export function disposePlanView(): void {
+  liveHands?.dispose();
+  liveHands = null;
   liveView?.dispose();
   liveView = null;
   liveCase = null;
+}
+
+/** Cathy's answer for the route so far, from the engine (planAssist, planAssistLine): never a model's numbers. */
+async function assistLine(c: LoadedCase, graph: RouteGraph, s: RouteState, ask: 'best' | 'options'): Promise<string> {
+  const optimized = await optimize({ caseId: c.id, targetId: s.targetId }, c);
+  const weights = defaultWeights(optimized.kind === 'frontier' ? optimized.candidates : []);
+  const assist = planAssist({ optimized, weights, entryId: s.entryId, presetId: s.presetId, routeSoFar: s.edges, graph });
+  return planAssistLine(assist, c, s.targetId, ask).text;
 }
 
 function presetOf(id: WirePresetId): WirePreset {
@@ -220,10 +237,30 @@ function draw(sc: Screen): void {
     }),
     ...(warnings[0] ? [warnings[0].text] : []),
   ];
+  voiceNow = async (action) => {
+    if (action === 'zoom_in' || action === 'zoom_out') {
+      return liveView?.zoom(action === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+    }
+    if (action === 'assist_best_next' || action === 'assist_options') return assistLine(c, graph, sc.state, action === 'assist_best_next' ? 'best' : 'options');
+    return null;
+  };
   if (!liveView || liveCase !== c) {
     disposePlanView();
-    liveView = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines });
+    const created = createPlanView(c, (node) => pickNow(node), { panel: () => panelLines });
+    liveView = created;
     liveCase = c;
+    // Hands-free: the pointer hovers in the view, and a pinch picks the branch point under it, like a click.
+    liveHands = createHandsVoice({
+      host: created.element,
+      actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_options'],
+      onVoice: (a) => voiceNow(a),
+      onGesture: (g) => {
+        if (!g?.select || !g.pointer) return;
+        const node = created.pickAt(g.pointer.x, g.pointer.y);
+        if (node) pickNow(node);
+      },
+    });
+    created.toolbar.append(liveHands.controls);
   }
   const view = liveView;
   view.update({ routeEdges: s.edges, pickable: steps.map((x) => x.node), entryNode: graph.entries.get(s.entryId), targetNode: graph.targets.get(s.targetId) });
