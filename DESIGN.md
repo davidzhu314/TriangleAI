@@ -269,6 +269,9 @@ Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover 
 - **Tip twist readout** under the top row: a small dial (needle in the route purple) and the tip's twist in degrees, 0–359, from `WireState.rollRad` (rail) or `tipPose.tipRollRad` (physics, with "Hub" beside it, since the tip lags the hub). With Hands on and the gun pose held, "Hand +23°" is the hand's twist from where the pose started.
 - **Fine twist:** Shift with A or D twists at a quarter of full speed (`FINE_TWIST`), for a narrow branch opening. The Controls card says so.
 - **Foldable cards:** "Training case" and "Controls" fold from their title (a chevron), open by default, each remembered.
+- **Setting the tip angle:** type an angle in the readout and press Set (or Enter); the wire turns there at up to full speed, slowing over the last 30°, and stops within half a degree. A dashed second needle on the dial marks the target. `[` and `]` nudge it one degree. A or D (or the stick) takes over at once.
+- **Hand angle mode** ("Hand sets angle", shown with Hands on): while the gun pose is held, the hand's twist sets the tip's angle at half scale from where the tip was when the pose started (10° of hand, 5° of tip); a still hand holds the tip still. Push and pull by curl are unchanged.
+- **The catheter head's label:** a small pill at the tip in the 3D and flat views shows its angle ("122°", or "122° → 140°" while turning), repositioned every frame as the camera follows.
 
 ### Plan declutter (2026-11-08)
 

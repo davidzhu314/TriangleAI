@@ -98,6 +98,8 @@ export interface CaseScene {
   resetView(kind: 'close' | 'whole'): void;
   /** Where each branch handle is on the canvas, in CSS pixels from its top left (for automated tests). */
   handlesOnScreen(): { node: string; x: number; y: number }[];
+  /** Where a point in the case's frame (metres, Y-up) is on the canvas, in CSS pixels; null when behind the camera. */
+  screenPoint(p: Vec3): { x: number; y: number } | null;
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -485,6 +487,12 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       to.setLength(Math.min(max, Math.max(min, to.length())));
       camera.position.copy(controls.target).add(to);
       controls.update();
+    },
+    screenPoint(p) {
+      const r = canvas.getBoundingClientRect();
+      const v = content.localToWorld(new THREE.Vector3(p[0], p[1], p[2])).project(camera);
+      if (v.z > 1) return null;
+      return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
     },
     handlesOnScreen() {
       const r = canvas.getBoundingClientRect();

@@ -23,6 +23,7 @@ import { renderShell } from '../shell';
 import { entry, loadBundled, loadedCase, saveDrive, savedPlan, type SavedPlan } from '../store';
 import './drive.css';
 import { capFluoroAtTarget } from './fluoro-cap';
+import { aimRotate, angleDiff, AIM_DONE_DEG, fold, handAngleTarget, parseAngle } from './aim';
 import { controlFrame, KEY_BINDINGS, padPuff, type PadSnapshot } from './input';
 import { wireChoice, wireUrl, type WireChoice } from './wire-switch';
 import { GESTURE_HELP, mergeControl, VOICE_HELP, type GestureOutput, type VoiceAction } from '../../input';
@@ -184,30 +185,83 @@ const DEG = 180 / Math.PI;
 /** Degrees 0..359 from radians, as the dial reads. */
 export const twistDegrees = (rad: number): number => (((Math.round(rad * DEG) % 360) + 360) % 360);
 
+/** The tip's twist in degrees, unrounded (0..360), from the wire's own state; null when the source has none. */
+export function tipDegOf(s: WireState | null): number | null {
+  const rad = s?.tipPose?.tipRollRad ?? s?.rollRad;
+  return rad === undefined ? null : fold(rad * DEG);
+}
+
+interface TwistReadout {
+  element: HTMLElement;
+  update(s: WireState | null, g: GestureOutput | null, target: number | null): void;
+  /** Hand angle mode is on: the gun pose's twist sets the tip angle instead of its speed. */
+  handAngle(): boolean;
+}
+
 /**
  * The tip twist as a dial and degrees, from the wire's own state: WireState.rollRad (rail) or tipPose.tipRollRad
  * with the hub's (physics, where the tip lags the hub). With Hands on, the gun pose's twist from neutral too.
+ * "Set" turns the wire to a typed angle and stops there; with Hands on, "Hand sets angle" makes the gun pose's twist
+ * set the tip's angle (half scale) instead of its speed.
  */
-function twistReadout(): { element: HTMLElement; update(s: WireState | null, g: GestureOutput | null): void } {
+function twistReadout(onSet: (deg: number) => void): TwistReadout {
   const needle = svgNs('line', { x1: '12', y1: '12', x2: '12', y2: '3', class: 'twist-needle' });
+  const goal = svgNs('line', { x1: '12', y1: '12', x2: '12', y2: '2', class: 'twist-goal' });
   const dial = svgNs('svg', { viewBox: '0 0 24 24', class: 'twist-dial', 'aria-hidden': 'true' });
-  dial.append(svgNs('circle', { cx: '12', cy: '12', r: '10', class: 'twist-ring' }), needle, svgNs('circle', { cx: '12', cy: '12', r: '1.6', class: 'twist-hub' }));
-  const tip = h('span', { class: 'twist-value num', 'data-testid': 'twist-tip' }, '—');
+  dial.append(svgNs('circle', { cx: '12', cy: '12', r: '10', class: 'twist-ring' }), goal, needle, svgNs('circle', { cx: '12', cy: '12', r: '1.6', class: 'twist-hub' }));
+  const tip = h('span', { class: 'twist-value num', role: 'status', 'aria-live': 'off', 'data-testid': 'twist-tip' }, '—');
+  const toward = h('span', { class: 'twist-extra', 'data-testid': 'twist-target', hidden: true });
   const hub = h('span', { class: 'twist-extra', 'data-testid': 'twist-hub', hidden: true });
   const hand = h('span', { class: 'twist-extra', 'data-testid': 'twist-hand', hidden: true });
-  const element = h('div', { class: 'twist-readout', role: 'status', 'aria-live': 'off', 'data-testid': 'twist-readout' }, dial, h('span', { class: 'twist-label' }, 'Tip twist'), tip, hub, hand);
+  const field = h('input', { type: 'text', inputmode: 'numeric', class: 'input twist-field', id: 'twist-set', placeholder: 'deg', autocomplete: 'off', 'aria-label': 'Set the tip to this angle, degrees', 'data-testid': 'twist-set' }) as HTMLInputElement;
+  const setButton = h('button', { type: 'button', class: 'btn btn-secondary twist-go', 'data-testid': 'twist-go' }, 'Set');
+  const submit = (): void => {
+    const deg = parseAngle(field.value);
+    field.setAttribute('aria-invalid', String(deg === null));
+    if (deg === null) return;
+    field.value = '';
+    onSet(deg);
+  };
+  setButton.addEventListener('click', submit);
+  field.addEventListener('keydown', (e) => {
+    e.stopPropagation(); // typing an angle never drives the wire
+    if (e.key === 'Enter') submit();
+  });
+  field.addEventListener('keyup', (e) => e.stopPropagation());
+  const handMode = h('button', { type: 'button', class: 'btn btn-secondary twist-hand-mode', 'aria-pressed': 'false', hidden: true, 'data-testid': 'hand-angle-mode', title: 'With the gun pose held, your hand\'s twist sets the tip\'s angle (half scale) instead of its speed.' }, 'Hand sets angle');
+  handMode.addEventListener('click', () => handMode.setAttribute('aria-pressed', String(handMode.getAttribute('aria-pressed') !== 'true')));
+  const element = h(
+    'div',
+    { class: 'twist-readout', role: 'group', 'aria-label': 'Tip twist', 'data-testid': 'twist-readout' },
+    dial,
+    h('span', { class: 'twist-label' }, 'Tip twist'),
+    tip,
+    toward,
+    hub,
+    hand,
+    h('span', { class: 'twist-set' }, field, setButton),
+    handMode,
+  );
   return {
     element,
-    update(s, g) {
-      const tipRad = s?.tipPose?.tipRollRad ?? s?.rollRad;
-      element.hidden = tipRad === undefined;
-      if (tipRad === undefined) return;
-      const d = twistDegrees(tipRad);
+    handAngle: () => handMode.getAttribute('aria-pressed') === 'true',
+    update(s, g, target) {
+      const deg = tipDegOf(s);
+      element.hidden = deg === null;
+      if (deg === null) return;
+      const d = Math.round(deg) % 360;
       tip.textContent = `${d}°`;
       needle.setAttribute('transform', `rotate(${d} 12 12)`);
+      toward.hidden = target === null;
+      goal.style.display = target === null ? 'none' : '';
+      if (target !== null) {
+        toward.textContent = `→ ${Math.round(target) % 360}°`;
+        goal.setAttribute('transform', `rotate(${Math.round(target)} 12 12)`);
+      }
       const hubRad = s?.tipPose?.hubRollRad;
       hub.hidden = hubRad === undefined;
       if (hubRad !== undefined) hub.textContent = `Hub ${twistDegrees(hubRad)}°`;
+      handMode.hidden = g === null; // only with Hands on
       const handDeg = g?.status === 'gun' ? g.debug?.twistDeg : undefined;
       hand.hidden = handDeg === undefined;
       if (handDeg !== undefined) hand.textContent = `Hand ${handDeg >= 0 ? '+' : '−'}${Math.abs(Math.round(handDeg))}°`;
@@ -382,7 +436,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     'Controls',
     controlRow('push-pull', 'Push / pull', keyButton('W', 'Push', 'push'), keyButton('S', 'Pull', 'pull')),
     controlRow('rotate', 'Rotate', keyButton('A', 'Rotate left', 'left'), keyButton('D', 'Rotate right', 'right')),
-    h('p', { class: 'hud-note' }, h('span', { class: 'kbd' }, 'Shift'), ' with A or D twists slowly, for a narrow branch opening.'),
+    h('p', { class: 'hud-note' }, h('span', { class: 'kbd' }, 'Shift'), ' with A or D twists slowly; ', h('span', { class: 'kbd' }, '['), ' and ', h('span', { class: 'kbd' }, ']'), ' turn the tip one degree; or type an angle under the view and press Set.'),
     controlRow('fluoro', 'Hold for fluoro', keyButton('Space', 'Hold for fluoro', 'fluoro')),
     controlRow('contrast-puff', 'Contrast puff', keyButton('C', 'Contrast puff', 'puff')),
     h('p', { class: 'hud-note' }, 'Hold a key, or press and hold its button. Gamepad: sticks push and rotate, right trigger for fluoro, A for contrast.'),
@@ -482,7 +536,15 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       return lines.join(' ') || null;
     },
   });
-  const twist = twistReadout();
+  // Setting the tip to an angle: a typed angle, [ and ] nudges, or the hand in angle mode. Turned there through the
+  // same rotate control the keys use, and dropped as soon as the trainee twists by hand or key.
+  let aimTarget: number | null = null;
+  let handAnchor: number | null = null;
+  let handTwist: number | null = null;
+  const twist = twistReadout((deg) => {
+    aimTarget = deg;
+    sync();
+  });
   const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, wireSwitch, view.toolbar, hands.controls, voiceFluoroBadge), twist.element, notice, banner);
 
   // ---- bottom right
@@ -527,7 +589,9 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     const fluoroOn = s ? s.fluoro : held.has('fluoro');
     voiceFluoroBadge.hidden = voiceFluoroUntil === null;
     if (overview.showing() && performance.now() - mistakesAt > 500) refreshMistakes();
-    view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], catheter: s?.devices?.catheter ?? [], tip: s?.tip ?? null, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
+    const tipDeg = tipDegOf(s ?? null);
+    const tipLabel = tipDeg === null ? null : aimTarget === null ? `${Math.round(tipDeg) % 360}°` : `${Math.round(tipDeg) % 360}° → ${Math.round(aimTarget) % 360}°`;
+    view.update({ mode: live.mode, plan: { startNode, edges: plan.edges }, wire: s?.wire ?? [], catheter: s?.devices?.catheter ?? [], tip: s?.tip ?? null, tipLabel, fluoro: fluoroOn, dim: c.difficulty === 'intermediate', entryNode: startNode, targetNode });
     // The wire's own state says which mode is driving: after a fallback it reports rail.
     const wireMode = s?.mode ?? fellBackTo ?? source?.mode;
     modeLabel.textContent = `${live.mode === 'front' ? 'Front view' : 'X-ray'} · ${wireMode ? `${wireMode} mode` : 'wire not connected'}`;
@@ -548,7 +612,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
       forceBar.setAttribute('aria-valuenow', fmt(s.contactForceN, 2));
       forceBar.classList.toggle('meter-over', s.contactForceN > threshold);
     }
-    twist.update(s, hands.gesture());
+    twist.update(s, hands.gesture(), aimTarget);
     overview.setWire(s.wire.map((p) => `${(p[0] * 1000).toFixed(2)},${(-p[1] * 1000).toFixed(2)}`).join(' '));
     const offRoute = !plan.edges.includes(s.edge);
     if (s.atTarget) setBanner(`The wire reached the ${target}.`, 'neutral');
@@ -569,6 +633,16 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     const target = ev.target as HTMLElement | null;
     if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
     fine = ev.shiftKey;
+    // [ and ] nudge the tip's angle by a degree: precise corrections without holding a key.
+    if (ev.code === 'BracketLeft' || ev.code === 'BracketRight') {
+      ev.preventDefault();
+      const now = tipDegOf(live.state);
+      if (down && now !== null) {
+        aimTarget = fold(Math.round(aimTarget ?? now) + (ev.code === 'BracketRight' ? 1 : -1)); // whole degrees, as the readout shows
+        sync();
+      }
+      return;
+    }
     const control = KEY_BINDINGS[ev.code];
     if (!control) return;
     if (control === 'fluoro' || target?.tagName !== 'BUTTON') ev.preventDefault();
@@ -604,7 +678,26 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
     }
     if (voiceFluoroUntil !== null) keys.fluoro = true;
     const g = hands.gesture();
-    const frame = g ? mergeControl(g, keys) : keys;
+    let frame = g ? mergeControl(g, keys) : keys;
+    const now = tipDegOf(live.state);
+    // A twist by key or stick takes over from a set angle.
+    if (keys.rotate !== 0) aimTarget = null;
+    // Hand angle mode: while the gun pose is held, the hand's twist (smoothed) sets the tip's angle, half scale, from
+    // where the tip was when the pose started. A still hand holds the tip still.
+    const handDeg = twist.handAngle() && g?.status === 'gun' ? g.debug?.twistDeg : undefined;
+    if (handDeg !== undefined && now !== null) {
+      handAnchor ??= now;
+      handTwist = handTwist === null ? handDeg : handTwist + 0.3 * (handDeg - handTwist);
+      aimTarget = handAngleTarget(handAnchor, handTwist);
+    } else if (handAnchor !== null) {
+      handAnchor = null;
+      handTwist = null;
+      aimTarget = null;
+    }
+    if (aimTarget !== null && now !== null) {
+      frame = { ...frame, rotate: aimRotate(now, aimTarget) };
+      if (handAnchor === null && Math.abs(angleDiff(now, aimTarget)) <= AIM_DONE_DEG) aimTarget = null; // there: done
+    }
     puffPending = false;
     source?.control(frame);
   };

@@ -540,3 +540,40 @@
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Setting the tip to an angle: the typed field, the target on the dial, the hand mode. */
+.twist-goal {
+  stroke: var(--color-route-player);
+  stroke-width: 1.5;
+  stroke-dasharray: 1.5 1.5;
+  opacity: 0.7;
+}
+
+.twist-set {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.twist-field {
+  width: 4.5rem;
+  min-height: var(--size-control);
+  padding-block: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.twist-field[aria-invalid='true'] {
+  border-color: var(--color-negative);
+}
+
+.twist-go,
+.twist-hand-mode {
+  min-height: var(--size-control);
+  padding-inline: var(--space-3);
+}
+
+.twist-hand-mode[aria-pressed='true'] {
+  background: var(--color-surface-active);
+  color: var(--color-heading);
+  border-color: var(--color-route-player);
+}
