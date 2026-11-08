@@ -7,8 +7,11 @@
  * - While voice is on, a notice says the microphone is live and Chrome sends the audio to Google.
  * - Keyboard and gamepad keep working and win over the hand (mergeControl), so the keyboard-only demo stays the
  *   fallback at every moment.
+ * - Cathy's box (bottom right, on screens that answer questions): her questions as buttons, a field that matches a
+ *   typed question with the same matcher as voice, and her latest answer, from voice too. Every answer is the screen's
+ *   engine template (`onVoice`): deterministic, no AI model and no network.
  */
-import { createBrowserRecognizer, createWakeListener, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
+import { createBrowserRecognizer, createWakeListener, matchCommand, type GestureOutput, type HandFrame, type VoiceAction, type VoiceMatch, type WakeState } from '../../input';
 import { h } from '../dom';
 import { feedFrames, startHandTracking, type HandTracker, type TrackerError } from './camera';
 import './hands-voice.css';
@@ -24,6 +27,42 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   reset_view: 'Reset view',
   hide_labels: 'Hide names',
   show_labels: 'Show names',
+};
+
+/** Cathy's questions, in the order her buttons show them; a screen gets the ones it answers. */
+const QUESTIONS: readonly VoiceAction[] = ['assist_check', 'assist_best_next', 'assist_options', 'assist_review'];
+
+/**
+ * A typed question that the voice matcher missed (typing is wordier than speaking): the first question whose
+ * keywords appear in it. Deterministic, like the matcher; null when none does.
+ */
+const TYPED_KEYWORDS: readonly [VoiceAction, RegExp][] = [
+  ['assist_check', /\b(right (path|way|track)|on (track|the plan)|am i lost|is this (right|correct)|correct (path|way))\b/],
+  ['assist_review', /\b(how am i doing|doing wrong|mistakes?|feedback|review|how did i do|going so far)\b/],
+  ['assist_options', /\b(options?|choices?|alternatives?|other (routes?|paths?|ways?))\b/],
+  ['assist_best_next', /\b(next|where|which (way|branch|artery|vessel)|best (path|route|way|artery))\b/],
+];
+export function typedQuestion(text: string, available: readonly VoiceAction[]): VoiceAction | null {
+  const t = text.toLowerCase();
+  for (const [action, re] of TYPED_KEYWORDS) if (available.includes(action) && re.test(t)) return action;
+  return null;
+}
+
+/** Whether Cathy's box is open, remembered per browser (a convenience: it opens if storage is unavailable). */
+const CATHY_OPEN_KEY = 'threadsim.cathy.open';
+const readOpen = (): boolean => {
+  try {
+    return localStorage.getItem(CATHY_OPEN_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+};
+const writeOpen = (open: boolean): void => {
+  try {
+    localStorage.setItem(CATHY_OPEN_KEY, String(open));
+  } catch {
+    // private window or blocked storage: the box still works, it just won't remember
+  }
 };
 
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
@@ -104,6 +143,67 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
   const pointer = h('div', { class: 'hv-pointer', hidden: true, 'aria-hidden': 'true' });
   host.append(panel, pointer);
 
+  // ---- Cathy's box: ask by button, by typing, or by voice; the answer shows here
+  const questions = QUESTIONS.filter((a) => actions.includes(a));
+  const cathyOut = h('div', { class: 'cathy-out', role: 'status', 'aria-live': 'polite', 'data-testid': 'cathy-output' });
+  cathyOut.append(h('p', { class: 'cathy-hint' }, 'Pick a question, type one, or turn Voice on and say “Hey Cathy, …”.'));
+  /**
+   * Run an action through the screen and show the exchange in the box. With `quiet`, an action that succeeds without
+   * words (a zoom by voice) leaves the box as it was.
+   */
+  const respond = async (action: VoiceAction, asked: string, into: HTMLElement, quiet = false): Promise<void> => {
+    const youAsked = h('p', { class: 'cathy-asked' }, asked);
+    if (!actions.includes(action)) {
+      into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, `“${ACTION_WORDS[action]}” isn't available on this screen.`));
+      return;
+    }
+    const text = await onVoice(action);
+    if (!text && quiet) return;
+    into.replaceChildren(youAsked, h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, text ?? 'Done.'));
+  };
+  let cathyBox: HTMLElement | null = null;
+  if (questions.length) {
+    const buttons = h(
+      'div',
+      { class: 'cathy-questions', role: 'group', 'aria-label': 'Ask Cathy' },
+      ...questions.map((a) => {
+        const b = h('button', { type: 'button', class: 'btn btn-secondary btn-small', 'data-ask': a }, ACTION_WORDS[a]);
+        b.addEventListener('click', () => void respond(a, `${ACTION_WORDS[a]}?`, cathyOut));
+        return b;
+      }),
+    );
+    const field = h('input', { type: 'text', class: 'cathy-field', placeholder: 'Ask Cathy…', 'aria-label': 'Ask Cathy a question', autocomplete: 'off', 'data-testid': 'cathy-field' }) as HTMLInputElement;
+    const form = h('form', { class: 'cathy-form' }, field, h('button', { type: 'submit', class: 'btn btn-secondary btn-small' }, 'Ask'));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const typed = field.value.trim();
+      if (!typed) return;
+      field.value = '';
+      const m = matchCommand([{ transcript: typed, confidence: 1 }]);
+      const action = m.action ?? typedQuestion(typed, questions);
+      if (action) void respond(action, typed, cathyOut);
+      else
+        cathyOut.replaceChildren(
+          h('p', { class: 'cathy-asked' }, typed),
+          h('p', { class: 'hv-answer', 'data-testid': 'voice-answer' }, `I can answer: ${questions.map((a) => `“${ACTION_WORDS[a]}”`).join(', ')}.`),
+        );
+    });
+    // Typing in the box must not drive the wire or trigger the screen's other shortcuts.
+    field.addEventListener('keydown', (e) => e.stopPropagation());
+    field.addEventListener('keyup', (e) => e.stopPropagation());
+    const body = h('div', { class: 'cathy-body' }, buttons, form, cathyOut, h('p', { class: 'cathy-note' }, 'Answers come from the route engine, not an AI model.'));
+    const toggle = h('button', { type: 'button', class: 'cathy-toggle', 'aria-expanded': 'true', 'data-testid': 'cathy-toggle' }, 'Cathy');
+    const setOpen = (open: boolean): void => {
+      body.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      writeOpen(open);
+    };
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    cathyBox = h('aside', { class: 'cathy-box', 'aria-label': 'Cathy, the assistant', 'data-testid': 'cathy-box' }, toggle, body);
+    host.append(cathyBox);
+    setOpen(readOpen());
+  }
+
   const show = (g: GestureOutput | null): void => {
     latest = g;
     latestAt = performance.now();
@@ -158,6 +258,11 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
     caption.replaceChildren(heard);
     host.dataset['voiceAction'] = m.action ?? 'none';
     if (!m.action) return;
+    // With Cathy's box on this screen, every answer goes there; the caption keeps what was heard.
+    if (cathyBox) {
+      await respond(m.action, `“${m.heard}”`, cathyOut, true);
+      return;
+    }
     if (!actions.includes(m.action)) {
       caption.append(h('p', { class: 'hv-answer' }, `“${ACTION_WORDS[m.action]}” isn't available on this screen.`));
       return;
@@ -206,6 +311,7 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
       if (window.__threadsimHands) delete window.__threadsimHands;
       panel.remove();
       pointer.remove();
+      cathyBox?.remove();
       controls.remove();
     },
   };
