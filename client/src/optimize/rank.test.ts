@@ -6,7 +6,7 @@ import { loadFixtureY } from './fixture-y.testutil';
 import { buildGraph } from './graph';
 import { gridCase, loadSynthetic, randomCase, rng } from './graphs.testutil';
 import { optimizeCase } from './optimizer';
-import { createRanker, measureRanges, normalisedCost, normaliseWeights, rankRoutes } from './rank';
+import { createRanker, DEFAULT_WEIGHTS, defaultWeights, measureRanges, normalisedCost, normaliseWeights, rankRoutes } from './rank';
 
 const FRAME_MS = 1000 / 60;
 const diamond = loadSynthetic('diamond');
@@ -154,5 +154,29 @@ describe('rankRoutes on candidates', () => {
     const all = rankRoutes(f.candidates.filter((r) => r.feasible), ranges, { lengthM: 1 });
     expect(all.order.at(-1)!.s).toBeCloseTo(1, 12);
     expect(all.order[0]!.s).toBe(0);
+  });
+});
+
+describe('default weights (before a slider moves)', () => {
+  it('give an equal share to each of the seven geometric measures', () => {
+    const keys = Object.keys(DEFAULT_WEIGHTS).sort();
+    expect(keys).toEqual(['estFluoroS', 'heavyCrossings', 'lengthM', 'narrowestRadiusM', 'proximityPenalty', 'sharpestTurnDeg', 'totalTurningDeg']);
+    for (const w of Object.values(DEFAULT_WEIGHTS)) expect(w).toBeCloseTo(1 / 7, 12);
+    for (const [k, v] of Object.entries(normaliseWeights(DEFAULT_WEIGHTS))) expect(v).toBeCloseTo(DEFAULT_WEIGHTS[k as keyof typeof DEFAULT_WEIGHTS]!, 12);
+    expect(Object.isFrozen(DEFAULT_WEIGHTS)).toBe(true);
+  });
+
+  it('match the measures the routes carry: without recorded runs, the same as DEFAULT_WEIGHTS', () => {
+    expect(defaultWeights(f.candidates)).toEqual(DEFAULT_WEIGHTS);
+    const withSim = f.candidates.map((r) => ({ ...r, cost: { ...r.cost, simPeakForceN: 1, simSuccessRate: 0.5 } }));
+    const w = defaultWeights(withSim);
+    expect(Object.keys(w)).toHaveLength(9);
+    for (const v of Object.values(w)) expect(v).toBeCloseTo(1 / 9, 12);
+  });
+
+  it('rank the frontier without favouring a route the way an empty weight set cannot', () => {
+    const order = createRanker(f)(DEFAULT_WEIGHTS).order;
+    expect(order.map((x) => x.routeId).sort()).toEqual(f.routes.map((r) => r.id).sort());
+    expect(new Set(order.map((x) => x.s)).size).toBeGreaterThan(1); // {} would tie every route at 0
   });
 });

@@ -30,6 +30,23 @@ export function measureRanges(candidates: readonly Route[]): MeasureRanges {
   return out;
 }
 
+/**
+ * Default weights, before the player moves a slider (Compare's starting point, and the weights a
+ * player who never touches a slider is scored at): an equal share on every measure the routes carry.
+ * The two simulated measures count only when real recorded runs supplied them, which D4 did not, so
+ * today that is the seven geometric measures at 1/7 each. Equal, so no measure is weighted to favour
+ * a route (DECISIONS.md, "Default weights").
+ */
+export function defaultWeights(routes: readonly Route[]): Weights {
+  const keys = MEASURE_KEYS.filter((k) => routes.some((r) => r.cost[k] !== undefined));
+  return Object.fromEntries(keys.map((k) => [k, 1 / keys.length])) as Weights;
+}
+
+/** The default weights over the seven geometric measures (no recorded runs): 1/7 each. */
+export const DEFAULT_WEIGHTS: Readonly<Weights> = Object.freeze(
+  Object.fromEntries(MEASURE_KEYS.filter((k) => k !== 'simPeakForceN' && k !== 'simSuccessRate').map((k, _, all) => [k, 1 / all.length])) as Weights,
+);
+
 /** Validate and normalise weights to sum 1. Throws on negative or non-finite weights. */
 export function normaliseWeights(weights: Weights): Weights {
   let sum = 0;
