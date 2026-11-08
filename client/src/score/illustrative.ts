@@ -18,6 +18,8 @@ import {
   LOW_TORTUOSITY_MAX,
   RADIATION_ZERO_FACTOR,
 } from './constants';
+import { CATHY_MAX_CHARS } from './grounding';
+import { WARN_AHEAD_M } from './warn';
 
 export interface IllustrativeConstant {
   id: string;
@@ -60,4 +62,6 @@ export const ILLUSTRATIVE_CONSTANTS: readonly IllustrativeConstant[] = Object.fr
   { id: 'score.radiation_zero', label: 'Radiation reaches zero at this × the estimate', value: RADIATION_ZERO_FACTOR, unit: '×', decision: 'Gentleness and radiation curves (illustrative).' },
   { id: 'result.budget_star_cost', label: 'Stars lost when over the fluoro allowance', value: BUDGET_STAR_COST, unit: 'stars', decision: 'Stars and radiation budget as implemented.' },
   { id: 'ladder.low_tortuosity_max', label: 'Low-tortuosity tier: tortuosity at or below', value: LOW_TORTUOSITY_MAX, unit: '', decision: 'Ladder tiers from case.anatomy (§6.5).' },
+  { id: 'cathy.warn_ahead', label: 'Cathy warns of a wrong branch this far ahead', value: WARN_AHEAD_M * 1000, unit: 'mm', decision: 'Cathy: warning distance (illustrative).' },
+  { id: 'cathy.max_chars', label: "Longest line Cathy's LLM may say", value: CATHY_MAX_CHARS, unit: 'characters', decision: 'Cathy: LLM line length (illustrative).' },
 ]);

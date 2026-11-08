@@ -44,7 +44,7 @@ async function openDrive(page: Page, caseId: string): Promise<void> {
 }
 
 const GESTURES = ['Gun', 'Push', 'Hold', 'Pull', 'Rotate', 'Pan', 'Two hands', 'Point', 'Pinch'];
-const DRIVE_PHRASES = ['zoom in', 'zoom out', 'reset view', 'hide', 'show labels', 'best next artery', 'how am I doing', 'am I on the right path', 'undo'];
+const DRIVE_PHRASES = ['zoom in', 'zoom out', 'reset view', 'hide labels', 'show labels', 'best next artery', 'how am I doing', 'am I on the right path', 'undo'];
 
 test('the controls card keeps the keys and lists every gesture and the "Hey Cathy" commands', async ({ page }) => {
   await openDrive(page, 'low-tort');
