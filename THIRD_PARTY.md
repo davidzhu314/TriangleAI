@@ -42,3 +42,12 @@ Added in D1 (physics process only, `physics/requirements-sim.txt`; none of these
 | CathSim phantoms `low_tort`, `phantom2`, `phantom3`, `phantom4` (`visual.stl` meshes and `bca`/`lcca` target sites), converted by ThreadSim | commit adfabb2 (2024-11-13) | CC BY-NC-SA 4.0 (research and demo only; adaptations shared alike) | https://github.com/airvlab/cathsim | `physics/cases/<phantom>/` only. They are served to the browser at runtime by the physics process (D5) and never copied into `client/`. ThreadSim's changes: the frame was converted to RAS mm, the meshes simplified and split per vessel, and centerlines computed from the mesh. Each package carries `LICENSE.md` with this attribution. |
 | NumPy | 1.25.2 | BSD-3-Clause | https://numpy.org | `physics/cases/convert_phantoms.py` (offline converter, physics environment only) |
 | SciPy | 1.11.2 | BSD-3-Clause | https://scipy.org | `physics/cases/convert_phantoms.py` (distance transform, connected components, Dijkstra) |
+
+### First 3D Slicer case (D3c), recorded before conversion
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| TotalSegmentator dataset, small subset (University Hospital Basel). Subject `s1404`, CT angiography thorax-abdomen-pelvis, no pathology recorded. Only its arterial masks are used: aorta, brachiocephalic trunk, common carotids and iliac arteries. No CT image, age, sex or other metadata leaves `tools/`. | v2.0.1 (Zenodo record 10047263) | CC BY 4.0. Cite Wasserthal et al., "TotalSegmentator: robust segmentation of 104 anatomic structures in CT images", Radiology: AI 2023 | https://doi.org/10.5281/zenodo.10047263 | Converted with 3D Slicer + SlicerVMTK by `slicer/export_case.py`. The output mesh and centerlines are in `client/public/cases/ts-s1404-cta/` |
+| 3D Slicer | 5.13.0 preview 2026-11-05 (revision fb80933, Intel build) | BSD-style 3D Slicer license | https://www.slicer.org | `slicer/` (offline export only) |
+| SlicerVMTK extension (Extract Centerline) | revision 23190ba | BSD-3-Clause (VMTK) | https://github.com/vmtk/SlicerExtension-VMTK | `slicer/` (offline export only) |
+| ExtraMarkups extension | revision f5c833b | installed with Slicer; not used by the export | https://github.com/chir-set/SlicerExtraMarkups | — |
