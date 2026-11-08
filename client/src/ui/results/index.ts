@@ -9,8 +9,9 @@
 import type { CaseResult, FeedbackLine, LoadedCase, WireEvent } from '../../contracts';
 import { optimize } from '../../optimize';
 import { createReplayView } from '../../render/replay-view';
+import { CONTACT_CONTEXT, contactLine, contactSummary, contactThreshold, contactTip, wallContacts, type WallContact } from './contacts';
 import { svgEl } from '../../render/case-svg';
-import { bestStars, replayTimeline, scoreAttempt, type ReplayTimeline, type ScoreInput } from '../../score';
+import { bestStars, ILLUSTRATIVE_CONSTANTS, replayTimeline, scoreAttempt, type ReplayTimeline, type ScoreInput } from '../../score';
 import { startingWeights, visibleMeasures } from '../compare/model';
 import { dash, h } from '../dom';
 import { labelled, type IconName } from '../icons';
@@ -172,7 +173,32 @@ function driveTable(result: CaseResult, physics: boolean): HTMLElement {
   );
 }
 
-function timelineBlock(c: LoadedCase, timeline: ReplayTimeline | null): HTMLElement {
+/**
+ * The wall contact review beside the replay: a summary, then each contact by number (where, when, how hard, and a
+ * tip). Selecting a contact highlights its mark on the replay view, and a mark selects its contact.
+ */
+function contactsPanel(c: LoadedCase, contacts: readonly WallContact[], thresholdN: number, view: HTMLElement): HTMLElement {
+  const items = contacts.map((w) => {
+    const b = h('button', { type: 'button', class: 'contact-item', 'aria-pressed': 'false', 'data-n': String(w.n), 'data-testid': 'contact-item' }, h('span', { class: 'contact-n', 'aria-hidden': 'true' }, String(w.n)), h('span', { class: 'contact-words' }, h('span', { class: 'contact-line' }, contactLine(c, w)), h('span', { class: 'contact-tip' }, contactTip(c, w))));
+    return b;
+  });
+  const select = (n: number | null): void => {
+    for (const b of items) b.setAttribute('aria-pressed', String(b.dataset['n'] === String(n)));
+    for (const m of view.querySelectorAll<SVGGElement>('.contact-mark')) m.classList.toggle('contact-mark-active', m.dataset['n'] === String(n));
+  };
+  for (const b of items) b.addEventListener('click', () => select(b.getAttribute('aria-pressed') === 'true' ? null : Number(b.dataset['n'])));
+  for (const m of view.querySelectorAll<SVGGElement>('.contact-mark')) m.addEventListener('click', () => select(Number(m.dataset['n'])));
+  return h(
+    'section',
+    { class: 'contacts', 'aria-labelledby': 'contacts-heading', 'data-testid': 'contacts' },
+    h('h3', { id: 'contacts-heading' }, 'Wall contact'),
+    h('p', { class: 'contacts-summary', 'data-testid': 'contacts-summary' }, contactSummary(c, contacts, thresholdN)),
+    items.length ? h('ol', { class: 'contacts-list' }, items.map((b) => h('li', {}, b))) : null,
+    h('p', { class: 'muted contacts-context' }, CONTACT_CONTEXT),
+  );
+}
+
+function timelineBlock(c: LoadedCase, timeline: ReplayTimeline | null, contacts: readonly WallContact[] = [], thresholdN = 0): HTMLElement {
   if (!timeline) {
     return h('section', { class: 'block', 'aria-labelledby': 'replay-heading' }, h('h2', { id: 'replay-heading' }, 'Replay'), h('p', { class: 'muted' }, 'The replay timeline is not available for this attempt.'));
   }
@@ -213,17 +239,28 @@ function timelineBlock(c: LoadedCase, timeline: ReplayTimeline | null): HTMLElem
     kinds.length
       ? h('ul', { class: 'timeline-key' }, kinds.map((k) => h('li', {}, labelled(MARKER_ICON[k], MARKER_NAME[k]))))
       : h('p', { class: 'muted' }, 'No events were logged in this drive.'),
+    replayWithContacts(c, timeline, contacts, thresholdN),
+  );
+}
+
+function replayWithContacts(c: LoadedCase, timeline: ReplayTimeline, contacts: readonly WallContact[], thresholdN: number): HTMLElement {
+  const view = createReplayView(c, timeline.drivenPath, timeline.bestPath, contacts.flatMap((w) => (w.at ? [{ n: w.n, at: w.at }] : [])));
+  return h(
+    'div',
+    { class: 'replay-columns' },
     h(
       'div',
       { class: 'replay-figure' },
-      createReplayView(c, timeline.drivenPath, timeline.bestPath),
+      view,
       h(
         'ul',
         { class: 'results-legend' },
         h('li', {}, swatch('route-trace'), 'Your driven path'),
         h('li', {}, swatch('frontier-line route-2'), 'Best route at your weights'),
+        contacts.length ? h('li', {}, h('span', { class: 'contact-key', 'aria-hidden': 'true' }), 'Wall contact') : null,
       ),
     ),
+    contactsPanel(c, contacts, thresholdN, view),
   );
 }
 
@@ -265,6 +302,10 @@ export async function mountResults(root: HTMLElement, { key, c, drive }: Results
     timeline = null;
   }
 
+  const forceThreshold = ILLUSTRATIVE_CONSTANTS.find((k) => k.id === 'rail.force_spike')?.value ?? 0;
+  const contacts = wallContacts(drive.log, forceThreshold);
+  const thresholdN = contactThreshold(drive.log, forceThreshold);
+
   // Progress: one record per scored drive, never twice on a refresh (V6).
   const rec = recordOnce(progressHistory(), drive, result);
   if (rec.recorded) {
@@ -289,7 +330,7 @@ export async function mountResults(root: HTMLElement, { key, c, drive }: Results
     h('div', { class: 'title-row' }, h('h1', {}, `Results: ${c.title}`), h('p', { class: 'muted' }, 'Training case (not a patient).')),
     h('div', { class: 'results-head' }, h('div', { class: 'results-main' }, findingBlock(key, result), moreLines(result)), scoreCard(c, result, bestStars(c.id, history))),
     driveTable(result, drive.log.mode === 'physics'),
-    timelineBlock(c, timeline),
+    timelineBlock(c, timeline, contacts, thresholdN),
     advice ? h('p', { class: 'results-advice', 'data-testid': 'suggestion' }, advice) : null,
     h(
       'div',
