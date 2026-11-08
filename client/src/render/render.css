@@ -233,3 +233,7 @@
 .btn.ar-enter[hidden] {
   display: none;
 }
+
+.view-frame[hidden] {
+  display: none;
+}
