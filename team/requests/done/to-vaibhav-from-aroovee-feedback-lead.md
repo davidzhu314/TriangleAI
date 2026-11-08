@@ -8,3 +8,4 @@ Meanwhile: Results shows `feedback[0]` as it is, with "Retry the drive" beside i
 
 ## Answer
 
+Done. When the plan line is `plan.best`, it now comes after the drive lines that took points off, so `feedback[0]` is the one thing to change (the prolapse drive now leads with `drive.fidelity_drift`). A lost budget star and a plan check that cost points still lead; a clean drive still leads with `plan.best`. Only the order changed; the golden results were regenerated and differ only in order. DECISIONS.md "Feedback leads with something to change" (Vaibhav).

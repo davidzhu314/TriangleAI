@@ -1,8 +1,13 @@
 /**
- * Feedback lines (spec §6.4), most important first: not reaching the target, then the plan's
- * deciding check, then a star lost to the budget, then the drive components from lowest score up
- * (each one below 100 adds its lines), then the neutral radiation and budget notes. The Results
- * screen's demo step shows only the top line.
+ * Feedback lines (spec §6.4), most important first, so feedback[0] is the one thing to change:
+ * 1. not reaching the target;
+ * 2. the plan's deciding check, unless the plan is already the best at the player's weights
+ *    (`plan.best`, which is praise: it moves to step 5);
+ * 3. a star lost to the radiation budget;
+ * 4. the drive components from lowest score up (each one below 100 adds its lines);
+ * 5. `plan.best`, when that was the plan line;
+ * 6. the neutral radiation and budget notes.
+ * The Results screen shows feedback[0] largest.
  */
 
 import type {
@@ -201,7 +206,11 @@ export function buildFeedback(r: CaseResult, ctx: FeedbackContext): FeedbackLine
   const n = new Names(ctx.case);
   const lines: FeedbackLine[] = [];
   if (!r.reachedTarget) lines.push(feedbackLine('drive.not_reached', { target: n.target(ctx.log.targetId) }, 'result.stars'));
-  lines.push(...planLines(r, ctx.player, ctx.optimized, n, ctx.log.targetId));
+  // a full-score plan ("your route is the best") is praise, not something to change: it goes after
+  // the drive lines that took points off, so feedback[0] is the one thing to change
+  const plan = planLines(r, ctx.player, ctx.optimized, n, ctx.log.targetId);
+  const planIsPraise = plan.every((l) => l.template === 'plan.best');
+  if (!planIsPraise) lines.push(...plan);
 
   const budget = ctx.case.fluoroBudgetS;
   const budgetValues = () => ({ over_s: round(r.fluoroOverBudgetS, 1), budget_s: round(budget ?? 0, 1) });
@@ -210,6 +219,7 @@ export function buildFeedback(r: CaseResult, ctx: FeedbackContext): FeedbackLine
 
   const order = [...DRIVE_ORDER].sort((a, b) => r.drive[a].score - r.drive[b].score || DRIVE_ORDER.indexOf(a) - DRIVE_ORDER.indexOf(b));
   for (const k of order) if (belowFull(r.drive[k].score)) lines.push(...componentLines(k, r, ctx.log, ctx.reference, n));
+  if (planIsPraise) lines.push(...plan);
 
   if (!belowFull(r.drive.radiation.score) && r.drive.radiation.fluoroS > 0) {
     lines.push(
