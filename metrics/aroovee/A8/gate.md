@@ -34,3 +34,27 @@ Run on 2026-11-07, on the production build (`pnpm build`), with Taste Skill v2.1
 
 - **Taste `lint.mjs`** on my folders (`client/src/ui`, `render`, `styles`, `assets`, `main.ts`): 0 FAIL, 1 WARN. The warning is `default-font` (Inter), the A0 typeface measured from the reference site and recorded in DECISIONS.md.
 - **Token check** across `client/src/ui` and `client/src/render`: no raw hex colours and no px, rem, em or ch lengths, apart from the 640 px and 1100 px breakpoints DESIGN.md allows. The tutorial note's position is computed at run time from the element it points at, not written as a size.
+
+## Re-run with the 3D views (2026-11-07, after D5 and A7)
+
+**Setup.**
+- Plan, Compare and Drive now open in three.js; the flat 2D face is one click away.
+- Same method as above: the production build, theme forced, a plan and the wrong-branch golden seeded.
+- Drive now gets its wire from `select.ts` in the production build, so it was inspected on the real app, not the harness.
+
+| Screen | Light | Dark |
+| --- | --- | --- |
+| Library (7 cases now, tutorial note beside "Open case") | 0 FAIL, 1 WARN | 0 FAIL, 1 WARN |
+| Case brief | 0 FAIL, 1 WARN | 0 FAIL, 1 WARN |
+| Plan, 3D | 0 FAIL, 1 WARN | 0 FAIL, 1 WARN |
+| Compare, 3D | 0 FAIL, 1 WARN | 0 FAIL, 1 WARN |
+| Drive, 3D, live rail wire | 0 FAIL, 0 WARN | 0 FAIL, 0 WARN |
+| Results | 0 FAIL, 0 WARN | 0 FAIL, 0 WARN |
+
+**0 FAIL on every 2D screen.**
+
+**New warning kept: Library `hero-void` at 1440 px** (an empty block of 780 × 480 px). It's the middle of the case rows, each with its title on the left and its stars on the right. Main now bundles 7 cases, so seven rows fill the first screen. They are peer rows (DESIGN.md: Library row), and filling the middle would add filler.
+
+**Fixed while checking:** the tutorial note covered the "Other cases" heading. It now sits beside its anchor when there's room.
+
+**Plan's `ragged-row`** now counts two pairs (367 and 292 px), because the 3D well holds the 3D/Flat switch. The reason it stays is the same as above.

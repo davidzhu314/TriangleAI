@@ -1,13 +1,15 @@
 /**
  * The Plan screen's view of the case, behind one interface so screens never import a renderer directly.
  *
- * Today: the shared 2D front view (case-svg.ts) with the route trace, clickable branch-point handles and the entry
- * and target markers. Next: a three.js scene (translucent vessel mesh from LoadedCase.mesh with toWorld,
- * OrbitControls) implementing the same PlanView, once David adds `three`
- * (team/requests/to-david-from-aroovee-threejs.md).
+ * Two faces (dual-view.ts): the three.js scene by default (the translucent vessel mesh from LoadedCase.mesh with
+ * toWorld, OrbitControls, risk zones, the route as the heavier teal trace, clickable branch-point handles, entry
+ * and target markers) and the shared 2D front drawing (case-svg.ts) as the flat alternative and WebGL fallback.
+ * In AR (A7) the same handles are picked with a controller, and the cost panel floats beside the model.
  */
 import type { LoadedCase } from '../contracts';
+import type { ArHooks } from './ar';
 import { drawCase, svgEl } from './case-svg';
+import { createDualView } from './dual-view';
 import './render.css';
 
 export interface PlanViewState {
@@ -36,16 +38,23 @@ export function drawMarkers(d: ReturnType<typeof drawCase>, layer: SVGGElement, 
   }
 }
 
-export function createPlanView(c: LoadedCase, onPick: PickHandler): PlanView {
+export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks): PlanView {
   const d = drawCase(c, `Front view of ${c.title}. Build the route with the list of next branch points.`, 'plan-hatch');
   const route = svgEl('polyline', { points: '', class: 'route-trace' });
   const handles = svgEl('g', { class: 'handles' });
   const markers = svgEl('g', { class: 'markers' });
   d.svg.append(route, handles, markers);
 
-  const element = document.createElement('div');
-  element.className = 'plan-view';
-  element.append(d.svg);
+  let last: PlanViewState | null = null;
+  const draw3d = (state: PlanViewState): void => {
+    const scene = dual.scene();
+    if (!scene) return;
+    scene.setRoute('player', scene.routePoints(state.entryNode, state.routeEdges), { colorToken: '--color-route-player', heavy: true });
+    scene.setHandles(state.pickable, onPick);
+    scene.setMarkers(state.entryNode, state.targetNode);
+  };
+  const dual = createDualView(c, `3D view of ${c.title}. Drag to turn it; click a branch point to extend the route, or use the list of next branch points.`, d.svg, 'plan-view', ar, () => last && draw3d(last));
+  const element = dual.element;
 
   const onClick = (ev: Event): void => {
     const id = (ev.target as Element).closest('[data-node]')?.getAttribute('data-node');
@@ -66,10 +75,12 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler): PlanView {
         handles.append(g);
       }
       drawMarkers(d, markers, state.entryNode, state.targetNode);
+      last = state;
+      draw3d(state);
     },
     dispose() {
       d.svg.removeEventListener('click', onClick);
-      element.remove();
+      dual.dispose();
     },
   };
 }

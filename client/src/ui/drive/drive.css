@@ -206,32 +206,6 @@
   color: var(--color-heading);
 }
 
-.segmented {
-  display: inline-flex;
-  padding: var(--space-1);
-  background: var(--color-surface);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-control);
-}
-
-.segment {
-  min-height: var(--size-control);
-  padding-inline: var(--space-3);
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius-field);
-  color: var(--color-text);
-  font: inherit;
-  letter-spacing: inherit;
-  cursor: pointer;
-}
-
-.segment[aria-pressed='true'] {
-  background: var(--color-surface-active);
-  color: var(--color-heading);
-  font-weight: var(--font-weight-medium);
-}
-
 .drive-banner {
   max-width: 100%;
   margin: 0;

@@ -89,12 +89,20 @@ function dismiss(how: 'dismissed' | 'done'): void {
   hide();
 }
 
+/**
+ * Beside the anchor when the page has room on its right (so the note covers nothing the step needs), else below it,
+ * else above. Positions are measured from the page at run time, not sizes from the design.
+ */
 function place(anchor: HTMLElement, el: HTMLElement): void {
   const r = anchor.getBoundingClientRect();
-  const below = r.bottom + el.offsetHeight < window.innerHeight || r.top < el.offsetHeight;
-  el.style.setProperty('--note-top', `${(below ? r.bottom : r.top - el.offsetHeight) + window.scrollY}px`);
-  el.style.setProperty('--note-left', `${Math.max(0, Math.min(r.left, document.documentElement.clientWidth - el.offsetWidth)) + window.scrollX}px`);
-  el.dataset.side = below ? 'below' : 'above';
+  const gap = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--space-3')) || 0;
+  const width = document.documentElement.clientWidth;
+  const side = r.right + gap + el.offsetWidth <= width ? 'beside' : r.bottom + el.offsetHeight < window.innerHeight || r.top < el.offsetHeight ? 'below' : 'above';
+  const top = side === 'beside' ? r.top - gap : side === 'below' ? r.bottom : r.top - el.offsetHeight;
+  const left = side === 'beside' ? r.right + gap : Math.max(0, Math.min(r.left, width - el.offsetWidth));
+  el.style.setProperty('--note-top', `${top + window.scrollY}px`);
+  el.style.setProperty('--note-left', `${left + window.scrollX}px`);
+  el.dataset.side = side;
 }
 
 function refresh(): void {

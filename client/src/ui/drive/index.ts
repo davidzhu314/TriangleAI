@@ -127,7 +127,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   let source: WireSource | null = null;
 
   // ---- view
-  const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire.`);
+  // AR (A7): the controller drives through the same step as a gamepad (window animation frames pause in an
+  // immersive session), and the HUD's words float beside the model.
+  let arStep: (pad: PadSnapshot | null) => void = () => undefined;
+  const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire. Drag to turn it.`, {
+    onFrame: (pad) => arStep(pad),
+    panel: () => [...casePanel.querySelectorAll('.hud-row')].map((r) => (r.textContent ?? '').replace(/s+/g, ' ').trim()),
+  });
   const startNode = graph.entries.get(plan.entryId);
   const targetNode = graph.targets.get(plan.targetId);
   const overview = routeOverview(c, startNode, plan.edges);
@@ -223,7 +229,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const banner = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-banner' });
   /** The fallback notice stays up for the rest of the drive (DESIGN.md: notices never stop the drive). */
   const notice = h('p', { class: 'drive-banner', role: 'status', 'aria-live': 'polite', 'data-testid': 'drive-notice' });
-  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch), notice, banner);
+  const top = h('div', { class: 'hud-top' }, h('div', { class: 'hud-top-row' }, modeLabel, expert ? h('span', { class: 'pill pill-neutral' }, 'Expert: X-ray only') : viewSwitch, view.toolbar), notice, banner);
 
   // ---- bottom right
   const restart = h('button', { type: 'button', class: 'btn btn-secondary' }, 'Restart');
@@ -318,14 +324,17 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
 
   let lastPad: PadSnapshot | null = null;
   let raf = 0;
-  const tick = (): void => {
-    const gp = typeof navigator.getGamepads === 'function' ? [...navigator.getGamepads()].find((g) => g) : null;
-    const pad: PadSnapshot | null = gp ? { axes: [...gp.axes], buttons: gp.buttons.map((b) => b.value) } : null;
+  const step = (pad: PadSnapshot | null): void => {
     if (padPuff(lastPad, pad)) triggerPuff();
     lastPad = pad;
     const frame = controlFrame(held, pad, puffPending);
     puffPending = false;
     source?.control(frame);
+  };
+  arStep = step;
+  const tick = (): void => {
+    const gp = typeof navigator.getGamepads === 'function' ? [...navigator.getGamepads()].find((g) => g) : null;
+    step(gp ? { axes: [...gp.axes], buttons: gp.buttons.map((b) => b.value) } : null);
     raf = requestAnimationFrame(tick);
   };
 
