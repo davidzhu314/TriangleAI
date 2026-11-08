@@ -302,7 +302,7 @@
   --color-route-3: #d4b84a;
   --color-route-4: #a09d9b;
 
-  --color-chart-1: #4fb4c8;
+  --color-chart-1: #8fb0db;
   --color-chart-2: #f4f2f1;
   --color-chart-3: #a09d9b;
   --color-grid: #2c2b2a;
@@ -312,7 +312,7 @@
   --color-scene-vessel: #b5b1ae;
   --opacity-scene-vessel: 0.4;
   --color-scene-wire: #f4f2f1;
-  --color-scene-ghost: #4fb4c8;
+  --color-scene-ghost: #8fb0db;
   --color-anatomy-artery: #e08591;
   --color-anatomy-vein: #8fb0db;
   --color-vein: #8fb0db;
@@ -320,7 +320,7 @@
   --color-body-bone: #8f897f;
   --color-body-heart: #9a6f6a;
   --color-marker-entry: #f4f2f1;
-  --color-marker-target: #4fb4c8;
+  --color-marker-target: #e08591;
 
   --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
