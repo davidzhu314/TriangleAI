@@ -45,6 +45,7 @@ The repo is a message bus only when someone opens a session to read it. Each of 
 | `tests/engine/`, `tests/fixtures/engine/`, `tests/crosscheck/`, `team/rehearsal/` | Gibran |
 | `metrics/<lane>/` | Each lane writes only its own (`metrics/david/`, `metrics/vaibhav/`, `metrics/aroovee/`, `metrics/gibran/`). Commit summaries, not raw high-frequency logs. |
 | `DECISIONS.md`, `THIRD_PARTY.md`, `docs/` | Shared, append-only |
+| `assets/vascular/` (staged BodyParts3D mesh, CC BY-SA 2.1 JP; stays outside `client/` until a request to all says otherwise) | Gibran |
 | `tests/fixtures/` root | Nobody. New fixtures go in a subfolder you own. |
 
 `client/src/wire/` is split between two owners; see `client/src/wire/README.md`. If you are about to create a file in `wire/` whose name does not match your globs, stop and file a request.
