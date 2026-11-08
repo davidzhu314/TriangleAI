@@ -39,13 +39,20 @@ export function railAutopilot(model: RailModel, state: RailState, dt: number, fl
   if (next === undefined) return { ...idle, push: 1 };
 
   const node = railEndNode(model, walked);
-  // the roll that enters `next` under the branch rule (steerRoll), else aim straight at it
-  const t = railHeading(model, walked, L);
-  const last = walked[walked.length - 1]!.edge;
-  const cands = (model.adjacency.get(node) ?? []).filter((id) => id !== last);
-  const dirs = cands.map((id) => railEdgeDirection(model, id, node));
-  const want = cands.indexOf(next);
-  const target = (want >= 0 ? steerRoll(t, model.preset.tipAngleDeg, dirs, want) : null) ?? bestRoll(t, railEdgeDirection(model, next, node));
+  // the roll that enters `next` under the branch rule (steerRoll), else aim straight at it. It
+  // depends only on the walked path and the next edge, so it is memoised in the model's cache: a
+  // branch that can't be aimed at runs a 360-roll search, which must not repeat on every tick.
+  const key = `steer:${walked.map((w) => (w.reversed ? '-' : '+') + w.edge).join(',')}>${next}`;
+  let target = model.cache.get(key) as number | undefined;
+  if (target === undefined) {
+    const t = railHeading(model, walked, L);
+    const last = walked[walked.length - 1]!.edge;
+    const cands = (model.adjacency.get(node) ?? []).filter((id) => id !== last);
+    const dirs = cands.map((id) => railEdgeDirection(model, id, node));
+    const want = cands.indexOf(next);
+    target = (want >= 0 ? steerRoll(t, model.preset.tipAngleDeg, dirs, want) : null) ?? bestRoll(t, railEdgeDirection(model, next, node));
+    model.cache.set(key, target);
+  }
   const err = model.preset.tipAngleDeg === 0 ? 0 : wrap(target - state.rollRad);
   const rotate = clamp1(err / (RAIL_ROLL_RAD_PER_S * dt));
   const aligned = Math.abs(err) < 1e-3;

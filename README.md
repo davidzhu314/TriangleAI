@@ -25,7 +25,7 @@ pip install -r physics/requirements-test.txt
 pytest physics
 ```
 
-Physics setup (CathSim) lives in `physics/README.md` (written in D1). The app runs without it, in rail mode.
+Physics setup (CathSim) and the D5 physics process (`python -m server` in `physics/`, on 127.0.0.1:8765) are in `physics/README.md`. The app runs without it, in rail mode.
 
 ## What's in the app
 
@@ -40,8 +40,15 @@ One case is one pass through six screens, each at its own hash route:
 | Drive | `#/case/<id>/drive` | Front and X-ray views, HUD (vessel, distance, wall force, fluoro), keyboard and gamepad, difficulty ladder |
 | Results | `#/case/<id>/results` | The one thing to change, plan and drive scores, stars, replay timeline, next case |
 
-- **Views are 2D for now.** Plan, Compare, Drive and Results draw the case as a flat front view in SVG, until three.js is added.
-- **Driving needs `client/src/wire/select.ts`, which isn't on main yet.** Until it lands, Drive shows the planned route and says driving isn't available. The end-to-end tests drive the full app through a test-only harness (`tests/e2e/harness/`) that plugs in the rail wire. The harness is never part of the build.
+- **Cases.** The Library lists the bundled cases from `client/public/cases/index.json`:
+  - the generated ladder: `low-tort`, `type-i-plaque`, `type-ii`, `type-ii-tortuous`, `type-iii`, `bovine`;
+  - `ts-s1404-cta`, a planning-only case exported from a real CT angiogram's arteries with 3D Slicer and SlicerVMTK (TotalSegmentator dataset, CC BY 4.0). How to reproduce it is in `slicer/README.md`;
+  - `fixture-y`.
+- **Views are 2D for now.** Plan, Compare, Drive and Results draw the case as a flat front view in SVG. three.js 0.187.0 is pinned as a dependency, but no screen uses it yet.
+- **Driving.** Drive gets its wire from `client/src/wire/select.ts` (D5). Every bundled case drives on the rail wire.
+  - A CathSim phantom served by the physics process drives on live physics. If the socket fails or stalls for 2 s, it falls back to rail with a notice.
+  - Phantom cards appear in the Library only once its probe points at the physics process: `PHYSICS_CASES_URL` in `client/src/ui/physics-probe.ts` is still `null`.
+  - There are no recorded physics runs, so replay mode is not offered.
 - **Design system:** `DESIGN.md`, `client/src/styles/tokens.css` and `theme.css`, light and dark (following the OS setting). Every colour and size in the UI is a token. Icons are in `client/src/assets/icons/`.
 - **Numbers:** every number on screen comes from the engine (`client/src/optimize`, `client/src/score`) or the case file, with a formula tooltip. A missing value shows as a dash.
 - **Mock build:** `VITE_ENGINE=mock pnpm build` runs on the engine mocks and shows a "Mock data" badge.
@@ -143,19 +150,19 @@ These live on the branch `lane/vaibhav-input`. They're tested, CI is green, and 
   - push-to-talk (hold V), cut off 0.7 s after release;
   - an optional wake word, "Hey Cathy";
   - an opt-in always-listen mode that only acts on "Hey Cathy, …", off by default, with a live-mic notice. Chrome streams the audio to Google while it's on.
-- **Status:** Aroovee approved all three features for after the demo, including always-listen, and decided that a hint marks the attempt "assisted". David's answer and the `CLAUDE.md` ownership row for `client/src/input/` are pending.
+- **Status:** David and Aroovee approved all three features for after the demo, including always-listen (off by default, with a live-mic notice). A hint marks the attempt "assisted", with no extra score penalty. The `CLAUDE.md` ownership row for `client/src/input/` waits until #22 merges.
 - **Docs:** the full guide, including the local webcam lab, is `client/src/input/README.md` on that branch.
 
 ### Open items
 
 - **Steering in the optimizer:** a `cannot_steer` constraint, so the optimizer never offers a route the rail can't steer. Needs a contract change (`team/requests/to-all-from-vaibhav-contract-steerability.md`).
-- **The §4.4 arch constraint and the two simulated measures:** need real recorded runs (D4).
+- **The §4.4 arch constraint and the two simulated measures:** need real recorded runs. D4 recorded none, because no driver reached a target, so they stay dropped (`DECISIONS.md`).
 - **Ladder tier 4 (whole-body planning):** needs a marker in the case format.
-- **Hand gestures and voice:** merge after the demo, once David answers.
+- **Hand gestures and voice:** approved by David and Aroovee for after the demo; PR #22 is still a draft.
 
 ## Changes: design system and screens (Aroovee)
 
-Each milestone has a handoff in `team/handoffs/` and screenshots in `metrics/aroovee/`. All were built on 2026-11-07 and are in PR #17 until it merges.
+Each milestone has a handoff in `team/handoffs/` and screenshots in `metrics/aroovee/`. All were built on 2026-11-07. A2–A6 merged in PR #17, and A8 in PR #30.
 
 - **A0, design system.**
   - `DESIGN.md`: the measured system, the screen inventory and the layout.
@@ -190,7 +197,7 @@ Each milestone has a handoff in `team/handoffs/` and screenshots in `metrics/aro
   - The difficulty ladder.
   - Banners: target reached, wall force, off route, fluoro over budget. A fallback notice says in words why the physics wire dropped to rail.
   - Finish or exit saves the drive's event log for Results.
-  - The wire comes only through `select.ts` or an injected factory. That one item is still open: `select.ts` isn't on main.
+  - The wire comes only through `select.ts` (on main since D5) or an injected factory.
 - **A6, Results screen.**
   - The engine's top feedback line, shown as written, with one action beside it (retry the drive, or revise the plan), then the next lines.
   - The plan score, with the check that set it.
@@ -206,13 +213,13 @@ Each milestone has a handoff in `team/handoffs/` and screenshots in `metrics/aro
   - Each screen passed Taste Skill v2.1.5's lint and inspector with 0 FAIL at 1440, 768 and 390 px, in light and dark.
 - **Team requests.**
   - Answered: the `cannot_steer` contract, Vaibhav's feedback voice review, hand input (after the demo), and hands, voice and assistant (after the demo).
-  - Open with David: `select.ts`, three.js, and the physics case index.
+  - Answered by David: `select.ts`, three.js (0.187.0, pinned), and the physics case index (`http://127.0.0.1:8765/cases/index.json`).
   - Open with Vaibhav: default weights, and the order of the feedback lines.
 
 ## Who owns what
 
-David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
+David (anatomy, case data, physics; release manager), Vaibhav (optimizer, rail wire, scoring), Aroovee (design system, screens, rendering, AR), Gibran (Teammate 4: engine verification, data and demo QA, including the NumPy cross-checks in `tests/crosscheck/`). Folder ownership and session rules: `CLAUDE.md`. Plan: `PLAN.md`. Spec: `docs/ThreadSim_Build_Specification.md`.
 
 ## Credits
 
-Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process.
+Third-party code, data and assets, with licenses: `THIRD_PARTY.md`. Physics mode, where available, is built on CathSim (research use, CC BY-NC-SA 4.0); its code and meshes stay in the separate physics process. The `ts-s1404-cta` case is derived from the TotalSegmentator dataset (University Hospital Basel, CC BY 4.0; Wasserthal et al., Radiology: AI 2023).

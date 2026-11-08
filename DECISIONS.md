@@ -203,3 +203,15 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Known gap:** VMTK merges the bifurcation regions of the closely spaced arch origins into one node, `n_b2`, with five edges. The branch edges still follow the real centerline along the arch to each origin. Without merging, VMTK drops those regions and the graph disconnects.
   - **Catalog:** listed after `bovine` and before `fixture-y`, outside the ladder (no anatomy tier).
 - 2026-11-07 · David · **Gibran lane approved (Teammate 4: engine verification, data and demo QA).** David and Aroovee both approved `team/requests/to-all-from-vaibhav-gibran-lane.md`. Folder ownership in `CLAUDE.md` matches the request: `tests/engine/`, `tests/fixtures/engine/`, `tests/crosscheck/` (moved from Vaibhav), `team/rehearsal/` and `metrics/gibran/` → Gibran; Vaibhav keeps `tests/fixtures/synthetic/` and `tests/fixtures/logs/`. Nothing moves from David's or Aroovee's folders. `client/src/input/` and `tests/fixtures/hands/` wait for PR #22. No contract change (still v1), no new dependency, no change to demo scope.
+- 2026-11-07 · Vaibhav · **Regret noise.** A sweep of every bundled case found type-i-plaque → lcca, where the two frontier routes tie: R = Rmax = 5.6e-17 of floating-point noise, so R/Rmax = 1 and a perfect drive on the best route scored plan 0 (1 star). Regrets within 1e-9 of zero now count as zero (`REGRET_EPS`, `score/plan.ts`); S is a sum of normalised costs in 0..1, so real gaps are many orders larger. No golden result changes.
+- 2026-11-07 · Vaibhav · **Gentleness reference: steerable route and early stop (amends "Gentleness reference without recorded runs").** On the real CTA case (ts-s1404-cta → lcca), the best-ranked frontier route can't be steered (until the optimizer's `cannot_steer` lands), so the reference autopilot retried for 300 s of simulation: 2.7 s of scoring. Changes:
+  - The reference is now the best-ranked frontier route that `steerableAt` accepts; if none is, the best one.
+  - A reference drive stops at its first wrong branch or prolapse.
+  - The autopilot memoises its roll per branch point, so a branch it can't aim at no longer reruns a 360-roll search every tick.
+  - Path fidelity prunes segments by a squared-distance bound.
+
+  On that case, scoring now takes ~26 ms. All golden results are byte-identical.
+- 2026-11-07 · David · **D7: Slicer script and licensing.**
+  - **Reproduction:** `slicer/export_case.py`, re-run headless in 3D Slicer 5.13.0 with SlicerVMTK 23190ba from the committed inputs in `slicer/cases/ts-s1404-cta/`, reproduces `client/public/cases/ts-s1404-cta/` byte for byte. No script or input change was needed.
+  - **THIRD_PARTY.md:** gained the remaining physics-process packages, the test and build tooling, and a note on what the client build ships. Each license was read from the package's own metadata or license file.
+  - **README:** its stale facts are corrected: `select.ts` landed, three.js is pinned but unused, the bundled cases including `ts-s1404-cta`, Gibran, and the merged PRs. The honesty line is unchanged.

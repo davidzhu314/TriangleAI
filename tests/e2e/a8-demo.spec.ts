@@ -243,19 +243,18 @@ test('1:00 Compare: the frontier shows its routes, and moving the safety slider 
   await expect(page).toHaveURL(/#\/case\/type-iii\/compare$/);
   const frontier = (await engine.optimize({ caseId: c.id, targetId: 'rcca' }, c)) as Frontier;
   const groups = model.groupRoutes(c, frontier);
-  const measures = model.visibleMeasures(frontier, null);
   const rank = engine.createRanker(frontier);
   const order = (w: Weights) => [...model.groupRanks(groups, rank(w)).entries()].sort((a, b) => a[1] - b[1]).map(([id]) => id);
   const rows = () => page.getByTestId('routes-table').locator('tbody tr[tabindex]').evaluateAll((els) => els.map((e) => e.getAttribute('data-route')));
   expect(groups.length).toBeGreaterThanOrEqual(3); // DEMO.md: "three routes" holds on this seed
   await expect(page.getByTestId('routes-table').locator('tbody tr[tabindex]')).toHaveCount(groups.length);
-  const before = order(model.startingWeights(measures));
+  const before = order(model.startingWeights(frontier.candidates));
   expect(await rows()).toEqual(before);
 
   const safety = page.locator('input[data-measure=proximityPenalty]');
   await safety.focus();
   await page.keyboard.press('End');
-  const after = order({ ...model.startingWeights(measures), proximityPenalty: Number(await safety.inputValue()) });
+  const after = order({ ...model.startingWeights(frontier.candidates), proximityPenalty: Number(await safety.inputValue()) });
   expect(after).not.toEqual(before);
   await expect.poll(rows).toEqual(after);
 

@@ -7,11 +7,10 @@
  * its formula tooltip. With no saved drive the screen says so; it never shows a made-up result.
  */
 import type { CaseResult, FeedbackLine, LoadedCase, WireEvent } from '../../contracts';
-import { optimize } from '../../optimize';
+import { defaultWeights, optimize } from '../../optimize';
 import { createReplayView } from '../../render/replay-view';
 import { svgEl } from '../../render/case-svg';
 import { bestStars, replayTimeline, scoreAttempt, type ReplayTimeline, type ScoreInput } from '../../score';
-import { startingWeights, visibleMeasures } from '../compare/model';
 import { dash, h } from '../dom';
 import { labelled, type IconName } from '../icons';
 import { FORMULA_TEXT } from '../plan/cost-rows';
@@ -247,7 +246,8 @@ export interface ResultsOptions {
 export async function mountResults(root: HTMLElement, { key, c, drive }: ResultsOptions): Promise<void> {
   const optimized = await optimize({ caseId: c.id, targetId: drive.plan.targetId }, c);
   const frontier = optimized.kind === 'frontier' ? optimized : null;
-  const weights = drive.plan.weights ?? startingWeights(visibleMeasures(frontier, null).filter((m) => frontier?.routes.some((r) => r.cost[m.key] !== undefined)));
+  // A drive saved without weights (Compare skipped) is scored at the engine's defaults, as V5 does.
+  const weights = drive.plan.weights ?? defaultWeights(frontier ? frontier.candidates : []);
   const input: ScoreInput = { log: drive.log, optimized, weights, case: c };
 
   let result: CaseResult;
