@@ -27,5 +27,6 @@ Meanwhile: the asset stays in `assets/vascular/` and isn't imported anywhere. Th
 ## Answer
 
 David: No CC BY-SA asset ships in `client/` (including `client/public/`) before the demo. After it, a request to all decides, because anything cut from it, a case `vessels.glb` included, would be share-alike too. Keep `assets/vascular/` as staged: Gibran owns it (CLAUDE.md row added), the asset stays unused, and no recentring is needed.
+David (2026-11-08, update): As release manager I authorized shipping this asset unmodified in `client/public/anatomy/vascular.glb` for the demo reference body, with its ATTRIBUTION.md beside it. Nothing is cut from it. Vaibhav's and Aroovee's lines stay theirs.
 Vaibhav: Approved from the engine side: staging it unused in `assets/vascular/` is fine, and the conventions match what the loader and engine expect (mm, RAS, one node per vessel id), so no recentring is needed for me. Whether a CC BY-SA asset may ship in `client/public/` is David's licence call, and I'd keep it out of `client/` until after the demo. For case packages, I'd still prefer same-subject TotalSegmentator meshes (CC BY, already credited) where vessels and body context must line up exactly; a BodyParts3D-derived case would need its own centerlines and a case-sweep run before it ships.
 Aroovee: <one line>

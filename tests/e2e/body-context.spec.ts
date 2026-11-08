@@ -121,20 +121,37 @@ test('turning Body on shows the "bone" and "heart" nodes; off hides them; the ch
   await expect(page.locator('.plan-view')).toHaveAttribute('data-anatomy-body', 'true', { timeout: SCENE_MS });
 });
 
-// Since #68 every real CT case has its context.glb; low-tort and type-iii are generated and have none.
+// Since #68 every real CT case has its context.glb; low-tort and type-iii are generated and have none. They get the
+// shipped reference body (client/public/anatomy/vascular.glb), aligned to the case.
 for (const id of ['low-tort', 'type-iii']) {
-  test(`${id}, with no context.glb: no Body toggle, the layer exactly as before, and nothing logged`, async ({ page }) => {
+  test(`${id}, with no context.glb: no Body toggle, the aligned reference body, and nothing logged`, async ({ page }) => {
     const errors = pageErrors(page);
     await openPlan(page, id);
     const view = page.locator('.plan-view');
-    await expect(view).toHaveAttribute('data-anatomy-model', 'placeholder');
+    await expect(view).toHaveAttribute('data-anatomy-model', 'model');
     await page.getByRole('button', { name: 'Anatomy' }).click();
     await expect(panel(page).getByLabel('Body')).toHaveCount(0);
     for (const name of ['Show anatomy', 'Arteries', 'Veins', 'Labels']) await expect(panel(page).getByLabel(name)).toBeVisible();
-    await expect(panel(page)).toContainText('Placeholder model');
+    await expect(panel(page)).toContainText("Reference body (BodyParts3D), aligned to this case. Not this patient's anatomy.");
+    await panel(page).getByLabel('Show anatomy').check();
+    await expect(view).toHaveAttribute('data-anatomy', 'ready');
     expect(errors).toEqual([]);
   });
 }
+
+test('without the reference body file, a generated case keeps the placeholder (fail-soft)', async ({ page }) => {
+  await page.route('**/anatomy/vascular.glb', (route) => route.fulfill({ status: 404, body: 'not here' }));
+  await openPlan(page, 'type-iii');
+  await expect(page.locator('.plan-view')).toHaveAttribute('data-anatomy-model', 'placeholder');
+  await page.getByRole('button', { name: 'Anatomy' }).click();
+  await expect(panel(page)).toContainText('Placeholder model');
+});
+
+test('a case with no alignment shows no reference body, and says why', async ({ page }) => {
+  await openPlan(page, 'fixture-y');
+  await page.getByRole('button', { name: 'Anatomy' }).click();
+  await expect(panel(page)).toContainText('No alignment for this case');
+});
 
 for (const id of ['ts-s1404-cta', 'ts-s1336-cta', 'ts-s0727-cta']) {
   test(`${id}: its own context.glb (David's export, no fixture) gives the Body toggle`, async ({ page }) => {

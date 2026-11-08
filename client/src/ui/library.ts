@@ -15,7 +15,7 @@ import { h, replace } from './dom';
 import { art } from './icons';
 import { importPanel, type ImportPanel } from './import-panel';
 import { probePhysicsCases } from './physics-probe';
-import { href } from './router';
+import { href, parseRoute } from './router';
 import { honestyLine, renderShell } from './shell';
 import type { CatalogEntry } from './store';
 import { addPhysicsCase, caseMeta, catalog, entry, loadBundled, nextCase, saveCaseMeta, stageFor, starsFor } from './store';
@@ -199,6 +199,8 @@ export async function renderLibrary(root: HTMLElement): Promise<void> {
     );
     return;
   }
+  // The trainee may have left while the cases loaded (Settings, a case): don't draw the Library over that screen.
+  if (parseRoute(location.hash).name !== 'library') return;
 
   const nameInput = h('input', { type: 'text', id: 'add-case-name', class: 'input', autocomplete: 'off', 'data-testid': 'add-case-name' }) as HTMLInputElement;
   const synopsisInput = h('textarea', { id: 'add-case-synopsis', class: 'input', rows: '3', 'data-testid': 'add-case-synopsis' }) as HTMLTextAreaElement;

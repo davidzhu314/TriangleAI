@@ -1,5 +1,6 @@
 /**
- * The anatomy layer and its controls (feature/vascular-ui), on the production build with the placeholder model.
+ * The anatomy layer and its controls (feature/vascular-ui), on the production build with the shipped reference body
+ * (client/public/anatomy/vascular.glb, BodyParts3D) aligned to the case.
  * WebGL is software-drawn here, so the tests read what the layer reports on its view (data-anatomy*) and the
  * labels it puts in the page, not pixels.
  */
@@ -20,7 +21,7 @@ test('the layer is off until asked for, then loads the model with arteries, vein
   await expect(button).toHaveAttribute('aria-expanded', 'false');
   await button.click();
   await expect(panel(page)).toBeVisible();
-  await expect(panel(page)).toContainText('Placeholder model');
+  await expect(panel(page)).toContainText('Reference body (BodyParts3D), aligned to this case');
   await panel(page).getByLabel('Show anatomy').check();
   await expect(view).toHaveAttribute('data-anatomy', 'ready');
   const [arteries, veins, labels] = (await view.getAttribute('data-anatomy-counts'))!.split('/').map(Number);
@@ -86,10 +87,12 @@ test('Reset camera puts the view back where it opened', async ({ page }) => {
 
 test('Drive hides the layer in X-ray without changing the settings', async ({ page }) => {
   await page.addInitScript(() => {
-    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } }));
+    // low-tort: a generated case with an alignment, so the reference body loads (fixture-y has none).
+    const edges = ['e_r_iliac', 'e_aorta_desc', 'e_arch_distal', 'e_arch_proximal', 'e_bca', 'e_rcca'];
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'low-tort': { entryId: 'fem_r', targetId: 'rcca', presetId: 'soft_angled', edges } }));
     localStorage.setItem('threadsim.anatomy.v1', JSON.stringify({ visible: true, arteries: true, veins: true, labels: true, opacity: 0.35 }));
   });
-  await page.goto('/#/case/fixture-y/drive');
+  await page.goto('/#/case/low-tort/drive');
   const view = page.locator('.drive-view');
   await expect(view).toHaveAttribute('data-anatomy', 'ready');
   await expect(view).toHaveAttribute('data-anatomy-arteries', 'true');
