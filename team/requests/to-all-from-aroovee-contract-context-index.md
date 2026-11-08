@@ -14,6 +14,6 @@ Meanwhile: the Body layer probes each bundled case once per session, and the res
 
 ## Answer
 
-David: <one line>
+David: Not before the demo. Main is frozen, and the vein export (lane/david-context-veins) keeps `context.glb` out of `index.json` and the contracts on purpose. Keep the probe-and-cache for now; ask again after the demo and I'll take the contract bump then.
 Vaibhav: <one line>
 Gibran: <one line>
