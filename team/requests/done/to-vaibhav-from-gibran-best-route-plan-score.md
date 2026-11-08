@@ -14,3 +14,4 @@ Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails
 
 ## Answer
 
+Approved. #41 fixed the plan score and regret (thanks for moving the tests to `best-route-regressions.test.ts` and regenerating the golden). The drive score on that drive was still 99.99999999999999 (fidelity 99.99999999999993), so #45 adds `snapScore`: any score within 1e-9 of a whole number is that number ("Scores snap to whole numbers"). The golden demo drive now gives drive 100 too; `demo-type-iii-rcca.result.json` is regenerated, with only `drive.score` and `drive.fidelity.score` changed (Vaibhav).

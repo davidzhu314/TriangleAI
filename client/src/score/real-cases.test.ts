@@ -14,9 +14,10 @@ import type { CaseJson, CenterlinesJson, EventLog, Frontier, LoadedCase, Route }
 import { buildTestLoadedCase } from '../optimize/case-builder.testutil';
 import { buildGraph } from '../optimize/graph';
 import { optimizeCase } from '../optimize/optimizer';
-import { DEFAULT_WEIGHTS, measureRanges, rankRoutes } from '../optimize/rank';
+import { DEFAULT_WEIGHTS, defaultWeights, measureRanges, rankRoutes } from '../optimize/rank';
 import { steerableAt } from '../optimize/steerability';
 import { RailWireSource } from '../wire/rail-source';
+import { snapScore } from './constants';
 import { regretScore } from './plan';
 import { forceReference } from './reference';
 import { referenceFor, scoreCase } from './score';
@@ -103,5 +104,27 @@ describe('gentleness reference on a case with unsteerable frontier routes', () =
     const ref = forceReference(c, bad, 30);
     expect(ref.reached).toBe(false);
     expect(performance.now() - t0).toBeLessThan(200);
+  });
+});
+
+describe('scores snap to whole numbers (request from Gibran)', () => {
+  it('snapScore removes floating-point dust and leaves real fractions alone', () => {
+    expect(snapScore(99.99999999999997)).toBe(100);
+    expect(snapScore(100.00000000000001)).toBe(100);
+    expect(snapScore(5.551115123125783e-17)).toBe(0);
+    expect(snapScore(87.5)).toBe(87.5);
+    expect(snapScore(99.9999)).toBe(99.9999);
+  });
+
+  it('type-iii → rcca demo: the best route, driven cleanly, scores exactly 100, with regret exactly 0', async () => {
+    const c = await bundled('type-iii');
+    const f = optimizeCase(buildGraph(c), { caseId: c.id, targetId: 'rcca' }) as Frontier;
+    const weights = defaultWeights(f.candidates);
+    const top = f.routes.find((r) => r.id === rankRoutes(f.routes, measureRanges(f.candidates), weights).order[0]!.routeId)!;
+    const r = scoreCase({ log: await autopilotLog(c, 'rcca', top), optimized: f, weights, case: c });
+    expect(r.plan.regret).toBe(0);
+    expect(r.plan.score).toBe(100);
+    expect(r.drive.score).toBe(100);
+    for (const k of ['fidelity', 'gentleness', 'radiation', 'errors'] as const) expect(r.drive[k].score, k).toBe(100);
   });
 });

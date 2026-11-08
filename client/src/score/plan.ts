@@ -11,7 +11,7 @@
 import type { CostVector, Frontier, MeasureKey, NoSafeRoute, OptimizeResult, PlanScore, Route, Weights } from '../contracts';
 import { dominates, MEASURE_KEYS } from '../optimize/frontier';
 import { measureRanges, normalisedCost, normaliseWeights, rankRoutes, weightedScore, type MeasureRanges } from '../optimize/rank';
-import { PLAN_CAPS } from './constants';
+import { PLAN_CAPS, snapScore } from './constants';
 
 /**
  * Regrets this close to zero are floating-point noise, not a real difference: S is a sum of
@@ -24,7 +24,7 @@ const snap = (x: number) => (Math.abs(x) <= REGRET_EPS ? 0 : x);
 /** 100·(1 − min(1, R/Rmax)); 100 when Rmax is 0 (or noise). */
 export function regretScore(regret: number, regretMax: number): number {
   if (snap(regretMax) <= 0) return 100;
-  return 100 * (1 - Math.min(1, Math.max(0, snap(regret)) / regretMax));
+  return snapScore(100 * (1 - Math.min(1, Math.max(0, snap(regret)) / regretMax)));
 }
 
 /** The measure with the largest w_k·(ĉ_k(player) − ĉ_k(best)), when that is above 0. Ties go to measure order. */
