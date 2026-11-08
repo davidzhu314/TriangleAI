@@ -15,7 +15,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { LoadedCase, RiskTier, Vec3 } from '../contracts';
 
 import { centre, closeUpBox, extent, inside, type Box } from './framing';
-import { token, tokenMs, tokenNumber } from './tokens';
+import { THEME_EVENT, token, tokenMs, tokenNumber } from './tokens';
 const color = (name: string): THREE.Color => {
   const v = token(name);
   return v ? new THREE.Color(v) : new THREE.Color();
@@ -490,6 +490,7 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       renderer.setAnimationLoop(null);
       resize.disconnect();
       themeQuery.removeEventListener('change', retheme);
+      window.removeEventListener(THEME_EVENT, retheme);
       canvas.removeEventListener('pointerup', onPointerUp);
       controls.dispose();
       disposeObject(content);
@@ -512,6 +513,7 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
   };
   const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
   themeQuery.addEventListener('change', retheme);
+  window.addEventListener(THEME_EVENT, retheme);
   retheme();
   api.setVessels({ colorToken: '--color-scene-vessel', opacity: tokenNumber('--opacity-scene-vessel'), zones: true });
 

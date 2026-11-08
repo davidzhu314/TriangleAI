@@ -70,8 +70,9 @@ function view(key: string): View {
   const finish = document.querySelector<HTMLElement>('[data-testid=finish-drive]');
   const compare = document.querySelector<HTMLButtonElement>('[data-testid=compare]');
   return {
-    screen: route.name,
-    onTutorialCase: route.name !== 'library' && route.key === key,
+    // Settings is off the case flow: the tutorial treats it like the Library (not on a case).
+    screen: route.name === 'settings' ? 'library' : route.name,
+    onTutorialCase: route.name !== 'library' && route.name !== 'settings' && route.key === key,
     routeComplete: !!compare && !compare.disabled,
     targetReached: !!finish && !finish.hidden,
   };

@@ -12,7 +12,7 @@ import type { Vec3 } from '../contracts';
 import type { AnatomyConfig } from './anatomy-config';
 import { classify, fitToBox, labelFor, shows, type AnatomyState, type VesselKind } from './anatomy-model';
 import type { CaseScene } from './scene3d';
-import { token, tokenNumber } from './tokens';
+import { THEME_EVENT, token, tokenNumber } from './tokens';
 
 export interface AnatomyInfo {
   arteries: number;
@@ -76,6 +76,7 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
   recolor();
   const themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
   themeQuery.addEventListener('change', recolor);
+  window.addEventListener(THEME_EVENT, recolor);
 
   // Labels: DOM text pinned to the model, so they use the page's type and tokens.
   const labels = new CSS2DRenderer();
@@ -209,6 +210,7 @@ export function createAnatomyLayer(scene: CaseScene, config: AnatomyConfig, host
       stopFrame();
       resize.disconnect();
       themeQuery.removeEventListener('change', recolor);
+      window.removeEventListener(THEME_EVENT, recolor);
       labels.domElement.remove();
       scene.content.remove(holder);
       holder.traverse((o) => (o as THREE.Mesh).geometry?.dispose());
