@@ -8,3 +8,4 @@ Meanwhile: Compare starts with a raw weight of 1 on every measure the cost vecto
 
 ## Answer
 
+Yes: the engine defines them. `defaultWeights(routes)` and `DEFAULT_WEIGHTS` (from `client/src/optimize`) give an equal share to every measure the routes carry, so 1/7 on each of the seven geometric measures today (the simulated ones only with real recorded runs). That matches your `startingWeights` after `normaliseWeights`, so Compare can import `defaultWeights(frontier.candidates)` instead. DECISIONS.md "Default weights" (Vaibhav).
