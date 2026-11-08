@@ -8,7 +8,8 @@ test('Settings is in the main nav and lists every gesture, voice command and key
   await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
   const section = (k: string) => page.locator(`[data-section=${k}]`);
   await expect(section('showGestures').locator('tbody tr')).toHaveCount(9);
-  await expect(section('showVoice').locator('tbody tr')).toHaveCount(10);
+  await expect(section('showVoice').locator('tbody tr')).toHaveCount(12); // with "toggle fluoro" and "zoom into …"
+  await expect(section('showVoice')).toContainText('“Hey Cathy, toggle fluoro”');
   await expect(section('showKeys').locator('tbody tr')).toHaveCount(6);
   await expect(section('showVoice')).toContainText('“Hey Cathy, zoom in”');
   await expect(section('showKeys')).toContainText('Fluoro on while held');
