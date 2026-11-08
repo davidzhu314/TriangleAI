@@ -18,11 +18,18 @@ The count is the number of option edges, but the vessels are deduplicated, so tw
 
 - none
 
-### "Best next artery" on a route the rail wire can't steer
+### "Best next artery" without the graph, on a route the rail wire can't steer
 
-The assistant follows the top-ranked frontier route; the optimizer does not yet check steering (`cannot_steer` waits on a contract bump).
+Without `graph`, the assistant follows the top-ranked frontier route even when the wire can't steer it. With `graph` (#51), the test checks that "best" is always steerable: 319 plan states, all passing. Callers should pass `graph`.
 
 - ts-s1404-cta → lcca: best is `fem_l · soft_angled · e_l_iliac,e_aorta_1,e_lcca`; rail can't steer at n_b2 into e_lcca (takeoff 73° vs tip 45°)
+
+### Where Cathy says "try another wire or entry" (with the graph, at the start of planning)
+
+- ts-s1404-cta → rcca, fem_r · standard_j: "This wire can't steer into any of the ways on from here; try another wire or entry."
+- ts-s1404-cta → rcca, fem_l · standard_j: "This wire can't steer into any of the ways on from here; try another wire or entry."
+- ts-s1404-cta → lcca, fem_r · soft_angled: "This wire can't steer into any of the ways on from here; try another wire or entry."
+- ts-s1404-cta → lcca, fem_l · soft_angled: "This wire can't steer into any of the ways on from here; try another wire or entry."
 
 ## Not covered yet
 
