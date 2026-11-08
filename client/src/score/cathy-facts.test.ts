@@ -87,11 +87,14 @@ describe('assist_check lines (deterministic, LLM off)', () => {
       }
       inputs.push(push);
       state = step(model, state, push, RAIL_DT_S).state;
-      if (lines.includes('assist.pull_back')) break;
+      if (lines.includes('assist.pull_back') || lines.includes('assist.past_opening')) break;
     }
     expect(lines[0]).toBe('assist.on_plan');
     expect(lines).toContain('assist.wrong_branch_ahead');
-    expect(lines.indexOf('assist.wrong_branch_ahead')).toBeLessThan(lines.indexOf('assist.pull_back'));
+    // off the plan: "pull back", or "gone past the opening" when the tip stayed in a vessel the plan uses
+    const off = Math.max(lines.indexOf('assist.pull_back'), lines.indexOf('assist.past_opening'));
+    expect(off).toBeGreaterThan(-1);
+    expect(lines.indexOf('assist.wrong_branch_ahead')).toBeLessThan(off);
   });
 
   it('plan: the first mark when there is one, else the best way on', () => {
