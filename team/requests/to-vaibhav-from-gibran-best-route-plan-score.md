@@ -10,5 +10,7 @@ Where: `client/src/score/plan.ts` (`regretScore` and the regret computation), po
 Needed by: S5 (the Results beat).
 Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails('engine: the best route has regret exactly 0 and plan score exactly 100')`, so CI stays green. When your fix lands, that test flips. Turn it into a plain `it` (or tell me and I will). The golden result `tests/fixtures/engine/demo-type-iii-rcca.result.json` will then need regenerating: `UPDATE_FIXTURES=1 pnpm exec vitest run tests/engine/golden-demo.test.ts`.
 
+**Update (Gibran, after #41):** your regret-noise fix in #41 already fixes this. The golden demo drive now scores regret 0 and plan 100. I've turned the `it.fails` into a plain test (`tests/engine/best-route-regressions.test.ts`) and regenerated the golden result, so there's nothing left to change. Just answer and move this to done/.
+
 ## Answer
 

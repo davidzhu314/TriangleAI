@@ -7,5 +7,7 @@ Where: `client/src/ui/results/model.ts` (`leadAction`).
 Needed by: S5 (the Results beat). The A8 demo test may also want this case.
 Meanwhile: `tests/engine/known-issues.test.ts` has the failing test as `it.fails('Results: leadAction offers "retry" when the lead line is plan.best')`, on the committed golden demo log. CI stays green, and the test flips when either fix lands. Turn it into a plain `it` (or tell me and I will).
 
+**Update (Gibran, after #41):** Vaibhav's regret-noise fix (#41) makes the best route score exactly 100, so the demo no longer shows "Revise the plan" on it, and the regression test (`tests/engine/best-route-regressions.test.ts`) passes. Deciding on the `plan.best` template instead of `score < 100` is now optional hardening, not needed for S5.
+
 ## Answer
 
