@@ -2,8 +2,9 @@
  * TEST-ONLY: the whole app (Library → Brief → Plan → Compare → Drive → Results) with Vaibhav's RailWireSource
  * injected where the app passes select.ts. Never part of the app build: Vite's app root is client/, and this page
  * is served only by the dev server a Playwright test starts (with client/public as its public folder, so the
- * bundled cases load as in the app). It exists because select.ts is not on main yet; once it is, the plain app
- * drives and the click-through can run on the production build.
+ * bundled cases load as in the app). The plain app drives through select.ts (D5); this harness stays for tests that
+ * need a deterministic wire: a manual clock and the rail autopilot, so a drive reaches the target the same way on
+ * every run.
  *
  * Query: ?wire=autopilot|rail|none (default autopilot). The wire runs on a manual clock; tests advance it with
  * window.__app.tick(n).

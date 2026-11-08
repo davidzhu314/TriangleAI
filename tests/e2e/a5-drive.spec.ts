@@ -1,7 +1,7 @@
 /**
- * Drive screen on the production build, before select.ts exists. The plan is put in session storage the way Plan
- * and Compare save it. With no wire, the HUD shows dashes and the screen says driving isn't available yet: no
- * number is made up. Controls, the view switch, the contrast puff and the difficulty ladder work without a wire.
+ * Drive screen on the production build, with the wire from select.ts (D5: bundled cases drive on rail). The plan
+ * is put in session storage the way Plan and Compare save it. The no-wire state ("Driving isn't available") is
+ * covered in a5-drive-wire.spec.ts through the harness, since the app always has a wire now.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -50,11 +50,17 @@ test('with no plan, Drive sends you to Plan in words', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Go to Plan' })).toBeVisible();
 });
 
-test('without a wire, the HUD shows dashes and the screen says so; nothing is made up', async ({ page }) => {
+test('the plain app drives on rail through select.ts, and the HUD follows the wire', async ({ page }) => {
   await openDrive(page, 'fixture-y');
-  await expect(page.getByTestId('drive-banner')).toHaveText("Driving isn't available yet in this build. The view shows your planned route.");
-  await expect(page.getByTestId('drive-mode')).toHaveText('Front view · wire not connected');
-  for (const id of ['hud-vessel', 'hud-distance', 'hud-fluoro', 'hud-force']) await expect(page.getByTestId(id)).toContainText('—');
+  await expect(page.getByTestId('drive-mode')).toHaveText('Front view · rail mode');
+  await expect(page.getByTestId('drive-banner')).not.toContainText("isn't available");
+  const distance = page.getByTestId('hud-distance');
+  await expect(distance).not.toContainText('—'); // from WireState and the planned route, once the wire starts
+  const cm = async () => Number((await distance.innerText()).replace(/[^0-9.]/g, ''));
+  const before = await cm();
+  await page.keyboard.down('KeyW');
+  await expect.poll(cm).toBeLessThan(before);
+  await page.keyboard.up('KeyW');
   await expect(page.getByText('Training case (not a patient)')).toBeVisible();
   await expect(page.getByText('Not a clinical device; no claim of patient benefit.')).toHaveCount(0); // never on the Drive HUD
   await expect(page.locator('.drive-view .ghost-trail')).not.toHaveAttribute('points', '');
@@ -79,7 +85,7 @@ test('X-ray view: vessels only during a contrast puff, which then fades', async 
   await page.getByRole('button', { name: 'X-ray' }).click();
   const view = page.locator('.drive-view');
   await expect(view).toHaveAttribute('data-mode', 'xray');
-  await expect(page.getByTestId('drive-mode')).toHaveText('X-ray · wire not connected');
+  await expect(page.getByTestId('drive-mode')).toHaveText('X-ray · rail mode');
   await page.keyboard.press('KeyC');
   await expect(view).toHaveClass(/contrast-fading/);
 });

@@ -3,29 +3,27 @@
  * beats; every expected value comes from the engine in this process (routeFor, optimize, the Compare model,
  * scoreAttempt), never a literal.
  *
- * Wire: client/src/wire/select.ts is not on main yet, so the plain app can't drive. While it is missing, the beats
- * run in the test-only app harness (tests/e2e/harness/app.html), which injects RailWireSource where the app passes
- * select.ts. Once select.ts exists the spec switches by itself to the production build that playwright.config.ts
- * serves (vite build + preview), and the presenter drives with the keys. S5's "against the production build" is
- * unmet until then (A8 handoff).
+ * It runs against the production build that playwright.config.ts serves (vite build + preview). The wire comes from
+ * select.ts (rail for bundled cases, on its real-time clock), and the presenter drives with the keys. Which keys to
+ * hold is worked out here from Vaibhav's rail model: hold W alone when that reaches the target, otherwise hold D or A
+ * for a moment first. If a drive goes off the planned route, the presenter restarts and tries the next way.
  *
  * A8_VIDEO=1 records the run at 1440 × 900 (the backup demo video) into test-results/.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import { createServer, type ViteDevServer } from 'vite';
 import type { EventLog, Frontier, LoadedCase, Weights } from '../../client/src/contracts';
 import { writeZip } from '../../tools/lib/zip';
+import config from '../../playwright.config';
 
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(120_000);
 
-const PRODUCTION = existsSync(join(process.cwd(), 'client', 'src', 'wire', 'select.ts'));
 const NEVER_SAY = ['realistic catheter simulation', 'safer for patients', 'clinically validated', 'optimal route'];
 
 let vite: ViteDevServer;
-let devBase = '';
 let context: BrowserContext;
 let page: Page;
 let engine: typeof import('../../client/src/optimize');
@@ -34,16 +32,15 @@ let model: typeof import('../../client/src/ui/compare/model');
 let rowsMod: typeof import('../../client/src/ui/plan/cost-rows');
 let warn: typeof import('../../client/src/ui/plan/warnings');
 let steps: typeof import('../../client/src/ui/plan/route-state');
+let railMod: typeof import('../../client/src/wire/rail-source');
 const cases = new Map<string, LoadedCase>();
 
-/** The app's address: the production preview once select.ts exists, else the harness on the dev server. */
-const app = (hash: string): string => (PRODUCTION ? `/${hash}` : `${devBase}/tests/e2e/harness/app.html?wire=autopilot${hash}`);
+/** The app's address on the production preview. */
+const app = (hash: string): string => `/${hash}`;
 
 test.beforeAll(async ({ browser }: { browser: Browser }) => {
-  vite = await createServer({ configFile: false, root: process.cwd(), publicDir: 'client/public', logLevel: 'silent', server: { port: 0, strictPort: false, hmr: false }, appType: 'mpa' });
-  await vite.listen();
-  const addr = vite.httpServer?.address();
-  devBase = typeof addr === 'object' && addr ? `http://localhost:${addr.port}` : '';
+  // Only to load the engine here for expected values; the page itself is the production build.
+  vite = await createServer({ configFile: false, root: process.cwd(), logLevel: 'silent', server: { middlewareMode: true, hmr: false }, appType: 'custom' });
   const load = <T>(p: string) => vite.ssrLoadModule(p) as Promise<T>;
   engine = await load('/client/src/optimize/index.ts');
   score = await load('/client/src/score/index.ts');
@@ -51,6 +48,7 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
   rowsMod = await load('/client/src/ui/plan/cost-rows.ts');
   warn = await load('/client/src/ui/plan/warnings.ts');
   steps = await load('/client/src/ui/plan/route-state.ts');
+  railMod = await load('/client/src/wire/rail-source.ts');
   const { loadCase } = await load<typeof import('../../client/src/case')>('/client/src/case/index.ts');
   for (const id of ['type-iii', 'fixture-y', 'low-tort']) {
     const r = await loadCase({ kind: 'files', origin: 'bundled', files: caseFiles(id) });
@@ -58,7 +56,7 @@ test.beforeAll(async ({ browser }: { browser: Browser }) => {
     cases.set(id, r.case);
   }
   const video = process.env.A8_VIDEO ? { recordVideo: { dir: 'test-results/a8-video', size: { width: 1440, height: 900 } } } : {};
-  context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light', ...(PRODUCTION ? { baseURL: 'http://localhost:4173' } : {}), ...video });
+  context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light', baseURL: config.use?.baseURL ?? 'http://localhost:4173', ...video });
   await context.addInitScript(() => {
     if (sessionStorage.getItem('a8.fresh')) return;
     sessionStorage.setItem('a8.fresh', '1');
@@ -112,26 +110,79 @@ async function planRoute(c: LoadedCase, entryId: string, targetId: string, prese
   }
 }
 
-/** Let two frames pass so held keys reach the wire, then advance the harness's manual clock. */
-async function tick(n: number) {
-  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-  return page.evaluate((k) => window.__app.tick(k), n);
+interface KeyRecipe {
+  /** Hold D (1) or A (−1) for holdMs before pushing; 0 ms means push straight away. */
+  dir: 1 | -1;
+  holdMs: number;
 }
 
-async function driveToTarget(): Promise<void> {
-  if (PRODUCTION) {
+/**
+ * Ways to drive a route with the keys, from Vaibhav's rail model on a manual clock: rotate for k ticks, then push
+ * until the target. Each window of k that reaches the target gives one recipe at its middle, widest window first,
+ * so a real-time key hold a few ticks off still lands inside it. Pushing straight away comes first when it works.
+ */
+async function keyRecipes(c: LoadedCase, entryId: string, targetId: string, presetId: string, edges: readonly string[]): Promise<KeyRecipe[]> {
+  const reaches = async (dir: 1 | -1, k: number): Promise<boolean> => {
+    const rail = new railMod.RailWireSource({ clock: 'manual' });
+    let at = false;
+    let off = false;
+    const planned = new Set(edges);
+    rail.onState((st) => {
+      at = st.atTarget;
+      off ||= !planned.has(st.edge); // a wrong branch: this way has failed, stop simulating it
+    });
+    await rail.start({ case: c, entryId, targetId, presetId: presetId as 'soft_angled', path: [...edges] });
+    for (let i = 0; i < k; i++) {
+      rail.control({ push: 0, rotate: dir, fluoro: false, contrastPuff: false });
+      rail.tick();
+    }
+    for (let i = 0; i < 3000 && !at && !off; i++) {
+      rail.control({ push: 1, rotate: 0, fluoro: false, contrastPuff: false });
+      rail.tick();
+    }
+    await rail.stop();
+    return at;
+  };
+  const tickMs = 1000 / 30;
+  if (await reaches(1, 0)) return [{ dir: 1, holdMs: 0 }]; // pushing alone works: no rotation needed
+  const windows: { dir: 1 | -1; from: number; to: number }[] = [];
+  for (const dir of [1, -1] as const) {
+    let open: number | null = null;
+    for (let k = 0; k <= 91; k++) {
+      const ok = k <= 90 && (await reaches(dir, k));
+      if (ok && open === null) open = k;
+      if (!ok && open !== null) {
+        windows.push({ dir, from: open, to: k - 1 });
+        open = null;
+      }
+    }
+  }
+  windows.sort((a, b) => Number(b.from === 0) - Number(a.from === 0) || b.to - b.from - (a.to - a.from));
+  return windows.map((w) => ({ dir: w.dir, holdMs: w.from === 0 ? 0 : Math.round(((w.from + w.to) / 2) * tickMs) }));
+}
+
+/** Drive to the target with the keys, as the presenter would; off the route, restart and try the next way. */
+async function driveToTarget(recipes: readonly KeyRecipe[]): Promise<void> {
+  expect(recipes.length, 'the rail model finds a way to drive this route with the keys').toBeGreaterThan(0);
+  const banner = page.getByTestId('drive-banner');
+  for (const [n, r] of recipes.entries()) {
+    if (n > 0) {
+      await page.getByRole('button', { name: 'Restart' }).click();
+      await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
+    }
+    await expect(page.getByTestId('hud-distance')).not.toContainText('—'); // the wire has started
+    if (r.holdMs > 0) {
+      const key = r.dir > 0 ? 'KeyD' : 'KeyA';
+      await page.keyboard.down(key);
+      await page.waitForTimeout(r.holdMs);
+      await page.keyboard.up(key);
+    }
     await page.keyboard.down('KeyW');
-    await expect(page.getByTestId('drive-banner')).toContainText('The wire reached the', { timeout: 90_000 });
+    await expect(banner).toContainText(/The wire reached the|Off the planned route|Wall force over the threshold/, { timeout: 90_000 });
     await page.keyboard.up('KeyW');
-    return;
+    if ((await banner.innerText()).includes('The wire reached the')) return;
   }
-  await page.waitForFunction(() => window.__app.last !== null);
-  for (let i = 0; i < 200; i++) {
-    const s = await tick(15);
-    if (s?.atTarget) break;
-    await page.waitForTimeout(40); // let the view draw, so the run reads as a drive in the video
-  }
-  await expect(page.getByTestId('drive-banner')).toContainText('The wire reached the');
+  throw new Error('no key recipe reached the target');
 }
 
 /** Results must equal scoreAttempt on the drive the app saved, with the same case and the plan's weights. */
@@ -150,6 +201,13 @@ async function expectResults(c: LoadedCase, key: string): Promise<void> {
   expect(kinds).toContain('target_reached');
   expect(kinds).not.toContain('wrong_branch');
 }
+
+interface DemoRoute {
+  entryId: string;
+  presetId: string;
+  edges: readonly string[];
+}
+let demo: { id: string; route: DemoRoute; recipes: KeyRecipe[] } | null = null;
 
 // ---------------------------------------------------------------- the six beats, Type III
 
@@ -201,8 +259,17 @@ test('1:00 Compare: the frontier shows its routes, and moving the safety slider 
   expect(after).not.toEqual(before);
   await expect.poll(rows).toEqual(after);
 
-  // Switch to the route now ranked first, and drive it.
-  await page.locator(`tr[data-route="${after[0]}"]`).click();
+  // Switch to the highest-ranked route the presenter can drive by holding W alone (the simplest drive to show),
+  // else the highest-ranked one the keys can drive at all.
+  const options: { id: string; route: DemoRoute; recipes: KeyRecipe[] }[] = [];
+  for (const id of after) {
+    const g = groups.find((x) => x.id === id)!;
+    const route = { entryId: g.entryId, presetId: g.presetIds[0]!, edges: g.edges };
+    options.push({ id, route, recipes: await keyRecipes(c, route.entryId, 'rcca', route.presetId, route.edges) });
+  }
+  const chosen = options.find((o) => o.recipes[0]?.holdMs === 0) ?? options.find((o) => o.recipes.length > 0)!;
+  demo = chosen;
+  await page.locator(`tr[data-route="${chosen.id}"]`).click();
   await page.getByTestId('switch').first().click();
   await expect(page.getByRole('status')).toContainText('Switched to');
   await neverSay();
@@ -216,11 +283,10 @@ test('1:40 Drive: rail on Type III, X-ray, fluoro, a contrast puff, and the targ
   expect(c.difficulty).toBe('expert');
   await expect(page.getByTestId('drive-mode')).toHaveText(/^X-ray · rail mode$/);
   await page.keyboard.down('Space'); // hold fluoro
-  if (!PRODUCTION) await tick(10);
   await expect(page.locator('.drive-view')).toHaveClass(/fluoro-on/);
   await page.keyboard.press('KeyC');
   await expect(page.locator('.drive-view')).toHaveClass(/contrast-fading/);
-  await driveToTarget();
+  await driveToTarget(demo!.recipes);
   await page.keyboard.up('Space');
   await neverSay();
 });
@@ -254,7 +320,7 @@ test('fixture-y: Plan → Compare → Drive → Results', async () => {
   await page.getByTestId('compare').click();
   await page.getByTestId('start-drive').click();
   await expect(page.getByTestId('drive-mode')).toHaveText(/rail mode$/);
-  await driveToTarget();
+  await driveToTarget(await keyRecipes(c, best.entryId, 'left_branch', best.presetId, best.edges));
   await page.getByTestId('finish-drive').click();
   await expectResults(c, 'fixture-y');
   await neverSay();
