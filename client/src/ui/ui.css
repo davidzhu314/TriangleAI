@@ -1079,3 +1079,165 @@ textarea.input {
   padding: 0;
   border: 0;
 }
+
+/* ---------------------------------------------------------------- Case brief: vessel map and facts (2026-11-08) */
+.brief-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.brief-columns-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 900px) {
+  .brief-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.brief-columns .fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.brief-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.brief-map-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  max-height: 34rem;
+  background: var(--color-vein-tint);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.brief-map-svg {
+  position: absolute;
+  inset: var(--space-4);
+  width: calc(100% - 2 * var(--space-4));
+  height: calc(100% - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.brief-map-svg .vessel {
+  stroke: var(--color-brand);
+  stroke-opacity: 0.55;
+}
+
+.brief-entry {
+  fill: var(--color-vein);
+}
+
+.brief-target {
+  fill: var(--color-surface);
+  stroke: var(--color-brand);
+}
+
+.brief-label {
+  fill: var(--color-heading);
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  paint-order: stroke;
+  stroke: var(--color-vein-tint);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+}
+
+.brief-map figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.brief-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+}
+
+.brief-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brief-key {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--radius-full);
+}
+
+.brief-key-entry {
+  background: var(--color-vein);
+}
+
+.brief-key-target {
+  background: var(--color-surface);
+  border: 2px solid var(--color-brand);
+}
+
+.brief-key-zone {
+  width: 1rem;
+  height: 0.375rem;
+  border-radius: 0;
+  background: var(--color-risk-forbidden);
+}
+
+.brief-next h2 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-lead);
+}
+
+.brief-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text);
+}
+
+.brief-steps strong {
+  color: var(--color-heading);
+}
+
+@media (max-width: 900px) {
+  .brief-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.brief-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.brief-dataset summary {
+  color: var(--color-link);
+  font-size: var(--font-size-meta);
+  cursor: pointer;
+}
+
+.brief-dataset p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}

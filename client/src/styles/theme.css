@@ -1,9 +1,9 @@
 /* ThreadSim theme: the font and element defaults, built only from tokens.css. Plain CSS; the project has no Tailwind.
    Import once, after tokens.css. Screen layout belongs to each screen, not here. */
 @font-face {
-  font-family: "Inter";
-  src: url("../assets/fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
-  font-weight: 100 900;
+  font-family: "DM Sans";
+  src: url("../assets/fonts/dm-sans-latin-wght-normal.woff2") format("woff2-variations");
+  font-weight: 100 1000;
   font-style: normal;
   font-display: swap;
 }

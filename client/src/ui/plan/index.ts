@@ -199,7 +199,7 @@ function draw(sc: Screen): void {
       WIRE_PRESETS.map((p) => ({
         value: p.id,
         label: labelled(PRESET_ICON[p.id], p.name),
-        note: h('span', { class: 'choice-note', title: 'Illustrative value (spec §4.3)' }, 'Sharpest turn it can enter: ', h('span', { class: 'num' }, String(p.maxTurnDeg)), '°'),
+        note: h('span', { class: 'choice-note', title: 'Illustrative value (spec §4.3)' }, 'Turns up to ', h('span', { class: 'num' }, String(p.maxTurnDeg)), '°'),
       })),
       s.presetId,
       (v) => set(choose(s, { presetId: v })),

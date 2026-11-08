@@ -25,37 +25,37 @@ colors:
   chart-3: "#706e6d"
 typography:
   h3:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 32px
     fontWeight: 500
     lineHeight: 1.1
     letterSpacing: -0.01em
   h4:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 24px
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: -0.01em
   h5:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 20px
     fontWeight: 500
     lineHeight: 1.2
     letterSpacing: -0.01em
   body:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 16px
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: -0.01em
   body-sm:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.2
     letterSpacing: -0.01em
   caption:
-    fontFamily: "\"Inter\", ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "\"DM Sans\", ui-sans-serif, system-ui, sans-serif"
     fontSize: 12px
     fontWeight: 400
     lineHeight: 1.2
@@ -177,7 +177,7 @@ The player's route moved from teal to steel blue, so on Plan it stays apart from
 
 ## Typography
 
-Inter alone, self-hosted from `client/src/assets/fonts/` so the demo works offline. Sentence case everywhere. Tracking `--letter-spacing` at every size, as measured. Weight 400 for reading, 500 for titles and headings, and 600 for one job per screen at most. No mono face: the reference's mono labels were its identity.
+DM Sans alone (from 2026-11-08, replacing Inter), self-hosted from `client/src/assets/fonts/` so the demo works offline. Sentence case everywhere. Tracking `--letter-spacing` at every size, as measured. Weight 400 for reading, 500 for titles and headings, and 600 for one job per screen at most. No mono face: the reference's mono labels were its identity.
 
 | Role | Size / line | Weight | Notes |
 | --- | --- | --- | --- |
@@ -258,6 +258,17 @@ Resting surfaces are flat: an edge or a tone step, never both, never a shadow. T
 
 Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover and press, `--duration-base` for menus, `--duration-slow` for sheets, `--ease-standard` throughout. Nothing performs an entrance. `theme.css` honours reduced motion. The contrast fade is the one timed effect, and it belongs to the X-ray shader.
 
+### Case brief (2026-11-08)
+
+- Two columns: the case's vessel map (flat, front-on, on a vein-blue panel: arteries in oxblood, risk zones, entry sites as steel-blue dots and targets as oxblood rings, each named, labels on the side of the tree their point is on) and the facts (scenario, targets, entry sites, arch, fluoro budget, risk zones by kind and severity, vessel count, source with the dataset citation behind "Dataset details", your progress).
+- Under them, "What happens next" in one row of four (Plan, Compare, Drive, Results), the checks, and Start planning.
+
+### Plan declutter (2026-11-08)
+
+- The 3D views' controls are one toolbar bar: inside it buttons and segmented groups lose their own borders; a pressed state is the only tone.
+- Route setup rows are compact; a wire preset's note is one line ("Turns up to 110°").
+- Route cost rows are tighter. The Cathy box is unchanged (David's, added tonight).
+
 ### Library (2026-11-08)
 
 - A grid of case cards, three across at desktop, two at tablet, one on a phone. Each card: the case's own flat vessel drawing (oxblood on a vein-blue tile, decorative), the title as the link into the case (the whole card is its hit area), the synopsis (case.json `scenario`, or the trainee's own), difficulty, mode, stars, and "Left off at Plan" or "Left off at Results" with a link back when the case was started this session.
@@ -295,6 +306,6 @@ Check at 1440, 768 and 390 px. Bands: phone up to 640, tablet 641 to 1100, deskt
 - `client/src/styles/tokens.css`: every token. Imported by `client/src/main.ts`.
 - `client/src/styles/theme.css`: the font and element defaults, plain CSS. `client/src/main.ts` imports it after tokens, then `client/src/ui/ui.css` (the screens).
 - `client/src/styles/palette.html`: every token on one page. In dev, open `/src/styles/palette.html`.
-- `client/src/assets/fonts/`: Inter and its licence.
+- `client/src/assets/fonts/`: DM Sans and its licence.
 - `client/src/assets/icons/`, `client/src/assets/empty/`: the icon set and empty-state art. `metrics/aroovee/A1-icon-set.png` shows them all.
 - `metrics/aroovee/A0-reference-measurement.md`: what was measured from the reference.

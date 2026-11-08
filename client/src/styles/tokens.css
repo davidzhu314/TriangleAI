@@ -7,8 +7,8 @@
   /* Surfaces: frame → sheet → card, three levels at most. */
   --color-background: #f6f5f3;       /* Oxblood & Navy (2026-11-08): a warm off-white ground, short of cream */
   --color-surface: #ffffff;        /* measured: the sheet and cards */
-  --color-surface-sunken: #efebe6;       /* derived: canvas wells, the 3D scene ground, card pictures */
-  --color-surface-active: #e9e4de;       /* selected list row, active nav pill */
+  --color-surface-sunken: #efedea;       /* derived: canvas wells, the 3D scene ground, card pictures */
+  --color-surface-active: #e8e6e3;       /* selected list row, active nav pill */
   --color-surface-inverse: #2e2d2d; /* measured: tooltips */
 
   /* Lines */
@@ -69,7 +69,7 @@
   --dash-route-4: 10 4 2 4;
 
   /* Charts: one hue, then neutrals */
-  --color-chart-1: #0b6a7d;
+  --color-chart-1: #2f5584;
   --color-chart-2: #2e2d2d;
   --color-chart-3: #706e6d;
   --color-grid: #eeebea;
@@ -80,10 +80,10 @@
   --color-scene-vessel: #8f8b89;
   --opacity-scene-vessel: 0.35;
   --color-scene-wire: #1f1e1e;
-  --color-scene-ghost: #0b6a7d;
+  --color-scene-ghost: #2f5584;
   --opacity-scene-ghost: 0.45;
   --color-marker-entry: #2e2d2d;
-  --color-marker-target: #0b6a7d;
+  --color-marker-target: #8e2433;
 
   /* X-ray view (spec §5.5): dark wire, dark silhouette, grey ground. Neutral on purpose. */
   --color-xray-bg: #8a8a8a;
@@ -107,8 +107,8 @@
   --opacity-body-heart: 0.18;
   --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
-  /* Type: Inter, measured. Display sizes over 32px dropped: app titles stay at or under 32. */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Type: DM Sans for the whole app (2026-11-08, Aroovee), self-hosted. Display sizes over 32px dropped: app titles stay at or under 32. */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-size-meta: 12px;       /* labels, meta, axis ticks, pills; nothing smaller */
   --font-size-body: 14px;       /* body, nav, table cells, controls */
   --font-size-lead: 16px;       /* card titles, section headings, phone data */
@@ -226,7 +226,7 @@
     --color-route-3: #d4b84a;
     --color-route-4: #a09d9b;
 
-    --color-chart-1: #4fb4c8;
+    --color-chart-1: #8fb0db;
     --color-chart-2: #f4f2f1;
     --color-chart-3: #a09d9b;
     --color-grid: #2c2b2a;
@@ -236,7 +236,7 @@
     --color-scene-vessel: #b5b1ae;
     --opacity-scene-vessel: 0.4;
     --color-scene-wire: #f4f2f1;
-    --color-scene-ghost: #4fb4c8;
+    --color-scene-ghost: #8fb0db;
     --color-anatomy-artery: #e08591;
     --color-anatomy-vein: #8fb0db;
     --color-vein: #8fb0db;
@@ -244,7 +244,7 @@
     --color-body-bone: #8f897f;
     --color-body-heart: #9a6f6a;
     --color-marker-entry: #f4f2f1;
-    --color-marker-target: #4fb4c8;
+    --color-marker-target: #e08591;
 
     --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
   }

@@ -356,3 +356,41 @@
 .anatomy-row[hidden] {
   display: none;
 }
+
+/* One toolbar surface (2026-11-08, declutter): the controls sit in a single bar; inside it, buttons and segmented
+   groups lose their own borders and fills, and a pressed state is the only tone. */
+.view-toolbar {
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  gap: var(--space-1) var(--space-4);
+}
+
+.view-toolbar .segmented {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.view-toolbar .btn,
+.view-toolbar .btn-secondary {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.view-toolbar .btn:hover,
+.view-toolbar .btn-secondary:hover {
+  background: var(--color-surface-active);
+}
+
+.view-toolbar .btn[aria-pressed='true'],
+.view-toolbar .btn[aria-expanded='true'] {
+  background: var(--color-surface-active);
+  color: var(--color-heading);
+}
+
+.hud-top-row .view-toolbar {
+  padding: var(--space-1);
+}
