@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SpeechAlternative, VoiceMatch } from './match';
+import { matchCommand, type SpeechAlternative, type VoiceMatch } from './match';
 import type { Recognizer } from './recognizer';
 import { createWakeListener, startsWithWake, type WakeState } from './wake';
 
@@ -161,6 +161,15 @@ describe('Cathy, reset view', () => {
     expect(heard.map((m) => m.action)).toEqual(['reset_view', 'reset_view', 'reset_view', 'reset_view', 'reset_view']);
     rec.onResult?.(say('reset view'));
     expect(heard).toHaveLength(5);
+  });
+
+  it('"Hey Cathy, reset" on its own resets the view (request from Aroovee)', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    rec.onResult?.(say('Hey Cathy, reset'));
+    rec.onResult?.(say('hey kathy reset'));
+    expect(heard.map((m) => m.action)).toEqual(['reset_view', 'reset_view']);
+    expect(matchCommand([{ transcript: 'hey cathy reset', confidence: 0.9 }]).action).toBe('reset_view');
   });
 
   it('is never confused with zoom out ("wide view") or undo', () => {

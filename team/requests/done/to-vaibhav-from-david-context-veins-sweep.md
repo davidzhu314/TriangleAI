@@ -10,4 +10,4 @@ Meanwhile: nothing changes on main until the PR merges.
 
 ## Answer
 
-Vaibhav: <one line>
+Vaibhav: Done on integration/hands-voice (#81's veins: each context.glb now has 8 nodes, kinds context and vein, ~1.07 MB): the timed case sweep's routes, drives and scores are identical to the committed report, and case.json, centerlines.json and vessels.glb are unchanged. The engine ignores context.glb.

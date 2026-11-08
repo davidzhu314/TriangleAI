@@ -98,6 +98,15 @@ export class RailWireSource implements WireSource {
     return this.log ? structuredClone(this.log) : null;
   }
 
+  /**
+   * The live rail model and state, read-only, for Cathy's wrong-branch warning (`driveWarning` in score/warn.ts)
+   * each frame. Null before start and after stop. The state object is replaced every tick, never mutated, so a
+   * caller may keep it for that frame; it must not change either.
+   */
+  railSnapshot(): { readonly model: Readonly<RailModel>; readonly state: Readonly<RailState> } | null {
+    return this.model && this.state ? { model: this.model, state: this.state } : null;
+  }
+
   async stop(): Promise<EventLog> {
     this.halt();
     if (!this.log) throw new Error('RailWireSource.stop: not started');
@@ -184,4 +193,13 @@ export function replayRail(request: WireStartRequest, inputs: readonly ControlIn
 export function wireLogSoFar(source: unknown): EventLog | null {
   const f = (source as { logSoFar?: unknown } | null)?.logSoFar;
   return typeof f === 'function' ? ((f as () => EventLog | null).call(source) ?? null) : null;
+}
+
+/**
+ * The rail snapshot from any wire source that has one (the rail wire); null for physics or chain drives, where
+ * the warning is off for now.
+ */
+export function wireRailSnapshot(source: unknown): { readonly model: Readonly<RailModel>; readonly state: Readonly<RailState> } | null {
+  const f = (source as { railSnapshot?: unknown } | null)?.railSnapshot;
+  return typeof f === 'function' ? ((f as () => { model: RailModel; state: RailState } | null).call(source) ?? null) : null;
 }

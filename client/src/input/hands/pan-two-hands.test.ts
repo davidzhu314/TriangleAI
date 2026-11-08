@@ -10,7 +10,8 @@ import { FRAME_MS, frame, gun, point, syntheticHand, type HandSpec } from './syn
 import type { GestureConfig, GestureOutput, HandObservation } from './types';
 
 const CFG: GestureConfig = { dominant: 'Right', mirrored: false };
-const pan = (extra: HandSpec = {}): HandObservation => syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', ...extra });
+/** Thumb + V: thumb out, index and middle straight and spread 70° apart, ring and pinky folded. */
+const pan = (extra: HandSpec = {}): HandObservation => syntheticHand({ flex: { index: 0, middle: 0, ring: 1, pinky: 1 }, thumb: 'out', spreadDeg: 70, ...extra });
 const ENGAGE = Math.ceil(DEBOUNCE_MS / FRAME_MS) + 2;
 
 function run(n: number, hands: (i: number) => HandObservation[], m = createGestureMachine(CFG)): GestureOutput[] {
@@ -18,7 +19,7 @@ function run(n: number, hands: (i: number) => HandObservation[], m = createGestu
 }
 
 describe('pan pose', () => {
-  it('three fingers out and the pinky folded is a pan, and only a pan', () => {
+  it('thumb + V (index and middle spread wide) is a pan, and only a pan', () => {
     const w = pan().world;
     expect(panChecks(w).filter((c) => !c.ok)).toEqual([]);
     expect(isPan(w)).toBe(true);
@@ -26,10 +27,27 @@ describe('pan pose', () => {
     expect(isPoint(w)).toBe(false);
   });
 
-  it('is not a pan with the ring folded (the gun), the middle folded (the point) or the whole hand open', () => {
+  it('is not a pan with index and middle together (the gun), the middle folded (the point), the whole hand open, or the thumb folded', () => {
     expect(isPan(gun().world)).toBe(false);
+    expect(isPan(gun(0, 0).world)).toBe(false); // the gun with straight fingers: same hand, no gap
     expect(isPan(point().world)).toBe(false);
-    expect(isPan(syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 0 }, thumb: 'out' }).world)).toBe(false);
+    expect(isPan(syntheticHand({ flex: { index: 0, middle: 0, ring: 0, pinky: 0 }, thumb: 'out', spreadDeg: 70 }).world)).toBe(false);
+    expect(isPan(pan({ thumb: 'folded' }).world)).toBe(false);
+  });
+
+  it('a narrow V (a relaxed peace sign) is neither a pan nor a gun; spread wide, it is a pan', () => {
+    for (const deg of [35, 50]) {
+      const w = pan({ spreadDeg: deg }).world;
+      expect(isPan(w), `${deg}°`).toBe(false);
+      expect(isGun(w), `${deg}°`).toBe(false);
+    }
+    expect(isPan(pan({ spreadDeg: 70 }).world)).toBe(true);
+  });
+
+  it('an engaged gun is never taken over by a pan while the gap stays inside the gun keep limit', () => {
+    const out = run(ENGAGE + 30, (i) => [gun(0.1, 0, { spreadDeg: i < ENGAGE ? 0 : 50 })]);
+    expect(out.at(-1)!.status).toBe('gun');
+    expect(out.every((o) => o.status !== 'pan')).toBe(true);
   });
 });
 

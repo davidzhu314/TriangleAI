@@ -12,4 +12,4 @@ Meanwhile: keyboard A/D still turns step by step.
 
 ## Answer
 
-Vaibhav: <one line>
+Vaibhav: Done: `createHubFollow()` in client/src/input/hands/to-control.ts. Once per frame: `mergeControl(g, keys, follow.rotate(g, wireState?.tipPose?.hubRollRad))`. On gun engage it notes the hub roll, then drives the hub to (that + the driving hand's twist), full rotate at 0.35 rad error, none within 0.035 rad; a held 90° twist turns the wire 90° and stops (tested with a simulated π rad/s hub). With no hub roll (rail) it returns null and the rate mapping stays; keyboard A/D still wins. Drive needs that one line in its control step (Aroovee's file); constants illustrative, DECISIONS "Hand twist as a turn angle".

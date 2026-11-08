@@ -76,7 +76,7 @@ export function barrelGapDeg(w: readonly Landmark[]): number {
 
 /** One named pose check, as the tests and the lab's diagnostic panel show it. */
 export interface PoseCheck {
-  name: 'ring curl' | 'pinky curl' | 'thumb up' | 'barrel gap' | 'index straight' | 'middle curl' | 'middle straight' | 'ring straight';
+  name: 'ring curl' | 'pinky curl' | 'thumb up' | 'barrel gap' | 'index straight' | 'middle curl' | 'middle straight' | 'ring straight' | 'v gap';
   value: number;
   /** `value` must be above `min`, or at most `max`. */
   min?: number;
@@ -122,23 +122,26 @@ export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter', 
 }
 
 /**
- * The pan ("trackpad") pose, check by check: index, middle and ring extended; pinky curled. The thumb is
- * free. Exclusive with the gun (ring curled) and the point (middle and ring curled).
+ * The pan pose ("thumb + V"), check by check: index and middle straight and spread apart, ring and pinky folded,
+ * thumb out. Exclusive with the gun (index and middle together: barrel gap at most 30° to start, 55° to keep) and
+ * the point (middle folded).
  */
 export function panChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): PoseCheck[] {
   const lim = PAN[level];
   return [
     atMost('index straight', flexion(w, 'index'), lim.fingersCurlMax),
     atMost('middle straight', flexion(w, 'middle'), lim.fingersCurlMax),
-    atMost('ring straight', flexion(w, 'ring'), lim.fingersCurlMax),
-    above('pinky curl', flexion(w, 'pinky'), lim.pinkyCurlMin),
+    above('ring curl', flexion(w, 'ring'), lim.othersCurlMin),
+    above('pinky curl', flexion(w, 'pinky'), lim.othersCurlMin),
+    above('thumb up', thumbUp(w), lim.thumbUpMin),
+    above('v gap', barrelGapDeg(w), lim.vGapMinDeg),
   ];
 }
 
-/** The pan anchor: the mean of the index, middle and ring MCPs on IMAGE landmarks (steadier than fingertips). */
+/** The pan anchor: the mean of the index and middle MCPs on IMAGE landmarks (the V's base; steadier than fingertips). */
 export function panAnchor(image: readonly Landmark[]): { x: number; y: number } {
-  const ids = [FINGER_MCP.index, FINGER_MCP.middle, FINGER_MCP.ring];
-  return { x: ids.reduce((a, i) => a + image[i]!.x, 0) / 3, y: ids.reduce((a, i) => a + image[i]!.y, 0) / 3 };
+  const ids = [FINGER_MCP.index, FINGER_MCP.middle];
+  return { x: ids.reduce((a, i) => a + image[i]!.x, 0) / 2, y: ids.reduce((a, i) => a + image[i]!.y, 0) / 2 };
 }
 
 export const allOk = (checks: readonly PoseCheck[]): boolean => checks.every((c) => c.ok);
