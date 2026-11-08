@@ -4,7 +4,7 @@ Vaibhav builds the deterministic engine: per-edge measures, the route optimizer 
 
 **Read first:** `docs/ThreadSim_Build_Specification.md` sections 4, 5.3, 5.6, 6, 11. Then `CLAUDE.md`, `PLAN.md` and `DECISIONS.md`.
 
-**You own:** `client/src/optimize/`, `client/src/score/`, `client/src/wire/rail*`, `client/src/wire/mock-source.ts`, `tests/crosscheck/`, `tests/fixtures/synthetic/`, `tests/fixtures/logs/`, `metrics/vaibhav/`.
+**You own:** `client/src/optimize/`, `client/src/score/`, `client/src/wire/rail*`, `client/src/wire/mock-source.ts`, `tests/fixtures/synthetic/`, `tests/fixtures/logs/`, `metrics/vaibhav/`. (`tests/crosscheck/` moved to Gibran when his lane was approved.)
 
 **You consume:** `LoadedCase` from David (`fixture-y` from D0b, the generated Type III and low-tortuosity cases from D6-min) and, only if real, `recorded-runs.json` from D4.
 
