@@ -9,6 +9,7 @@
 
 import { DEG_PER_TURN, FLUORO_S_PER_CM, FLUORO_S_PER_TURN } from '../optimize/constants';
 import { WIRE_PRESETS } from '../optimize/presets';
+import { BRANCH_ENTRY_BEGINNER_DEG } from '../optimize/branch-entry';
 import { FORCE_N_PER_MPS, FORCE_SPIKE_THRESHOLD_N, RAIL_ROLL_RAD_PER_S, RAIL_SPEED_MPS, WALL_ANGLE_DEG, WALL_PROLAPSE_S, BRANCH_ENTRY_DEG } from '../wire/rail';
 import {
   BUDGET_STAR_COST,
@@ -51,7 +52,8 @@ export const ILLUSTRATIVE_CONSTANTS: readonly IllustrativeConstant[] = Object.fr
   { id: 'fluoro.deg_per_turn', label: 'Degrees of turning that count as one turn', value: DEG_PER_TURN, unit: '°', decision: 'Estimated fluoro time (illustrative).' },
   { id: 'rail.speed', label: 'Rail wire speed at full push', value: RAIL_SPEED_MPS * 1000, unit: 'mm/s', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.roll', label: 'Rail wire roll at full rotate', value: (RAIL_ROLL_RAD_PER_S * 180) / Math.PI, unit: '°/s', decision: 'Rail wire constants (illustrative).' },
-  { id: 'rail.branch_entry', label: 'Tip must point within this of a branch to enter it', value: BRANCH_ENTRY_DEG, unit: '°', decision: 'Rail branch entry as implemented.' },
+  { id: 'rail.branch_entry', label: 'Tip must point within this of a branch to enter it (intermediate and expert cases)', value: BRANCH_ENTRY_DEG, unit: '°', decision: 'Rail branch entry as implemented.' },
+  { id: 'rail.branch_entry_beginner', label: 'The same on beginner cases', value: BRANCH_ENTRY_BEGINNER_DEG, unit: '°', decision: 'Branch entry 35° on beginner cases.' },
   { id: 'rail.wall_angle', label: 'Angle where wall force starts', value: WALL_ANGLE_DEG, unit: '°', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.force_gain', label: 'Wall force per push speed', value: FORCE_N_PER_MPS, unit: 'N·s/m', decision: 'Rail wire constants (illustrative).' },
   { id: 'rail.force_spike', label: 'Force spike threshold', value: FORCE_SPIKE_THRESHOLD_N, unit: 'N', decision: 'Rail wire constants (illustrative).' },

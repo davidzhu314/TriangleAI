@@ -34,5 +34,5 @@ Timing: whenever suits.
 ## Answer
 
 David: <one line>
-Vaibhav: <one line>
+Vaibhav: checked, nothing to rename. My lane's only "threadsim" strings are internal ids on your keep list: the mock guard markers (`THREADSIM_MOCK_*`, checked by `mock-guard.test.ts`), `threadsim.case/1` and `threadsim.eventlog/1` schema ids, and the synthetic fixtures' dataset tag. The voice help and Cathy's lines already say Cathy.
 Gibran: <one line>

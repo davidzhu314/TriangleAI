@@ -100,9 +100,14 @@ describe('branch entry (spec §5.3)', () => {
 
   it('otherwise takes the straightest way and records wrong_branch against the plan', () => {
     // stiff straight has no tip angle: the 45° left branch is never within 25°, so it continues
-    // into the straighter 30° right branch
-    const m = createRailModel(y, 'fem_r', 'left_branch', 'stiff_straight', ['e_aorta', 'e_left']);
+    // into the straighter 30° right branch (fixture-y read as an intermediate case: the spec's 25°)
+    const m = createRailModel({ ...y, difficulty: 'intermediate' }, 'fem_r', 'left_branch', 'stiff_straight', ['e_aorta', 'e_left']);
+    expect(m.branchEntryDeg).toBe(25);
     expect(chooseBranch(m, initialRailState(m).walked, 0)).toMatchObject({ edge: 'e_right', how: 'continued' });
+    // fixture-y is a beginner case: 35°, so the 30° right branch is now pointed into, and the left still isn't
+    const easy = createRailModel(y, 'fem_r', 'left_branch', 'stiff_straight', ['e_aorta', 'e_left']);
+    expect(easy.branchEntryDeg).toBe(35);
+    expect(chooseBranch(easy, initialRailState(easy).walked, 0)).toMatchObject({ edge: 'e_right', how: 'pointed' });
     const r = run(m, (st, k) => (k < 30 * 7 ? IN(1) : null));
     const wrong = r.events.find((e) => e.kind === 'wrong_branch');
     expect(wrong).toMatchObject({ kind: 'wrong_branch', edge: 'e_right', expectedEdge: 'e_left' });

@@ -16,14 +16,14 @@ function logAt(edge: string, presetId: WirePresetId = 'soft_angled'): EventLog {
 const inside = (w: { fromDeg: number; toDeg: number }, d: number) => (w.fromDeg <= w.toDeg ? d >= w.fromDeg && d <= w.toDeg : d >= w.fromDeg || d <= w.toDeg);
 
 describe('nextBranchWindow (low-tort, toward the right common carotid)', () => {
-  it('at the brachiocephalic opening: a narrow window for Soft angled, wider for Standard J (as Aroovee measured)', () => {
+  it('at the brachiocephalic opening, with the beginner 35° entry: about 63° of twist for Soft angled, 76° for Standard J as in the request table', () => {
     const soft = nextBranchWindow(logAt('e_arch_proximal'), c)!;
     const j = nextBranchWindow(logAt('e_arch_proximal', 'standard_j'), c)!;
     expect(soft.edge).toBe('e_bca');
-    expect(soft.widthDeg).toBeGreaterThanOrEqual(19);
-    expect(soft.widthDeg).toBeLessThanOrEqual(23);
-    expect(j.widthDeg).toBeGreaterThanOrEqual(50);
-    expect(j.widthDeg).toBeLessThanOrEqual(56);
+    expect(soft.widthDeg).toBeGreaterThanOrEqual(60);
+    expect(soft.widthDeg).toBeLessThanOrEqual(66);
+    expect(j.widthDeg).toBeGreaterThanOrEqual(73);
+    expect(j.widthDeg).toBeLessThanOrEqual(79);
     for (const w of [soft, j]) {
       expect(w.fromDeg).toBeGreaterThanOrEqual(0);
       expect(w.toDeg).toBeLessThan(360);

@@ -119,7 +119,7 @@ export class RouteEnumerator {
  * Checked only on routes that pass every other constraint, so a blocked route keeps one clear reason.
  */
 export function steerViolations(s: Steerability): ConstraintViolation[] {
-  return s.failures.map((f) => ({ kind: 'cannot_steer' as const, edge: f.edge, takeoffDeg: f.takeoffDeg, tipDeg: f.tipDeg, toleranceDeg: BRANCH_ENTRY_DEG }));
+  return s.failures.map((f) => ({ kind: 'cannot_steer' as const, edge: f.edge, takeoffDeg: f.takeoffDeg, tipDeg: f.tipDeg, toleranceDeg: s.toleranceDeg ?? BRANCH_ENTRY_DEG }));
 }
 
 /** A Route from a measured path, with the preset's constraint checks (§4.4) and steering (§5.3). */

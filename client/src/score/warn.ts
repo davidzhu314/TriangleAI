@@ -62,7 +62,7 @@ export function driveWarning(model: RailModel, state: RailState, rotateControl =
   const last = walked[walked.length - 1]!.edge;
   const cands = (model.adjacency.get(atNode) ?? []).filter((id) => id !== last);
   const want = cands.indexOf(plannedEdge);
-  const roll = want < 0 ? null : steerRoll(railHeading(model, walked, L), model.preset.tipAngleDeg, cands.map((id) => railEdgeDirection(model, id, atNode)), want);
+  const roll = want < 0 ? null : steerRoll(railHeading(model, walked, L), model.preset.tipAngleDeg, cands.map((id) => railEdgeDirection(model, id, atNode)), want, model.branchEntryDeg);
   let rotate: DriveWarning['rotate'] = null;
   if (roll !== null && model.preset.tipAngleDeg !== 0) {
     const err = wrap(roll - state.rollRad);
