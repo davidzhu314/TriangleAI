@@ -234,3 +234,9 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Real model:** set with `VITE_ANATOMY_GLB` and `VITE_ANATOMY_FRAME`, and placed by `RAS_MM_TO_YUP_M` like `vessels.glb`.
   - **Behaviour:** off by default, loaded on first use, and settings saved per browser (`threadsim.anatomy.v1`). It's never pickable, draws under the routes and markers, and is hidden in Drive's X-ray.
   - **Interface:** under review with Vaibhav (`to-vaibhav-from-aroovee-anatomy-layer.md`).
+- 2026-11-07 · David · **Two more real CT cases and weighted decimation (Vaibhav's real-anatomy request, items 1–2).**
+  - **Cases:** `ts-s1336-cta` and `ts-s0727-cta`, from TotalSegmentator v2.0.1 small-subset subjects s1336 and s0727 (CC BY 4.0, Zenodo 10047263). Arterial masks only, fetched by HTTP range reads; the CT image and `meta.csv` are never downloaded. They are planning only and sit outside the ladder, in the catalog after `ts-s1404-cta` and before `fixture-y`.
+  - **Labels:** no arch type, bovine or plaque label, because the masks alone don't show one honestly.
+  - **Skipped subjects:** s0970, s0915, s1082, s1395, s0903, s0928 and s0461 failed the unchanged pipeline (`slicer/README.md`).
+  - **Weighted decimation:** `slicer/export_case.py` keeps `min(1, k × weight)` of each vessel's triangles: arch branches and carotids ×4, subclavians ×2, aorta ×1, iliacs ×½. The total stays under 90k. Only cases over the cap change, so `ts-s1404-cta` re-exports byte-identical.
+  - **Known gap:** on s1336 → lcca and s0727 → rcca and lcca, no frontier route is steerable (takeoffs 85–98° against the soft angled tip's 45°). Gibran's grounding test lists them as findings since #57. Body context (item 3) stays parked as a contract change; CT plaque and smaller vessels (item 4) stay Later.
