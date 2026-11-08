@@ -227,7 +227,7 @@ test('the pan gesture moves the view, on Plan, Compare and Drive', async ({ page
       if (!panned && (await page.locator(view).first().getAttribute('data-hands')) === 'pan') panned = true;
     }
     expect(panned).toBe(true);
-    await expect(page.getByTestId('hands-status')).toHaveText('Panning');
+    await expect(page.getByTestId('hands-status')).toContainText('Turning');
     expect(await flat.evaluate((el) => (el as SVGSVGElement).viewBox.baseVal.x)).not.toBe(Number(before!.split(' ')[0]));
   };
   await page.addInitScript(() =>
@@ -237,6 +237,100 @@ test('the pan gesture moves the view, on Plan, Compare and Drive', async ({ page
     await page.goto(`/${hash}`);
     await expect(page.locator(view).first()).toHaveAttribute('data-scene', 'ready');
     await sweep(view);
+  }
+});
+
+test('in 3D the pan gesture turns the case on three axes (two hands roll it), and Reset view undoes it', async ({ page }) => {
+  const panHand = (side: 'Left' | 'Right', x: number, y: number) => synth.syntheticHand({ handedness: side, flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y } });
+  const feed = async (frames: unknown[]): Promise<void> => {
+    for (const f of frames) await page.evaluate((frame) => window.__threadsimHands!.feed(frame as never), f);
+  };
+  await page.goto('/#/case/type-iii/plan');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await page.locator('button[data-view-kind="3d"]').first().click();
+  const canvas = view.locator('canvas');
+  await expect(canvas).not.toHaveAttribute('data-turned', 'true');
+
+  // One hand: still to engage, then a diagonal sweep (yaw and pitch).
+  await feed(Array.from({ length: 50 }, (_, i) => synth.frame(i * synth.FRAME_MS, panHand('Right', 0.3 + (i > 12 ? (i - 12) * 0.008 : 0), 0.4 + (i > 12 ? (i - 12) * 0.005 : 0)))));
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+
+  await page.getByTestId('reset-view').first().click();
+  await expect(canvas).toHaveAttribute('data-turned', 'false');
+
+  // Two hands moving opposite ways vertically: a roll, with no net pan.
+  const t0 = 50 * synth.FRAME_MS;
+  await feed(
+    Array.from({ length: 50 }, (_, i) => {
+      const d = i > 12 ? (i - 12) * 0.006 : 0;
+      return synth.frame(t0 + i * synth.FRAME_MS, panHand('Left', 0.3, 0.5 + d), panHand('Right', 0.7, 0.5 - d));
+    }),
+  );
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+  await page.getByTestId('reset-view').first().click();
+  await expect(canvas).toHaveAttribute('data-turned', 'false');
+});
+
+test('"Hey Cathy, reset view" puts a zoomed and turned 3D view back where it opened', async ({ page }) => {
+  await stubSpeech(page);
+  await page.goto('/#/case/type-iii/plan');
+  const view = page.locator('.plan-view');
+  await expect(view).toHaveAttribute('data-scene', 'ready');
+  await page.locator('button[data-view-kind="3d"]').first().click();
+  const canvas = view.locator('canvas');
+
+  // Where the branch handles sit on screen (webdriver-only, refreshed every 200 ms): read it once it has settled.
+  type Handle = { node: string; x: number; y: number };
+  const handles = async (): Promise<Handle[]> => JSON.parse((await view.getAttribute('data-handles')) ?? '[]') as Handle[];
+  const settled = async (): Promise<Handle[]> => {
+    let last = '';
+    await expect
+      .poll(async () => {
+        const now = JSON.stringify(await handles());
+        const same = now !== '[]' && now === last;
+        last = now;
+        return same;
+      }, { intervals: [300] })
+      .toBe(true);
+    return JSON.parse(last) as Handle[];
+  };
+  const far = (a: Handle[], b: Handle[]): number => Math.max(...a.map((h, i) => Math.hypot(h.x - b[i]!.x, h.y - b[i]!.y)));
+  const opened = await settled();
+
+  // Zoom by voice, and turn the case with the pan gesture.
+  await voiceOn(page);
+  await say(page, 'hey cathy zoom in');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Zoom in');
+  const panHand = (x: number) => synth.syntheticHand({ handedness: 'Right', flex: { index: 0, middle: 0, ring: 0, pinky: 1 }, thumb: 'folded', pos: { x, y: 0.4 } });
+  for (let i = 0; i < 50; i++) await page.evaluate((f) => window.__threadsimHands!.feed(f as never), synth.frame(i * synth.FRAME_MS, panHand(0.3 + (i > 12 ? (i - 12) * 0.008 : 0))));
+  await expect(canvas).toHaveAttribute('data-turned', 'true');
+  expect(far(await settled(), opened)).toBeGreaterThan(20);
+
+  await say(page, 'hey cathy reset view');
+  await expect(page.getByTestId('voice-caption')).toContainText('→ Reset view');
+  await expect(canvas).toHaveAttribute('data-turned', 'false');
+  expect(far(await settled(), opened)).toBeLessThan(2);
+});
+
+test('every 3D view has a Reset view button, and it brings the view back', async ({ page }) => {
+  await page.addInitScript(() =>
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
+  );
+  for (const [hash, view] of [['#/case/fixture-y/plan', '.plan-view'], ['#/case/fixture-y/compare', '.plan-view'], ['#/case/fixture-y/drive', '.drive-view']] as const) {
+    await page.goto(`/${hash}`);
+    await expect(page.locator(view).first()).toHaveAttribute('data-scene', 'ready');
+    const reset = page.getByTestId('reset-view');
+    await expect(reset).toHaveCount(1);
+    await expect(reset).toBeVisible();
+    // Turn the camera with a drag, then reset: the opening framing comes back.
+    const box = (await page.locator(`${view} canvas`).first().boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2 + 40, { steps: 6 });
+    await page.mouse.up();
+    await reset.click();
+    await expect(page.locator(`${view} canvas`).first()).not.toHaveAttribute('data-turned', 'true');
   }
 });
 

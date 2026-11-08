@@ -16,12 +16,24 @@ test.describe.configure({ mode: 'serial' });
 let vite: ViteDevServer;
 let base = '';
 
-test.beforeAll(async () => {
+test.beforeAll(async ({ browser }) => {
   vite = await createServer({ configFile: false, root: process.cwd(), logLevel: 'silent', server: { port: 0, strictPort: false, hmr: false }, appType: 'mpa', optimizeDeps: THREE_DEPS });
   await vite.listen();
   const addr = vite.httpServer?.address();
   base = typeof addr === 'object' && addr ? `http://localhost:${addr.port}` : '';
+  await warmUp(browser, `${base}/tests/e2e/harness/drive.html?case=fixture-y&source=rail`);
 });
+
+/** Load a page once and let it settle: a cold dependency cache optimises (and reloads the page) here, not mid-test. */
+async function warmUp(browser: import('@playwright/test').Browser, url: string): Promise<void> {
+  const page = await browser.newPage();
+  await page.goto(url);
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await page.close();
+}
 
 test.afterAll(async () => {
   await vite?.close();

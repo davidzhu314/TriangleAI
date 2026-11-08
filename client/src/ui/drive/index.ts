@@ -12,6 +12,7 @@ import { buildGraph, defaultWeights, optimize, routeFor, type RouteGraph } from 
 import { driveAssist, ILLUSTRATIVE_CONSTANTS } from '../../score';
 import { createDriveView, type DriveView, type DriveViewMode } from '../../render/drive-view';
 import { drawCase, svgEl } from '../../render/case-svg';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
 import { labelled, type IconName } from '../icons';
@@ -138,7 +139,7 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   const view: DriveView = createDriveView(c, `Drive view of ${c.title}: the planned route as a ghost trail and the wire. Drag to turn it.`, {
     onFrame: (pad) => arStep(pad),
     panel: () => [...casePanel.querySelectorAll('.hud-row')].map((r) => (r.textContent ?? '').replace(/\s+/g, ' ').trim()),
-  });
+  }, anatomyFor(entry(key), c));
   const startNode = graph.entries.get(plan.entryId);
   const targetNode = graph.targets.get(plan.targetId);
   const overview = routeOverview(c, startNode, plan.edges);
@@ -250,9 +251,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out', 'assist_best_next', 'assist_review', 'undo'],
-    onPan: (dx, dy) => view.pan(dx, dy),
+    actions: ['zoom_in', 'zoom_out', 'reset_view', 'assist_best_next', 'assist_review', 'undo'],
+    onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
     onVoice: async (a) => {
+      if (a === 'reset_view') {
+        view.resetView();
+        return null;
+      }
       if (a === 'undo') return 'Undo works on Plan.';
       if (a === 'zoom_in' || a === 'zoom_out') return view.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
       const lines = await driveLines();

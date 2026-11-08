@@ -15,6 +15,7 @@
 import type { LoadedCase, Vec3 } from '../contracts';
 import { drawCase, svgEl, toPoints } from './case-svg';
 import type { ArHooks } from './ar';
+import type { AnatomyConfig } from './anatomy-config';
 import { createDualView, type DualView } from './dual-view';
 import { drawMarkers } from './plan-view';
 import { tokenMs, tokenNumber } from './tokens';
@@ -44,13 +45,15 @@ export interface DriveView {
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
-  pan(dx: number, dy: number): void;
+  pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
   /** Start a contrast puff: the X-ray silhouette shows, then fades. */
   puff(): void;
   dispose(): void;
 }
 
-export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): DriveView {
+export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks, anatomy?: Promise<AnatomyConfig | null>): DriveView {
   const d = drawCase(c, label, 'drive-hatch');
   const ghost = svgEl('polyline', { points: '', class: 'ghost-trail' });
   const wire = svgEl('polyline', { points: '', class: 'wire-line' });
@@ -60,7 +63,7 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
   const dual: DualView = createDualView(c, label, d.svg, 'drive-view', ar, (scene) => {
     scene.onFrame(fadeFrame);
     if (last) draw3d(last);
-  });
+  }, undefined, anatomy);
   const element = dual.element;
   const toolbar = dual.toolbar;
   toolbar.remove();
@@ -103,7 +106,8 @@ export function createDriveView(c: LoadedCase, label: string, ar?: ArHooks): Dri
   return {
     element,
     toolbar,
-    pan: (dx, dy) => dual.pan(dx, dy),
+    pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;

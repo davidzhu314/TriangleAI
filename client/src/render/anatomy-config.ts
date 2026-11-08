@@ -23,6 +23,12 @@ export interface AnatomyConfig {
   toWorld?: readonly number[];
   /** Marked in the controls: "Placeholder model". */
   placeholder: boolean;
+  /**
+   * The case's own body context (context.glb, same scan and frame as its vessels.glb): placed exactly with the
+   * case's mesh.toWorld, never fitted, and switched by the "Body" toggle. The vascular placeholder is never drawn
+   * on such a case.
+   */
+  context?: boolean;
 }
 
 export const PLACEHOLDER_ANATOMY: AnatomyConfig = { url: placeholderUrl, fit: 'case', placeholder: true };

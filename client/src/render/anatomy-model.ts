@@ -5,20 +5,29 @@
  */
 import type { Vec3 } from '../contracts';
 
-export type VesselKind = 'artery' | 'vein';
+/**
+ * 'context' is the same patient's body around the vessels (context.glb from the case's own scan: nodes "bone" and
+ * "heart"). It is background for scale and orientation, not a vessel, and has its own "Body" toggle.
+ */
+export type VesselKind = 'artery' | 'vein' | 'context';
 
-/** What the controls set. `visible` is the layer as a whole; the rest refine it. */
+/**
+ * What the controls set. `visible` is the vascular model as a whole; arteries, veins and labels refine it. `body`
+ * is the case's own body context on its own: it shows whatever `visible` says.
+ */
 export interface AnatomyState {
   visible: boolean;
   arteries: boolean;
   veins: boolean;
   labels: boolean;
+  /** The same-patient body context (bone and heart). Off by default. */
+  body: boolean;
   /** 0..1 */
   opacity: number;
 }
 
 export function defaultState(opacity: number): AnatomyState {
-  return { visible: false, arteries: true, veins: true, labels: true, opacity: clamp01(opacity) };
+  return { visible: false, arteries: true, veins: true, labels: true, body: false, opacity: clamp01(opacity) };
 }
 
 const clamp01 = (v: number): number => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0);
@@ -33,19 +42,22 @@ export function readState(raw: unknown, fallback: AnatomyState): AnatomyState {
     arteries: bool('arteries'),
     veins: bool('veins'),
     labels: bool('labels'),
+    body: bool('body'), // states saved before the Body toggle existed have none: off
     opacity: typeof o['opacity'] === 'number' ? clamp01(o['opacity']) : fallback.opacity,
   };
 }
 
 /**
- * Artery or vein, from the node's `extras.kind` first, then its name: "artery…", "a_…", "…_artery" and the usual
+ * Artery, vein or body context, from the node's `extras.kind` first, then its name: "bone…" and "heart…" are context; "artery…", "a_…", "…_artery" and the usual
  * arterial names; "vein…", "v_…", "…_vein", "vena cava" and "…venous". Null when neither: the node is still drawn
  * with the layer, but no arteries/veins toggle applies to it.
  */
 export function classify(name: string, extras?: Record<string, unknown> | null): VesselKind | null {
   const k = extras?.['kind'];
-  if (k === 'artery' || k === 'vein') return k;
+  if (k === 'artery' || k === 'vein' || k === 'context') return k;
   const n = name.toLowerCase().replace(/[\s.-]+/g, '_');
+  // The body context's nodes: "bone" (spine, ribs, sternum) and "heart", or names that start with them.
+  if (/^(bone|bones|heart)(_|$)/.test(n)) return 'context';
   if (/(^|_)(vein|veins|vena|venous|v)(_|$)|^vein|_vein$|vena_cava|svc|ivc/.test(n)) return 'vein';
   if (/(^|_)(artery|arteries|arterial|a)(_|$)|^artery|_artery$|aorta|aortic|carotid|subclavian|brachiocephalic_trunk|iliac|femoral_a/.test(n)) return 'artery';
   return null;
@@ -76,6 +88,7 @@ export function fitToBox(src: { min: Vec3; max: Vec3 }, target: { center: Vec3; 
 
 /** Whether one classified node shows under a state. */
 export function shows(kind: VesselKind | null, s: AnatomyState): boolean {
+  if (kind === 'context') return s.body;
   if (!s.visible) return false;
   if (kind === 'artery') return s.arteries;
   if (kind === 'vein') return s.veins;

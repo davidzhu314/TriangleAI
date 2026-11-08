@@ -152,3 +152,21 @@ describe('Cathy, undo (the last step)', () => {
     expect(rec.started).toBe(3);
   });
 });
+
+describe('Cathy, reset view', () => {
+  it('"Hey Cathy, reset view" and its phrasings run reset_view; without the wake word nothing runs', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, reset view', 'hey kathy reset the view', 'Cathy, reset camera', 'Hey Cathy, recenter', 'hey cathy reset few']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['reset_view', 'reset_view', 'reset_view', 'reset_view', 'reset_view']);
+    rec.onResult?.(say('reset view'));
+    expect(heard).toHaveLength(5);
+  });
+
+  it('is never confused with zoom out ("wide view") or undo', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, wide view', 'Hey Cathy, undo', 'Hey Cathy, reset view']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['zoom_out', 'undo', 'reset_view']);
+  });
+});

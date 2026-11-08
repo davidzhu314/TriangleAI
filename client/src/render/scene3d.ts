@@ -79,6 +79,17 @@ export interface CaseScene {
   zoom(factor: number): void;
   /** Pan the view by a share of the canvas (dx of its width, dy of its height), as dragging the picture would. */
   pan(dx: number, dy: number): void;
+  /**
+   * Turn the case about the point the camera looks at, on all three axes, in the camera's frame (radians):
+   * yaw about the screen's vertical, pitch about its horizontal, roll about the line of sight (positive is
+   * counter-clockwise as seen). The case turns, not the camera, so OrbitControls' upright camera never fights a
+   * roll, and picking still works (handles turn with the case).
+   */
+  rotate(yaw: number, pitch: number, roll: number): void;
+  /** Undo every turn of the case and put the camera back on the given framing. */
+  resetView(kind: 'close' | 'whole'): void;
+  /** Where each branch handle is on the canvas, in CSS pixels from its top left (for automated tests). */
+  handlesOnScreen(): { node: string; x: number; y: number }[];
   /** Pick along a ray and run the handle's action (AR select). True when a handle was hit. */
   tap(ray: THREE.Raycaster): boolean;
   onFrame(cb: (dtMs: number) => void): () => void;
@@ -396,6 +407,29 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       // Within about a fingertip's width on screen (a touch target).
       return best && best.d <= tokenNumber('--size-touch') ? best.id : null;
     },
+    rotate(yaw, pitch, roll) {
+      if (!yaw && !pitch && !roll) return;
+      camera.updateMatrixWorld();
+      const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+      const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+      const toViewer = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 2).normalize();
+      const q = new THREE.Quaternion()
+        .setFromAxisAngle(up, yaw)
+        .multiply(new THREE.Quaternion().setFromAxisAngle(right, pitch))
+        .multiply(new THREE.Quaternion().setFromAxisAngle(toViewer, roll));
+      const pivot = controls.target.clone();
+      content.position.sub(pivot).applyQuaternion(q).add(pivot);
+      content.quaternion.premultiply(q);
+      content.updateMatrixWorld(true);
+      canvas.dataset['turned'] = String(!content.quaternion.equals(new THREE.Quaternion()));
+    },
+    resetView(kind) {
+      content.position.set(0, 0, 0);
+      content.quaternion.identity();
+      content.updateMatrixWorld(true);
+      canvas.dataset['turned'] = 'false';
+      api.frame(kind);
+    },
     pan(dx, dy) {
       // The size of the canvas, in world units, at the distance of what the camera looks at.
       const dist = camera.position.distanceTo(controls.target);
@@ -416,6 +450,13 @@ export function createCaseScene(c: LoadedCase, label: string): CaseScene {
       to.setLength(Math.min(max, Math.max(min, to.length())));
       camera.position.copy(controls.target).add(to);
       controls.update();
+    },
+    handlesOnScreen() {
+      const r = canvas.getBoundingClientRect();
+      return handles.children.map((h) => {
+        const v = h.getWorldPosition(new THREE.Vector3()).project(camera);
+        return { node: h.userData['node'] as string, x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
+      });
     },
     pick(ray) {
       const hit = ray.intersectObjects(handles.children, false)[0];

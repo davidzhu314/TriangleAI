@@ -1,6 +1,10 @@
 """Fetch one subject's arterial masks from the TotalSegmentator dataset (small subset v2.0.1, CC BY 4.0).
 
     python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404
+    python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context
+
+`--context` fetches the body-context masks instead: the vertebrae C7 to L5, the ribs (left and right 1 to 12),
+the sternum and the heart, for the faint background mesh (`slicer/export_context.py`).
 
 Reads only the needed members of the 3.2 GB Zenodo zip with HTTP range requests. Only the arterial
 masks are written. The CT image (`ct.nii.gz`) and the dataset's `meta.csv` (age, sex, scanner) are
@@ -26,6 +30,14 @@ MASKS = {
     "iliac_artery_right": "r_iliac",
     "iliac_artery_left": "l_iliac",
 }
+
+
+# Body context (bones and heart), same subject, same dataset and license. File name = class name.
+CONTEXT = (
+    ["vertebrae_C7"] + [f"vertebrae_T{i}" for i in range(1, 13)] + [f"vertebrae_L{i}" for i in range(1, 6)]
+    + [f"rib_{side}_{i}" for side in ("left", "right") for i in range(1, 13)]
+    + ["sternum", "heart"]
+)
 
 
 class HttpFile(io.RawIOBase):
@@ -61,15 +73,16 @@ class HttpFile(io.RawIOBase):
         return len(data)
 
 
-def main(subject, out_dir):
+def main(subject, out_dir, context=False):
     os.makedirs(out_dir, exist_ok=True)
     z = zipfile.ZipFile(io.BufferedReader(HttpFile(URL), buffer_size=1 << 20))
-    for cls, vessel in MASKS.items():
+    wanted = {c: c for c in CONTEXT} if context else MASKS
+    for cls, name in wanted.items():
         data = z.read(f"{subject}/segmentations/{cls}.nii.gz")
-        with open(os.path.join(out_dir, f"{vessel}.nii.gz"), "wb") as f:
+        with open(os.path.join(out_dir, f"{name}.nii.gz"), "wb") as f:
             f.write(data)
-        print(vessel, len(data), "bytes")
+        print(name, len(data), "bytes")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], context="--context" in sys.argv[3:])

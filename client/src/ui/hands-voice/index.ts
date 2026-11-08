@@ -20,6 +20,7 @@ export const ACTION_WORDS: Readonly<Record<VoiceAction, string>> = {
   assist_options: 'My options',
   assist_review: 'How am I doing',
   undo: 'Undo last step',
+  reset_view: 'Reset view',
 };
 
 const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
@@ -27,7 +28,7 @@ const STATUS_WORDS: Readonly<Record<GestureOutput['status'], string>> = {
   lost: 'Hand lost. Show it again.',
   gun: 'Gun pose: aim to push or pull, twist to rotate.',
   point: 'Pointing: pinch to pick the branch under the dot.',
-  pan: 'Panning',
+  pan: 'Turning: move your hand to turn the case; two hands moving opposite ways roll it.',
 };
 
 /** Words for the wake listener's errors (Web Speech codes); anything else is said generically. */
@@ -49,8 +50,11 @@ export interface HandsVoiceOptions {
   host: HTMLElement;
   /** Every gesture frame while the camera is on (null when it turns off). */
   onGesture?: (g: GestureOutput | null) => void;
-  /** A pan this frame, in screen widths in the user's view (either hand, averaged). */
-  onPan?: (dx: number, dy: number) => void;
+  /**
+   * A pan this frame, in screen widths in the user's view (either hand, averaged), and a roll: with both hands
+   * panning, half the difference of their vertical moves (left down and right up is counter-clockwise).
+   */
+  onPan?: (dx: number, dy: number, roll: number) => void;
   /** A recognised command: return the answer to show under the caption, or null. */
   onVoice: (action: VoiceAction) => string | null | Promise<string | null>;
   /** Which commands this screen answers; others get "not on this screen". */
@@ -96,7 +100,11 @@ export function createHandsVoice({ host, onGesture, onPan, onVoice, actions }: H
       pointer.style.setProperty('--hv-x', `${g.pointer.x * 100}%`);
       pointer.style.setProperty('--hv-y', `${g.pointer.y * 100}%`);
     } else pointer.hidden = true;
-    if (g?.pan) onPan?.(g.pan.dx, g.pan.dy);
+    if (g?.pan) {
+      const l = g.hands.Left.pan;
+      const r = g.hands.Right.pan;
+      onPan?.(g.pan.dx, g.pan.dy, l && r ? (l.dy - r.dy) / 2 : 0);
+    }
     onGesture?.(g);
   };
 

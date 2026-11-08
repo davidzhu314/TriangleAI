@@ -8,6 +8,7 @@ import type { Frontier, LoadedCase, OptimizeResult, Route, Weights, WirePresetId
 import { buildGraph, createRanker, normaliseWeights, optimize, routeFor, WIRE_PRESETS, type RouteGraph } from '../../optimize';
 import { svgEl } from '../../render/case-svg';
 import { createCompareView, type CompareView } from '../../render/compare-view';
+import { anatomyFor } from '../body-context';
 import { notFound } from '../brief';
 import { createHandsVoice, type HandsVoice } from '../hands-voice';
 import { dash, h } from '../dom';
@@ -97,14 +98,21 @@ function draw(sc: Screen): void {
   // ---- overlay, the largest block
   if (!liveView || liveCase !== c) {
     disposeCompareView();
-    const created = createCompareView(c);
+    const created = createCompareView(c, anatomyFor(entry(key), c));
     liveView = created;
     liveCase = c;
     liveHands = createHandsVoice({
       host: created.element,
-      actions: ['zoom_in', 'zoom_out', 'undo'],
-      onPan: (dx, dy) => created.pan(dx, dy),
-      onVoice: (a) => (a === 'undo' ? 'Undo works on Plan.' : created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.'),
+      actions: ['zoom_in', 'zoom_out', 'reset_view', 'undo'],
+      onPan: (dx, dy, roll) => created.pan(dx, dy, roll),
+      onVoice: (a) => {
+        if (a === 'reset_view') {
+          created.resetView();
+          return null;
+        }
+        if (a === 'undo') return 'Undo works on Plan.';
+        return created.zoom(a === 'zoom_in' ? 0.75 : 1.33) ? null : 'Zoom works in the 3D view.';
+      },
     });
     created.toolbar.append(liveHands.controls);
   }

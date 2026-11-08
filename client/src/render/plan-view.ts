@@ -9,6 +9,7 @@
 import type { LoadedCase } from '../contracts';
 import type { ArHooks } from './ar';
 import { drawCase, svgEl } from './case-svg';
+import type { AnatomyConfig } from './anatomy-config';
 import { createDualView } from './dual-view';
 import './render.css';
 
@@ -30,7 +31,9 @@ export interface PlanView {
   /** Zoom the 3D view; false in the flat view, which has no zoom. */
   zoom(factor: number): boolean;
   /** Pan the view (3D or flat) by a share of its size. */
-  pan(dx: number, dy: number): void;
+  pan(dx: number, dy: number, roll?: number): void;
+  /** Back to where the view opened: exactly what the Reset view button does. */
+  resetView(): void;
   update(state: PlanViewState): void;
   dispose(): void;
 }
@@ -46,7 +49,7 @@ export function drawMarkers(d: ReturnType<typeof drawCase>, layer: SVGGElement, 
   }
 }
 
-export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks): PlanView {
+export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks, anatomy?: Promise<AnatomyConfig | null>): PlanView {
   const d = drawCase(c, `Front view of ${c.title}. Build the route with the list of next branch points.`, 'plan-hatch');
   const route = svgEl('polyline', { points: '', class: 'route-trace' });
   const handles = svgEl('g', { class: 'handles' });
@@ -64,7 +67,7 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
     scene.setHandles(state.pickable, onPick);
     scene.setMarkers(state.entryNode, state.targetNode);
   };
-  const dual = createDualView(c, `3D view of ${c.title}. Drag to turn it; click a branch point to extend the route, or use the list of next branch points.`, d.svg, 'plan-view', ar, () => last && draw3d(last));
+  const dual = createDualView(c, `3D view of ${c.title}. Drag to turn it; click a branch point to extend the route, or use the list of next branch points.`, d.svg, 'plan-view', ar, () => last && draw3d(last), undefined, anatomy);
   const element = dual.element;
 
   const onClick = (ev: Event): void => {
@@ -76,7 +79,8 @@ export function createPlanView(c: LoadedCase, onPick: PickHandler, ar?: ArHooks)
   return {
     element,
     toolbar: dual.toolbar,
-    pan: (dx, dy) => dual.pan(dx, dy),
+    pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
+    resetView: () => dual.resetCamera(),
     pickAt(x, y) {
       const scene = dual.scene();
       if (scene && dual.kind() === '3d') return scene.pickAt(x, y);

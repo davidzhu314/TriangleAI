@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { loadCase, type CaseSource } from '../client/src/case';
 import { countTriangles, parseGlb } from '../client/src/case/glb';
 import type { CaseJson, CenterlinesJson, LoadedCase } from '../client/src/contracts/case';
+import { CASE_FILES } from '../client/src/contracts';
 import schema from '../client/src/contracts/case.schema.json';
 import { MESH_TRIANGLE_BUDGET } from '../client/src/contracts/validation';
 import { writeZip } from './lib/zip';
@@ -95,6 +96,21 @@ describe.each(SUBJECTS.map((subject) => [`ts-${subject}-cta`, subject] as const)
     expect(glb.json['nodes'].map((n: { name: string }) => n.name)).toEqual(json<CaseJson>('case.json').vessels.map((v) => v.id));
     expect(glb.json['asset'].extras).toEqual({ axes: 'RAS', units: 'mm' });
     expect(countTriangles(glb.json)).toBeLessThanOrEqual(MESH_TRIANGLE_BUDGET);
+  });
+
+  it('has a context.glb beside the package: same subject\'s bones and heart, mm and RAS, never part of the case', () => {
+    const ctx = bytes('context.glb');
+    expect(ctx.length, 'about 1.5 MB at most').toBeLessThanOrEqual(1.5 * 1024 * 1024);
+    const glb = parseGlb(ctx);
+    expect(glb.json['asset'].extras).toEqual({ axes: 'RAS', units: 'mm' });
+    expect(glb.json['nodes']).toEqual([
+      { name: 'bone', mesh: 0, extras: { kind: 'context', label: 'Bones' } },
+      { name: 'heart', mesh: 1, extras: { kind: 'context', label: 'Heart' } },
+    ]);
+    expect(countTriangles(glb.json)).toBeLessThanOrEqual(MESH_TRIANGLE_BUDGET);
+    // The loader reads only the package files; case.json never names the context file.
+    expect(Object.values(CASE_FILES)).not.toContain('context.glb');
+    expect(readFileSync(join(DIR, 'case.json'), 'utf8')).not.toContain('context');
   });
 
   it('carries no patient fields: only the case schema keys', () => {
