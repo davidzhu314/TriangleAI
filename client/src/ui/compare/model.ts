@@ -32,7 +32,10 @@ export interface RouteGroup {
   cost: CostVector;
   entryId: string;
   edges: string[];
-  /** Name for a heading or a row, e.g. "Shortest, least radiation" or "Through Aorta → Left branch". */
+  /**
+   * Name for a heading or a row, e.g. "Shortest, least radiation" or "Through Aorta → Left branch". When the case
+   * has several entries the name leads with the entry from case data, e.g. "Right radial (shortest, least radiation)".
+   */
   name: string;
   /** "Soft angled or Standard J". */
   devices: string;
@@ -48,6 +51,13 @@ function pathName(c: LoadedCase, entryId: string, edges: readonly string[]): str
   const through = `through ${vessels.join(' → ')}`;
   if (c.entries.length < 2) return capital(through);
   return `From the ${c.entries.find((e) => e.id === entryId)?.name ?? entryId}, ${through}`;
+}
+
+/** A labelled route's name: its labels, led by its entry when the case has several (the presenter says the entry). */
+function labelName(c: LoadedCase, entryId: string, labels: readonly RouteLabel[]): string {
+  const words = labels.map((l) => LABEL_NAME[l]).join(', ');
+  if (c.entries.length < 2) return capital(words);
+  return `${c.entries.find((e) => e.id === entryId)?.name ?? entryId} (${words})`;
 }
 
 export function groupRoutes(c: LoadedCase, frontier: Frontier): RouteGroup[] {
@@ -68,7 +78,7 @@ export function groupRoutes(c: LoadedCase, frontier: Frontier): RouteGroup[] {
     return {
       ...g,
       presetIds,
-      name: g.labels.length ? capital(g.labels.map((l) => LABEL_NAME[l]).join(', ')) : pathName(c, g.entryId, g.edges),
+      name: g.labels.length ? labelName(c, g.entryId, g.labels) : pathName(c, g.entryId, g.edges),
       devices: presetIds.map(presetName).join(' or '),
     };
   });

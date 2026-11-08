@@ -1,7 +1,7 @@
 /**
  * Compare — "Is my route on the frontier?" (DESIGN.md: Screen inventory).
- * The overlay leads (frontier routes by colour, pattern and label, the player's route on top), then the weight
- * sliders beside one routes table, then keep or switch. The engine decides everything: optimize() for the frontier,
+ * The overlay leads (frontier routes by colour, pattern and label, the player's route on top) with the weight
+ * sliders beside it, then one routes table, then keep or switch. The engine decides everything: optimize() for the frontier,
  * routeFor for the player's own route, createRanker for the order.
  */
 import type { Frontier, LoadedCase, OptimizeResult, Route, Weights, WirePresetId } from '../../contracts';
@@ -126,7 +126,7 @@ function draw(sc: Screen): void {
         { class: 'compare-weights', 'aria-labelledby': 'weights-heading', 'data-testid': 'weights' },
         h('h2', { id: 'weights-heading' }, 'Weights'),
         h('p', { class: 'muted' }, 'Illustrative: they change the order of the frontier, never which routes are feasible.'),
-        sc.measures.map((m) => {
+        h('div', { class: 'weight-list' }, sc.measures.map((m) => {
           const raw = sc.weights[m.key] ?? 0;
           const share = shares[m.key];
           const input = h('input', { type: 'range', min: '0', max: '10', step: '1', value: String(raw), id: `w-${m.key}`, 'data-measure': m.key, 'aria-valuetext': share === undefined ? 'no weight' : `${Math.round(share * 100)} percent of the weight` });
@@ -143,7 +143,7 @@ function draw(sc: Screen): void {
             input,
             h('span', { class: 'weight-share num', 'data-share': m.key }, share === undefined ? dash('No weight') : `${Math.round(share * 100)}%`),
           );
-        }),
+        })),
         Object.keys(shares).length === 0 ? h('p', { class: 'muted' }, 'Every weight is zero, so the routes rank equal.') : null,
       )
     : null;
@@ -218,7 +218,7 @@ function draw(sc: Screen): void {
   const selectedGroup = sc.groups.find((g) => g.id === sc.selected);
   const switches = selectedGroup
     ? selectedGroup.presetIds.map((presetId) => {
-        const label = selectedGroup.presetIds.length > 1 ? `Switch to ${selectedGroup.name} (${presetName(presetId)})` : `Switch to ${selectedGroup.name}`;
+        const label = selectedGroup.presetIds.length > 1 ? `Switch to ${selectedGroup.name}, ${presetName(presetId)} wire` : `Switch to ${selectedGroup.name}`;
         const b = h('button', { type: 'button', class: 'btn btn-secondary', 'data-testid': 'switch' }, label);
         b.addEventListener('click', () => choose({ entryId: selectedGroup.entryId, targetId: plan.targetId, presetId, edges: [...selectedGroup.edges], weights: { ...sc.weights } }, `Switched to ${selectedGroup.name}.`));
         return b;
@@ -236,9 +236,10 @@ function draw(sc: Screen): void {
     'div',
     { class: 'compare' },
     h('div', { class: 'title-row' }, h('h1', {}, `Compare: ${c.title}`), h('p', { class: 'finding', 'data-testid': 'finding' }, finding(c, player, result, sc.groups, sc.measures))),
-    well,
-    warningBlock,
-    h('div', { class: 'compare-layout' }, sliders, table),
+    // The overlay and the sliders side by side, the table full width below: at 1440 × 900 the sliders, the overlay
+    // and the table's every column are on screen together while the ranking changes (rehearsal 1, issue 3).
+    h('div', { class: 'compare-layout' }, h('div', { class: 'compare-lead' }, well, warningBlock), sliders),
+    table,
     decide,
   );
   renderShell(

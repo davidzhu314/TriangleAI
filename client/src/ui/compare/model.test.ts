@@ -74,6 +74,22 @@ describe('grouping and naming', () => {
     if (!unlabelled) return; // every route labelled: nothing to check on this case
     for (const e of unlabelled.edges) expect(unlabelled.name).toContain(c.vessels.find((v) => v.id === c.edges.find((x) => x.id === e)!.vessel)!.name);
   });
+
+  it('leads each route name with its entry from case data when the case has several entries (type-iii)', async () => {
+    const dir = join(process.cwd(), 'client', 'public', 'cases', 'type-iii');
+    const files = Object.fromEntries(['case.json', 'centerlines.json', 'vessels.glb'].map((n) => [n, new Uint8Array(readFileSync(join(dir, n)))]));
+    const r = await loadCase({ kind: 'files', origin: 'bundled', files });
+    if (!r.ok) throw new Error('type-iii did not load');
+    const t3 = r.case;
+    expect(t3.entries.length).toBeGreaterThan(1);
+    const f = (await optimize({ caseId: t3.id, targetId: 'rcca' }, t3)) as Frontier;
+    for (const g of groupRoutes(t3, f)) {
+      const entryName = t3.entries.find((e) => e.id === g.entryId)!.name;
+      expect(g.name.toLowerCase()).toContain(entryName.toLowerCase());
+    }
+    // A single-entry case keeps the label-only name.
+    for (const g of groupRoutes(c, frontier).filter((x) => x.labels.length)) expect(g.name).not.toContain(c.entries[0]!.name);
+  });
 });
 
 describe('the finding', () => {

@@ -17,3 +17,4 @@ Meanwhile: `team/rehearsal/checklist.md` has presenter workarounds: skip the tut
 
 ## Answer
 
+Done by David in Aroovee's place (lane/david PR). 1: DEMO.md 1:00 now resets the slider to equal weights before switching to the right radial route; a8 asserts it ranks first and Results shows plan 100. 2: Drive stops counting fluoro at target_reached (HUD and saved log, fluoro-cap.ts); "Finish drive" is unchanged; scoring reads only samples, so nothing for Vaibhav. 3: Compare puts the sliders beside the overlay and the table full width under them; a8 checks sliders, last row and every column fit 1440 × 900. 4: rows and switch buttons lead with the entry name from case data on multi-entry cases. 5: Scale and Results fact lines updated; a8 Scale now imports the ts-s1404-cta case.zip.
