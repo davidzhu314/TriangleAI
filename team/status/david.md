@@ -1,9 +1,9 @@
 # Status — David (Teammate 1)
 
 Contracts version: 1
-Now: D3a PR open, waiting for human review. D3c blocked (3D Slicer not installed). Next by plan after D3a: D4
-Done: D0a scaffold; D0b contracts v1 + case.schema.json + fixture-y; D1 physics gate — Demo leads with physics (Euler integrator); D2 loader and validator; D6-min generated cases low-tort and type-iii + drivability retune; D3a phantom packages in physics/cases (2026-11-07)
+Now: D5 PR open, waiting for human review (physics server, case serving, select.ts, physics and replay sources). Aroovee's three requests answered (three.js added, select.ts, index URL). Contracts still v1. D3c still blocked (no Slicer). Next by plan after D5: later work (D3b stretch, D7)
+Done: D0a scaffold; D0b contracts v1 + case.schema.json + fixture-y; D1 physics gate — Demo leads with physics (Euler integrator); D2 loader and validator; D6-min generated cases low-tort and type-iii + drivability retune; D3a phantom packages in physics/cases; D4 attempted, no recorded runs; D5 physics server + select.ts + three.js deps (2026-11-07)
 Blocked: D3c — 3D Slicer and SlicerVMTK not installed (human: do not install; later session)
-Waiting to swap: wire/mock-source.ts → RailWireSource in select.ts (when Vaibhav's V4 handoff lands)
-Next handoff: D4 → recorded runs per phantom × target × preset
-Last session: 2026-11-07 — D3a: four CathSim phantoms as packages in physics/cases (GLB < 60k, centerlines computed from the mesh, frame cathsim→RAS resolved). D3c stopped: no Slicer. PR open, not merged.
+Waiting to swap: nothing. select.ts uses RailWireSource for non-phantom cases
+Next handoff: none planned until the human picks the next milestone
+Last session: 2026-11-07. Handled requests (three.js 0.187.0 pinned, select.ts, physics index URL http://127.0.0.1:8765/cases/index.json). D5: python -m server runs in real time (frame-to-frame p95 about 38 ms), sends CathSim world metres unchanged and per-frame mean wire-wall force, and falls back to rail (restarting from the entry). No recorded replays exist. Filed to-aroovee a5-drive-e2e. Handoff 2026-11-07-david-D5-physics-server.md. PR open, not merged.

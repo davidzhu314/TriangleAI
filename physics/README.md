@@ -25,24 +25,45 @@ Gotchas found in D1:
 
 CathSim's `env.yaml` sets `integrator: implicitfast`. With MuJoCo's fluid model on the 84 wire geoms, that runs about 14 control steps/s on every phantom, below the 40 steps/s gate. The physics process switches the compiled model to Euler at runtime (`physics.model.opt.integrator = mjINT_EULER`; CathSim's files are untouched): 190–270 steps/s. On phantom3 over 400 identical control steps, the two integrators' tip paths differ by 0.2 mm on average and 2.3 mm at most. Numbers: `metrics/david/d1/`.
 
-## The D1 probe (spec Phase 0)
+## Run the physics process (D5)
 
 ```sh
-# steps/s over 60 s (prints one JSON line)
+cd physics
+MUJOCO_GL=disable .venv/bin/python -m server              # port 8765; about 20 s to import CathSim, then it prints its URLs
+```
+
+One localhost port (127.0.0.1:8765) serves:
+
+- **`GET /cases/index.json`:** `{"cases": [{"id", "path"}]}`, where `path` is relative to the list (the same shape as `client/public/cases/index.json`). It lists `low_tort`, `phantom2`, `phantom3` and `phantom4`.
+- **`GET /cases/<id>/{case.json,centerlines.json,vessels.glb,LICENSE.md}`:** the D3a packages, each with its CathSim license notice. CORS is open, so the Vite app can read them.
+- **`ws://127.0.0.1:8765/wire`:** the spec §5.2 messages.
+  - State is sent about every 1/30 s of wall time, and each frame advances 1/30 s of simulation time in whole 0.012 s control steps.
+  - Positions are CathSim world metres, sent unchanged; that is the case package's Y-up frame (D3a).
+  - `contact_force_n` is the mean, over the frame's control steps, of the summed normal force (`mj_contactForce`) over every wire-to-wall contact.
+  - Full push is about 2 cm/s and full rotate about 1 rad/s.
+  - If CathSim cannot run, `start` is closed with code 1013 `server_unavailable`.
+- **`GET /recorded-runs.json`** and the replay files it names, only if `physics/recorded-runs.json` exists. D4 recorded none, so these are 404 and replay is unavailable.
+
+Latency from a client: start the server, then run `.venv/bin/python -m server.measure_latency --phantom phantom3 --seconds 30` from `physics/`. Results are in `metrics/david/d5/`.
+
+Tests (CI runs these without CathSim, using a fake simulator): `pytest physics`. A live client check runs with the server up: `PHYSICS_LIVE=1 pnpm vitest run client/src/wire/physics-live.test.ts`.
+
+## The D1 probe (spec Phase 0)
+
+`probe/probe_server.py` is the D1 spike, **not** the D5 server; use `python -m server` above. It treated CathSim's world as RAS, and its force rule only counted contacts within 2 mm. Both are wrong for D5 (DECISIONS.md). It is kept only to reproduce the D1 numbers:
+
+```sh
 MUJOCO_GL=disable .venv/bin/python probe/cathsim_bench.py --phantom phantom3 --seconds 60 --integrator euler
-# stock vs Euler: speed, stability, tip divergence
 MUJOCO_GL=disable .venv/bin/python probe/integrator_compare.py phantom3
-# latency: start the probe server, then measure from the repo root with Playwright's Chromium
 MUJOCO_GL=disable .venv/bin/python probe/probe_server.py --integrator euler --seconds 80
 node physics/probe/measure.mjs 40 phantom3           # in a second terminal, from the repo root
 ```
 
-`probe_server.py` is a spike, not the D5 server. It speaks the §5.2 messages, paces the sim to real time, sends state at about 30 Hz in simulation time, and serves a blank three.js page at `/` that draws the 80 wire points. It treats CathSim's world frame (metres) as RAS until D3a registers each phantom to its case package.
-
 ## When CathSim is missing
 
-The app never needs this process. If it is not running, or the socket fails or stalls for 2 s, `client/src/wire/select.ts` (D5) falls back to rail and shows a notice; phantom cases are listed only while this process answers. CI never installs CathSim: the `physics-bridge` job runs only `pytest physics` on the bridge code (`requirements-test.txt`, Python 3.9 container).
+The app never needs this process. If it is not running, or the socket fails or stalls for 2 s, `client/src/wire/select.ts` (D5) falls back to rail and shows a notice; phantom cases are listed only while this process answers. CI never installs CathSim: the `physics-bridge` job runs only `pytest physics` on the server code with a fake simulator (`requirements-test.txt`, Python 3.9 container).
 
 ## Still to do
 
-D3a: phantom case packages in `physics/cases/` (GLB under 60k triangles, VMTK centerlines, bca and lcca targets, CathSim's LICENSE and attribution in each package). D4: recorded runs. D5: the real server with case serving over HTTP and the fallback selector.
+- **D3c:** a CTA case through 3D Slicer. Blocked because Slicer is not installed.
+- **Recorded runs:** none. D4 found no driver that reaches a target (DECISIONS.md).

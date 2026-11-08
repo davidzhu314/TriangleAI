@@ -20,3 +20,4 @@ Meanwhile:
 
 ## Answer
 
+Done: `three` 0.187.0 (runtime) and `@types/three` 0.187.0 (dev) are pinned exactly in package.json and pnpm-lock.yaml, and the THIRD_PARTY.md row reads 0.187.0, MIT.
