@@ -1,6 +1,7 @@
 /**
- * Opt-in "always listen" mode: the microphone stays on, and only speech that starts with the wake
- * word "Hey Cathy" is treated as a command. Everything else is ignored, never matched.
+ * Voice input: always listening while voice is on, and only speech that starts with the wake word
+ * "Hey Cathy" is treated as a command. Everything else is ignored, never matched. This is the only
+ * voice mode; push-to-talk was removed (DECISIONS.md, "Voice: always listening, wake word only").
  *
  * - "Hey Cathy, zoom in" runs zoom_in in one go.
  * - "Hey Cathy" alone arms the listener: the next utterance is taken as the command, with or
@@ -9,12 +10,12 @@
  *   blocked or missing, service not allowed) stops the listener for good and reports it; harmless
  *   ones ('no-speech', 'aborted', 'network') just let the next session start.
  *
- * Off until the caller starts it: the UI must show that the microphone is live (in Chrome the audio
- * streams to Google while it is on). Push-to-talk (./ptt) remains the default way to talk.
+ * Off until the player turns voice on (the caller starts it): the UI must show that the microphone is
+ * live while it is on (in Chrome the audio streams to Google).
  */
 
 import { matchCommand, normalize, stripWake, type SpeechAlternative, type VoiceMatch } from './match';
-import type { Recognizer } from './ptt';
+import type { Recognizer } from './recognizer';
 
 export type WakeState = 'off' | 'listening' | 'armed' | 'error';
 

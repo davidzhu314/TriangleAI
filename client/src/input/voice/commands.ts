@@ -1,11 +1,13 @@
 /**
- * Push-to-talk voice commands: each action with several phrasings, including common mis-hearings.
+ * Voice commands: each action with several phrasings, including common mis-hearings. Voice is always
+ * listening once the player turns it on, and a command runs only after the wake phrase "Hey Cathy"
+ * (./wake). There is no push-to-talk (DECISIONS.md, "Voice: always listening, wake word only").
  * Add new mis-hearings found in the local webcam/mic lab here (team/handoffs explains how).
  *
  * Phrasings are written already normalised: lowercase, no punctuation, digits as words.
  */
 
-export type VoiceAction = 'zoom_in' | 'zoom_out' | 'assist_best_next' | 'assist_options' | 'assist_review';
+export type VoiceAction = 'zoom_in' | 'zoom_out' | 'assist_best_next' | 'assist_options' | 'assist_review' | 'undo';
 
 export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = {
   zoom_in: ['zoom in', 'closer', 'move closer', 'get closer', 'zoom inn'],
@@ -13,12 +15,14 @@ export const VOICE_COMMANDS: Readonly<Record<VoiceAction, readonly string[]>> = 
   assist_best_next: ['best next artery', 'where next', 'which way', 'best path', 'next best'],
   assist_options: ['what are my options', 'show options', 'options', 'show me the paths'],
   assist_review: ['how am i doing', 'what am i doing wrong', 'analyze', 'check my drive', 'any mistakes'],
+  /** Undo the last step: on Plan, remove the last branch added to the route. */
+  undo: ['undo', 'undo that', 'undo last step', 'undo the last step', 'go back a step', 'take that back', 'remove the last step', 'undue'],
 };
 
 export const VOICE_ACTIONS = Object.keys(VOICE_COMMANDS) as VoiceAction[];
 
 /**
- * Optional wake phrase ("Hey Cathy"), stripped from the start; push-to-talk already gates listening.
+ * The wake phrase ("Hey Cathy"): a command runs only after it, and it is stripped before matching.
  * The names include how speech recognition commonly spells or mis-hears "Cathy". (The app is still named Catherine.)
  */
 export const WAKE_LEADS = ['hey', 'a'] as const;

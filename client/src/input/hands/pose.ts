@@ -6,7 +6,7 @@
  * from the camera (toward the user).
  */
 
-import { FULL_CURL_DEG, GUN, PINCH_EXIT, POINT, PULL_ABOVE, PULL_FULL_AT, PUSH_BELOW, PUSH_FULL_AT, TWIST_DEAD_DEG, TWIST_FULL_DEG } from './constants';
+import { FULL_CURL_DEG, GUN, PAN, PINCH_EXIT, POINT, PULL_ABOVE, PULL_FULL_AT, PUSH_BELOW, PUSH_FULL_AT, TWIST_DEAD_DEG, TWIST_FULL_DEG } from './constants';
 import { FINGER_MCP, LM, type Finger, type GestureConfig, type HandObservation, type Landmark } from './types';
 
 type V = [number, number, number];
@@ -76,7 +76,7 @@ export function barrelGapDeg(w: readonly Landmark[]): number {
 
 /** One named pose check, as the tests and the lab's diagnostic panel show it. */
 export interface PoseCheck {
-  name: 'ring curl' | 'pinky curl' | 'thumb up' | 'barrel gap' | 'index straight' | 'middle curl';
+  name: 'ring curl' | 'pinky curl' | 'thumb up' | 'barrel gap' | 'index straight' | 'middle curl' | 'middle straight' | 'ring straight';
   value: number;
   /** `value` must be above `min`, or at most `max`. */
   min?: number;
@@ -121,9 +121,30 @@ export function pointChecks(w: readonly Landmark[], level: PoseLevel = 'enter', 
   ];
 }
 
+/**
+ * The pan ("trackpad") pose, check by check: index, middle and ring extended; pinky curled. The thumb is
+ * free. Exclusive with the gun (ring curled) and the point (middle and ring curled).
+ */
+export function panChecks(w: readonly Landmark[], level: PoseLevel = 'enter'): PoseCheck[] {
+  const lim = PAN[level];
+  return [
+    atMost('index straight', flexion(w, 'index'), lim.fingersCurlMax),
+    atMost('middle straight', flexion(w, 'middle'), lim.fingersCurlMax),
+    atMost('ring straight', flexion(w, 'ring'), lim.fingersCurlMax),
+    above('pinky curl', flexion(w, 'pinky'), lim.pinkyCurlMin),
+  ];
+}
+
+/** The pan anchor: the mean of the index, middle and ring MCPs on IMAGE landmarks (steadier than fingertips). */
+export function panAnchor(image: readonly Landmark[]): { x: number; y: number } {
+  const ids = [FINGER_MCP.index, FINGER_MCP.middle, FINGER_MCP.ring];
+  return { x: ids.reduce((a, i) => a + image[i]!.x, 0) / 3, y: ids.reduce((a, i) => a + image[i]!.y, 0) / 3 };
+}
+
 export const allOk = (checks: readonly PoseCheck[]): boolean => checks.every((c) => c.ok);
 export const isGun = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(gunChecks(w, level));
 export const isPoint = (w: readonly Landmark[], level: PoseLevel = 'enter', pinch = Infinity): boolean => allOk(pointChecks(w, level, pinch));
+export const isPan = (w: readonly Landmark[], level: PoseLevel = 'enter'): boolean => allOk(panChecks(w, level));
 /** The thumb is still up enough to keep the gun (failing this releases at once). */
 export const thumbStillUp = (w: readonly Landmark[]): boolean => thumbUp(w) > GUN.stay.thumbUpMin;
 
