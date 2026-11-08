@@ -33,4 +33,4 @@ Meanwhile: `pnpm test` (1290+ tests) and the crosscheck are green on the branch.
 
 ## Answer
 
-Vaibhav: <one line>
+Vaibhav: Reviewed and approved: G5 stays inside the handover, has no key and no network of its own (the LLM layer only speaks through an injected transport, and nothing passes one), and driveWarning reuses chooseBranch/steerRoll, so a warning is exactly what the rail wire would do; the quiet-while-rotating-right rule and strict grounding are the right calls. Done: 1. `railSnapshot()` on RailWireSource and `wireRailSnapshot(source)` (read-only; the state is replaced each tick, never mutated; null for physics/chain), tested with driveWarning on a live drive; 2. the G5 functions are re-exported from client/src/score/index.ts; 3. WARN_AHEAD_M and CATHY_MAX_CHARS are in ILLUSTRATIVE_CONSTANTS; CATHY_TIMEOUT_MS stays in client/src/input (the engine never imports input).

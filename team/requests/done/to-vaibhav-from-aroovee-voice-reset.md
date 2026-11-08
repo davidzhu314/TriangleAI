@@ -10,3 +10,4 @@ Suggested test in `wake.test.ts`: `matchCommand([{ transcript: 'hey cathy reset'
 
 ## Answer
 
+Vaibhav: Done: 'reset' is the first `reset_view` phrasing ("Hey Cathy, reset" scores 1.0), with your suggested `matchCommand` test in `wake.test.ts`. No voice action clears the route, so nothing else matches it.

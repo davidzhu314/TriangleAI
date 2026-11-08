@@ -7,7 +7,7 @@
  */
 
 export { createGestureMachine, createHandMachine, type GestureMachine, type HandMachine } from './hands/machine';
-export { mergeControl } from './hands/to-control';
+export { createHubFollow, HUB_FOLLOW_DEAD_RAD, HUB_FOLLOW_FULL_RAD, mergeControl, type HubFollow } from './hands/to-control';
 export { toUserView } from './hands/pose';
 export * as HAND_CONSTANTS from './hands/constants';
 export type { GestureConfig, GestureOutput, HandFrame, HandObservation, HandOutput, HandStatus, Landmark } from './hands/types';

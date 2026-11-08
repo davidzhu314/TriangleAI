@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SpeechAlternative, VoiceMatch } from './match';
+import { matchCommand, type SpeechAlternative, type VoiceMatch } from './match';
 import type { Recognizer } from './recognizer';
 import { createWakeListener, startsWithWake, type WakeState } from './wake';
 
@@ -163,6 +163,15 @@ describe('Cathy, reset view', () => {
     expect(heard).toHaveLength(5);
   });
 
+  it('"Hey Cathy, reset" on its own resets the view (request from Aroovee)', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    rec.onResult?.(say('Hey Cathy, reset'));
+    rec.onResult?.(say('hey kathy reset'));
+    expect(heard.map((m) => m.action)).toEqual(['reset_view', 'reset_view']);
+    expect(matchCommand([{ transcript: 'hey cathy reset', confidence: 0.9 }]).action).toBe('reset_view');
+  });
+
   it('is never confused with zoom out ("wide view") or undo', () => {
     const { rec, heard, wake } = setup();
     wake.start();
@@ -180,6 +189,13 @@ describe('Cathy, hide (the vessel names) and show labels', () => {
     expect(heard.map((m) => m.action)).toEqual(['hide_labels', 'hide_labels', 'hide_labels', 'hide_labels', 'show_labels', 'show_labels', 'show_labels']);
     rec.onResult?.(say('hide'));
     expect(heard).toHaveLength(7);
+  });
+
+  it('"Hey Cathy, hide labels" works, including as Chrome mis-hears it ("Hyde", "high", "hi")', () => {
+    const { rec, heard, wake } = setup();
+    wake.start();
+    for (const t of ['Hey Cathy, hide labels', 'hey kathy hyde labels', 'Hey Cathy high labels', 'hey cathy hi labels', 'Hey Kathy Hyde']) rec.onResult?.(say(t));
+    expect(heard.map((m) => m.action)).toEqual(['hide_labels', 'hide_labels', 'hide_labels', 'hide_labels', 'hide_labels']);
   });
 
   it('never confused with show options, wider or reset view', () => {

@@ -40,19 +40,23 @@ export const POINT: Readonly<{ enter: PointLimits; stay: PointLimits }> = {
 };
 
 export interface PanLimits {
-  /** Index, middle and ring flexion must be at most this (extended, like three fingers on a trackpad). */
-  fingersCurlMax: number;
-  /** Pinky flexion must be above this (folded), so an open hand isn't a pan. */
-  pinkyCurlMin: number;
+  /** Index, middle, ring and pinky flexion must all be above this: a fist. */
+  fingersCurlMin: number;
+  /** Thumb tip to index MCP, ÷ palm size, must be at most this: the thumb tucked, not up as in the gun. */
+  thumbUpMax: number;
 }
 
 /**
- * The pan ("trackpad") pose: index, middle and ring out, pinky folded; the thumb is free. Moving the hand
- * moves the view. Limits mirror the point pose's; untuned on a real hand yet (DECISIONS.md, "Pan gesture").
+ * The pan pose, "grab and drag": a fist, thumb tucked. Move the fist and the view follows (in 3D it turns).
+ * Vaibhav's call after trying the V: the easiest shape to make, and far from the point (index out).
+ * The gun pulling also curls the fingers, so the THUMB tells them apart: the gun starts with the thumb up
+ * (GUN.enter.thumbUpMin 0.4) and an engaged gun keeps its pull while the thumb stays above GUN.stay (0.2);
+ * a fist pan starts only with the thumb tucked (at most 0.35; a synthetic fist reads 0.13, a gun 0.96).
+ * Illustrative and untuned on a real hand (DECISIONS.md, "Pan: a fist, thumb tucked").
  */
 export const PAN: Readonly<{ enter: PanLimits; stay: PanLimits }> = {
-  enter: { fingersCurlMax: 0.45, pinkyCurlMin: 0.45 },
-  stay: { fingersCurlMax: 0.6, pinkyCurlMin: 0.3 },
+  enter: { fingersCurlMin: 0.6, thumbUpMax: 0.35 },
+  stay: { fingersCurlMin: 0.45, thumbUpMax: 0.5 },
 };
 
 /** Pan: view movement per unit of hand movement (both in screen widths), and a per-frame dead zone. */
