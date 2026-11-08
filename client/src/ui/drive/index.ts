@@ -266,9 +266,13 @@ function mount(root: HTMLElement, key: string, c: LoadedCase, graph: RouteGraph,
   };
   const hands = createHandsVoice({
     host: view.element,
-    actions: ['zoom_in', 'zoom_out', 'reset_view', 'assist_best_next', 'assist_review', 'undo'],
+    actions: ['zoom_in', 'zoom_out', 'reset_view', 'hide_labels', 'show_labels', 'assist_best_next', 'assist_review', 'undo'],
     onPan: (dx, dy, roll) => view.pan(dx, dy, roll),
     onVoice: async (a) => {
+      if (a === 'hide_labels' || a === 'show_labels') {
+        if (view.bodyContext()) return 'No vessel names on this case.';
+        return view.setLabels(a === 'show_labels') ? null : 'Names show in the 3D view with Anatomy on.';
+      }
       if (a === 'reset_view') {
         view.resetView();
         return null;

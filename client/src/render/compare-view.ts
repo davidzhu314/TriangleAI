@@ -36,6 +36,13 @@ export interface CompareView {
   pan(dx: number, dy: number, roll?: number): void;
   /** Back to where the view opened: exactly what the Reset view button does. */
   resetView(): void;
+  /**
+   * Show or hide the anatomy layer's vessel names (the panel's Labels switch, saved like a click). False when the
+   * view has no anatomy layer (Flat view, no WebGL).
+   */
+  setLabels(on: boolean): boolean;
+  /** True when this case's anatomy is its own body context, which has no vessel names. */
+  bodyContext(): boolean;
   /** Zoom the 3D view; false in the flat view. */
   zoom(factor: number): boolean;
   update(state: CompareViewState): void;
@@ -70,6 +77,13 @@ export function createCompareView(c: LoadedCase, anatomy?: Promise<AnatomyConfig
     toolbar: dual.toolbar,
     pan: (dx, dy, roll) => dual.pan(dx, dy, roll),
     resetView: () => dual.resetCamera(),
+    setLabels(on) {
+      const a = dual.anatomy();
+      if (!a) return false;
+      a.set({ labels: on });
+      return true;
+    },
+    bodyContext: () => dual.anatomy()?.context === true,
     zoom(factor) {
       const scene = dual.scene();
       if (!scene || dual.kind() !== '3d') return false;
