@@ -3,13 +3,19 @@
 // with a few rib arcs and a sternum bar ("bone"), and an ellipsoid ("heart"), placed in the ts-s1404-cta case's frame
 // (RAS millimetres) around its aorta. Like the real export: nodes named "bone" and "heart", no extras, no transforms,
 // asset.extras = { units: 'mm', axes: 'RAS' }.
-// Usage: node tests/e2e/fixtures/make-context-fixture.mjs <repo>
+//
+// With --veins it writes tests/e2e/fixtures/context-veins.glb instead: the same bone and heart plus two vein nodes,
+// "vein_ivc" and "vein_svc", tagged the way David's export tags them (extras { kind: "vein", label }). Two tubes to
+// the right of the aorta, not anatomy.
+// Usage: node tests/e2e/fixtures/make-context-fixture.mjs <repo> [--veins]
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const repo = resolve(process.argv[2] ?? '.');
+const args = process.argv.slice(2);
+const withVeins = args.includes('--veins');
+const repo = resolve(args.find((a) => !a.startsWith('--')) ?? '.');
 const require = createRequire(join(repo, 'package.json'));
 const mod = await import(pathToFileURL(require.resolve('three')).href);
 const THREE = mod.Vector3 ? mod : mod.default;
@@ -32,6 +38,11 @@ const nodesIn = [
   ['bone', mergeGeometries(bone)],
   ['heart', heart],
 ];
+if (withVeins) {
+  // Below and above the heart, right of the aorta (+x is the patient's right).
+  nodesIn.push(['vein_ivc', tube([V(30, 120, -330), V(28, 130, -200), V(20, 160, -110)], 12), { kind: 'vein', label: 'Inferior vena cava' }]);
+  nodesIn.push(['vein_svc', tube([V(25, 150, 10), V(22, 165, -40), V(18, 175, -20)], 9, 20), { kind: 'vein', label: 'Superior vena cava' }]);
+}
 
 const chunks = [];
 let byteOffset = 0;
@@ -47,7 +58,7 @@ const push = (typed, target) => {
   byteOffset += bytes.length + pad;
   return bufferViews.length - 1;
 };
-for (const [name, geom] of nodesIn) {
+for (const [name, geom, extras] of nodesIn) {
   geom.computeVertexNormals();
   geom.computeBoundingBox();
   const pos = new Float32Array(geom.attributes.position.array);
@@ -60,7 +71,7 @@ for (const [name, geom] of nodesIn) {
   accessors.push({ bufferView: push(idx, 34963), componentType: 5125, count: idx.length, type: 'SCALAR' });
   const ia = accessors.length - 1;
   meshes.push({ name, primitives: [{ attributes: { POSITION: pa, NORMAL: na }, indices: ia, mode: 4 }] });
-  nodes.push({ name, mesh: meshes.length - 1 });
+  nodes.push(extras ? { name, mesh: meshes.length - 1, extras } : { name, mesh: meshes.length - 1 });
 }
 const bin = new Uint8Array(byteOffset);
 let at = 0;
@@ -94,6 +105,6 @@ glb.set(jsonChunk, 20);
 dv.setUint32(20 + jsonChunk.length, bin.length, true);
 dv.setUint32(24 + jsonChunk.length, 0x004e4942, true);
 glb.set(bin, 28 + jsonChunk.length);
-const out = join(repo, 'tests/e2e/fixtures/context-ts-s1404-cta.glb');
+const out = join(repo, withVeins ? 'tests/e2e/fixtures/context-veins.glb' : 'tests/e2e/fixtures/context-ts-s1404-cta.glb');
 writeFileSync(out, glb);
 console.log(`wrote ${out}: ${(total / 1024).toFixed(1)} KB`);
