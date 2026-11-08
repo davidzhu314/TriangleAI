@@ -192,4 +192,30 @@ describe('chain simulation: ChainWireSource', () => {
     expect(log.samples.at(-1)!.fluoro).toBe(true);
     expect(log.events.filter((e) => e.kind === 'contrast_puff')).toHaveLength(1);
   });
+
+  it('speaks contracts v3: chain mode, device selection in ControlInput, the v3 state, sample fields and review events', async () => {
+    const c = cases.get('fixture-y')!;
+    const src = new ChainWireSource({ clock: 'manual' });
+    expect(src.mode).toBe('chain');
+    await src.start({ case: c, entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', path: ['e_aorta', 'e_left'] });
+    let last: import('../contracts').WireState | null = null;
+    src.onState((s) => (last = s));
+    src.control({ push: 1, rotate: 0, fluoro: true, contrastPuff: false, device: 'catheter', pulse: 'p15' });
+    for (let i = 0; i < 30; i++) src.tick();
+    src.control({ push: 0, rotate: 0, fluoro: false, contrastPuff: false });
+    src.tick();
+    const st = last! as import('../contracts').WireState;
+    expect(st.mode).toBe('chain');
+    expect(st.devices!.active).toBe('catheter');
+    expect(st.devices!.insertedM.catheter).toBeGreaterThan(0.02);
+    expect(st.tipPose!.leading, 'the catheter was pushed past the wire, so it leads').toBe('catheter');
+    expect(st.imaging!.totals.frames).toBe(15);
+    expect(st.imaging!.holdImageT).not.toBeNull();
+    expect(st.riskIndex).toBeGreaterThanOrEqual(0);
+    const log = await src.stop();
+    expect(log.mode).toBe('chain');
+    expect(log.samples.at(-2)!.device).toBe('catheter');
+    expect(log.samples.at(-2)!.tangent).toHaveLength(3);
+    expect(log.review!.filter((e) => e.kind === 'imaging_interval')).toEqual([expect.objectContaining({ pulse: 'p15', frames: 15 })]);
+  });
 });

@@ -20,8 +20,11 @@ export const EVENT_SAMPLE_HZ = 30;
 /** A back_out event fires when s decreases by more than 20 mm (spec §5.6). */
 export const BACK_OUT_THRESHOLD_M = 0.02;
 
-/** Which kind of source wrote the log. */
-export type WireMode = 'physics' | 'rail' | 'replay';
+/** Which kind of source wrote the log. v3: 'chain' is the browser chain simulation (wire/physics-chain*). */
+export type WireMode = 'physics' | 'rail' | 'replay' | 'chain';
+
+/** v3: the two coaxial devices of the chain simulation. */
+export type DeviceId = 'wire' | 'catheter';
 
 /** One 30 Hz sample. */
 export interface EventSample {
@@ -37,7 +40,29 @@ export interface EventSample {
   forceN: number;
   /** Fluoro held on during this sample. */
   fluoro: boolean;
+  // v3, optional (chain source only):
+  /** The device push and rotate moved. */
+  device?: DeviceId;
+  push?: number;
+  rotate?: number;
+  /** Unit tangent at the tip. */
+  tangent?: Vec3;
+  /** Roll at the tip and at the hub, radians; their difference is the stored twist. */
+  tipRollRad?: number;
+  hubRollRad?: number;
+  /** Educational contact-risk index, 0..100. Not a clinical force or an injury prediction. */
+  riskIndex?: number;
 }
+
+/**
+ * v3 review events (chain source only). They sit in `EventLog.review`, not `events`, so scoring that reads `events`
+ * is unchanged until it opts in.
+ */
+export type ReviewEvent =
+  | { kind: 'wall_contact'; t: number; toT: number; edge: string; arcM: number; peakLoadN: number; pushedS: number }
+  | { kind: 'imaging_interval'; t: number; toT: number; pulse: string; frames: number }
+  | { kind: 'branch_entry'; t: number; fromEdge: string; toEdge: string; onPlan: boolean; tipRollRad: number; hubRollRad: number }
+  | { kind: 'roadmap_stored'; t: number };
 
 interface EventBase {
   /** Simulation time, seconds. */
@@ -120,6 +145,8 @@ export interface EventLog {
   samples: EventSample[];
   /** Ordered by t. */
   events: WireEvent[];
+  /** v3, optional: review events from the chain source, ordered by t. */
+  review?: ReviewEvent[];
 }
 
 /** An empty log for a new drive. */

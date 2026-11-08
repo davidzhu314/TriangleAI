@@ -15,16 +15,15 @@
  *
  * Every number here is illustrative and labelled so on screen. No AI model computes any number here.
  */
-import type { Vec3 } from '../contracts';
-import type { DeviceId } from './physics-chain';
+import type { DeviceId, PulseRate, Vec3 } from '../contracts';
 
 /** Pulse-rate presets (illustrative). Fewer frames per second: less simulated exposure, staler and noisier images. */
-export const PULSE_PRESETS = {
+export const PULSE_PRESETS: Record<PulseRate, { fps: number; noise: number; label: string }> = {
   continuous: { fps: 30, noise: 1.0, label: 'Continuous (30 frames/s)' },
   p15: { fps: 15, noise: 1.2, label: 'Pulsed 15/s' },
   p7_5: { fps: 7.5, noise: 1.5, label: 'Pulsed 7.5/s' },
-} as const;
-export type PulseRate = keyof typeof PULSE_PRESETS;
+};
+export type { PulseRate };
 
 /** Simulated exposure per frame (unitless; not a dose). */
 export const EXPOSURE_UNITS_PER_FRAME = 1;

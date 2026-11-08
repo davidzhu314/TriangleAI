@@ -292,3 +292,13 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Not modeled:** inertia, axial friction, vessel deformation, and proximal bowing with the tip held.
   - **Approximation:** a blocked tip folds distally.
   - **Contracts:** stay at v2. `to-all-from-david-contract-chain-sim.md` proposes v3. Nothing is wired into a screen, and main is frozen.
+- 2026-11-08 · David · **Contracts v3 (chain simulation) on the integration branch; features integrate pre-demo.**
+  - **Approvals:** Vaibhav and Aroovee approved merging the chain simulation onto `integration/hands-voice`, with contract v3.
+  - **v3, additive:**
+    - `WireMode` gains `'chain'`; `DeviceId` and `PulseRate` are new.
+    - `ControlInput` gains optional `device`, `pulse` and `storeRoadmap`.
+    - `WireState` gains optional `tipPose`, `devices`, `contacts`, `riskIndex` and `imaging`.
+    - `EventSample` gains optional `device`, `push`, `rotate`, `tangent`, `tipRollRad`, `hubRollRad` and `riskIndex`.
+    - `EventLog` gains optional `review` (`wall_contact`, `imaging_interval`, `branch_entry`, `roadmap_stored`), kept out of `events` so scoring is unchanged.
+    - `CONTRACTS_VERSION` is 3 on the integration branch; main stays at 2 until that branch merges.
+  - **New rule (CLAUDE.md, Git):** until the demo, every feature from every lane integrates on `integration/hands-voice`, and all of it must be integrated before the demo. That branch merges into frozen main once, with David's OK, after a rehearsal on its preview, by the 06:00 EST cut-off. Demo fixes still go straight to main with David's OK.

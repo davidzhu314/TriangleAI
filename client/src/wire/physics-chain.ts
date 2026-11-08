@@ -29,13 +29,13 @@
  * bowing proximally while the tip stays stuck (a blocked tip folds distally instead). Every constant is illustrative.
  * No AI model computes any number here. Positions are metres in the case's Y-up frame.
  */
-import { BACK_OUT_THRESHOLD_M, type LoadedCase, type Vec3, type WireEvent, type WirePresetId } from '../contracts';
+import { BACK_OUT_THRESHOLD_M, type DeviceId, type LoadedCase, type Vec3, type WireEvent, type WirePresetId } from '../contracts';
 import { getPreset } from '../optimize/presets';
 import { Lumen } from './physics-chain-lumen';
 
 // ---------------------------------------------------------------- parameters (illustrative)
 
-export type DeviceId = 'wire' | 'catheter';
+export type { DeviceId };
 
 export interface DeviceSpec {
   /** Pre-shaped tip: total bend over `tipLenM`, degrees. */

@@ -31,6 +31,9 @@ Meanwhile: the simulation and its tests stay on the branch. `ChainWireSource.cha
 
 ## Answer
 
-David: <one line>
-Vaibhav: <one line>
-Aroovee: <one line>
+David: Approved and applied as contracts v3 on `integration/hands-voice`. There are two changes from the text above:
+- the pose field on `WireState` is `tipPose`, because `tip` is already the v2 position;
+- the review events sit in an optional `EventLog.review`, not in `events`, so scoring is unchanged until Vaibhav opts in.
+
+Vaibhav: Approved the merge onto the integration branch, with v3 (relayed by David, 2026-11-08).
+Aroovee: Approved the merge onto the integration branch, with v3 (relayed by David, 2026-11-08).
