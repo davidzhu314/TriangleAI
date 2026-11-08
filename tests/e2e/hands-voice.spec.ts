@@ -427,3 +427,33 @@ test('the keyboard-only demo path is untouched when Hands is off: nothing asks f
   await expect(page.locator('.plan-view')).not.toHaveAttribute('data-hands', /starting|none|gun|point/);
   expect(asked).toEqual([]);
 });
+
+test("Cathy's box answers without voice or an AI model: question buttons and typed questions, on Plan and Drive", async ({ page }) => {
+  await page.addInitScript(() =>
+    sessionStorage.setItem('threadsim.plans.v1', JSON.stringify({ 'fixture-y': { entryId: 'fem_r', targetId: 'left_branch', presetId: 'soft_angled', edges: ['e_aorta', 'e_left'] } })),
+  );
+  await page.goto('/#/case/fixture-y/plan');
+  const box = page.getByTestId('cathy-box');
+  await expect(box).toContainText('not an AI model');
+  await box.getByRole('button', { name: 'Am I on the right path', exact: true }).click();
+  await expect(page.getByTestId('voice-answer')).toHaveText('Your route already reaches the Left branch.');
+  await page.getByTestId('cathy-field').fill('what is the weather');
+  await page.getByTestId('cathy-field').press('Enter');
+  await expect(page.getByTestId('voice-answer')).toContainText('I can answer:');
+
+  await page.goto('/#/case/fixture-y/drive');
+  await expect(page.getByTestId('hud-distance')).not.toContainText('—');
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(800);
+  await page.keyboard.up('KeyW');
+  await page.getByTestId('cathy-field').fill('where should I go next');
+  await page.getByTestId('cathy-field').press('Enter');
+  await expect(page.getByTestId('voice-answer')).toHaveText(/Left branch/);
+  // Typing in Cathy's field never drives the wire.
+  const before = await page.getByTestId('hud-distance').innerText();
+  await page.getByTestId('cathy-field').pressSequentially('wwwwww');
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('hud-distance')).toHaveText(before);
+  await page.getByTestId('cathy-toggle').click();
+  await expect(box.locator('.cathy-body')).toBeHidden();
+});

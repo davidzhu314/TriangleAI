@@ -112,3 +112,100 @@
   background: var(--color-surface);
   pointer-events: none;
 }
+
+/* Cathy's box, in the view's bottom-right corner (the hands panel is bottom-left): her questions as buttons, a field
+   for a typed question, and her latest answer. Deterministic: every answer is the engine's template line. */
+.cathy-box {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: var(--size-palette);
+  max-width: calc(100% - 2 * var(--space-3));
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.cathy-toggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-heading);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  cursor: pointer;
+}
+
+.cathy-toggle::after {
+  content: ' ▾';
+  color: var(--color-text-muted);
+}
+
+.cathy-toggle[aria-expanded='false']::after {
+  content: ' ▸';
+}
+
+.cathy-toggle:focus-visible,
+.cathy-field:focus-visible {
+  outline: var(--focus-width) solid var(--color-focus);
+  outline-offset: var(--focus-width);
+}
+
+.cathy-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cathy-body[hidden] {
+  display: none;
+}
+
+.cathy-questions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.cathy-form {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.cathy-field {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-field);
+  font: inherit;
+}
+
+.cathy-out p {
+  margin: 0;
+}
+
+.cathy-out .hv-answer {
+  color: var(--color-text);
+}
+
+.cathy-hint,
+.cathy-asked,
+.cathy-note {
+  color: var(--color-text-muted);
+}
+
+.cathy-note {
+  margin: 0;
+}
