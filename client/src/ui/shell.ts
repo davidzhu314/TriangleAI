@@ -26,11 +26,12 @@ export interface ScreenFrame {
 
 let menuOpen = false;
 
-export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library' | 'settings' | null): void {
+export function renderShell(root: HTMLElement, frame: ScreenFrame, active: 'library' | 'study' | 'settings' | null): void {
   const nav = h(
     'nav',
     { class: 'nav', 'aria-label': 'Main' },
     h('a', { href: href.library(), class: 'nav-item', 'aria-current': active === 'library' ? 'page' : false }, 'Library'),
+    h('a', { href: href.study(), class: 'nav-item', 'aria-current': active === 'study' ? 'page' : false }, 'Study log'),
     h('a', { href: href.settings(), class: 'nav-item', 'aria-current': active === 'settings' ? 'page' : false }, 'Settings'),
   );
 

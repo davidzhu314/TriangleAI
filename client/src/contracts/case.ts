@@ -92,6 +92,15 @@ export interface CaseAnatomy {
   tortuosity?: number;
 }
 
+export type Species = 'human' | 'porcine' | 'ovine' | 'canine' | 'other';
+
+/** Who the scan is of, when it matters (a large-animal study's CT). Never a patient identifier. */
+export interface CaseSubject {
+  species: Species;
+  /** A study label such as "Pig 03". Never a name, record number or date of birth. */
+  label?: string;
+}
+
 /** case.json. */
 export interface CaseJson {
   schema: typeof CASE_SCHEMA_ID;
@@ -111,6 +120,8 @@ export interface CaseJson {
   /** Fluoro allowance for the radiation budget (§6.5), seconds. */
   fluoro_budget_s?: number;
   anatomy?: CaseAnatomy;
+  /** Absent means unstated; the real CT cases are human. */
+  subject?: CaseSubject;
 }
 
 export type CenterlineNodeKind = 'entry' | 'branch' | 'target' | 'end';
@@ -229,6 +240,7 @@ export interface LoadedCase {
   difficulty?: CaseDifficulty;
   fluoroBudgetS?: number;
   anatomy?: CaseAnatomy;
+  subject?: CaseSubject;
   vessels: CaseVessel[];
   entries: CaseEntry[];
   /** Targets the validator found unreachable from every entry are still listed, with `reachable: false`. */

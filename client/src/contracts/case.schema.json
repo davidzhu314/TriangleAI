@@ -76,6 +76,15 @@
         "bovine": { "type": "boolean" },
         "tortuosity": { "type": "number", "minimum": 0, "maximum": 1 }
       }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["species"],
+      "properties": {
+        "species": { "enum": ["human", "porcine", "ovine", "canine", "other"] },
+        "label": { "type": "string" }
+      }
     }
   },
   "$defs": {

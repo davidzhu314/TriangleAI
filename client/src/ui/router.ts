@@ -1,8 +1,11 @@
-/** Hash routes: #/library, #/settings, #/case/<key> and its /access, /apex, /plan, /compare, /drive and /results. Anything else goes to the Library. */
+/** Hash routes: #/library, #/settings, #/study (and /new[/<case>/<line>], /edit/<id>), #/case/<key> and its /access, /apex, /plan, /compare, /drive and /results. Anything else goes to the Library. */
 
 export type Route =
   | { name: 'library' }
   | { name: 'settings' }
+  | { name: 'study' }
+  | { name: 'study-new'; caseKey?: string; line?: string }
+  | { name: 'study-edit'; id: string }
   | { name: 'brief'; key: string }
   | { name: 'access'; key: string }
   | { name: 'apex'; key: string }
@@ -14,6 +17,14 @@ export type Route =
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts.length === 1 && parts[0] === 'settings') return { name: 'settings' };
+  if (parts[0] === 'study') {
+    if (parts.length === 1) return { name: 'study' };
+    if (parts[1] === 'new' && parts.length <= 4) {
+      const [caseKey, line] = parts.slice(2).map(decodeURIComponent);
+      return { name: 'study-new', ...(caseKey ? { caseKey } : {}), ...(line ? { line } : {}) };
+    }
+    if (parts[1] === 'edit' && parts[2] && parts.length === 3) return { name: 'study-edit', id: decodeURIComponent(parts[2]) };
+  }
   if (parts[0] === 'case' && parts[1]) {
     const key = decodeURIComponent(parts[1]);
     if (parts.length === 2) return { name: 'brief', key };
@@ -30,6 +41,9 @@ export function parseRoute(hash: string): Route {
 export const href = {
   library: (): string => '#/library',
   settings: (): string => '#/settings',
+  study: (): string => '#/study',
+  studyNew: (caseKey?: string, line?: string): string => ['#/study/new', ...(caseKey ? [encodeURIComponent(caseKey)] : []), ...(caseKey && line ? [encodeURIComponent(line)] : [])].join('/'),
+  studyEdit: (id: string): string => `#/study/edit/${encodeURIComponent(id)}`,
   brief: (key: string): string => `#/case/${encodeURIComponent(key)}`,
   access: (key: string): string => `#/case/${encodeURIComponent(key)}/access`,
   apex: (key: string): string => `#/case/${encodeURIComponent(key)}/apex`,

@@ -13,6 +13,7 @@ import { disposePlanView, renderPlan } from './plan';
 import { renderResults } from './results';
 import { parseRoute } from './router';
 import { renderSettings } from './settings';
+import { renderStudy } from './study';
 import { applyTheme, readSettings } from './settings-store';
 import { startTutorial, tutorialScreen } from './tutorial';
 
@@ -37,7 +38,14 @@ export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource
     disposeDrive();
     disposeApexView();
     const r = parseRoute(location.hash);
-    const done = r.name === 'library' ? renderLibrary(root) : r.name === 'settings' ? renderSettings(root) : screens[r.name](r.key);
+    const done =
+      r.name === 'library'
+        ? renderLibrary(root)
+        : r.name === 'settings'
+          ? renderSettings(root)
+          : r.name === 'study' || r.name === 'study-new' || r.name === 'study-edit'
+            ? renderStudy(root, r)
+            : screens[r.name](r.key);
     void done.then(() => {
       window.scrollTo(0, 0);
       tutorialScreen(r);

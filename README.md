@@ -41,6 +41,7 @@ One case is one pass through six screens, each at its own hash route, plus Setti
 | Results | `#/case/<id>/results` | The one thing to change, plan and drive scores, stars, replay timeline, next case |
 | Access check | `#/case/<id>/access` | Can a valve sheath (14, 16 or 18 Fr, illustrative) go in through the leg? Each femoral side's narrowest diameter, spare, sharpest bend and a diameter profile; then the subclavian and carotid routes, with the heart's apex and the cava listed as not measured |
 | Apex plan | `#/case/<id>/apex` | Through the heart's apex: on a real CT case with hand-marked valve and apex landmarks (`apex.json`), the patient's own heart and ribs in 3D with the selected sheath line, its angle off the valve axis, bone clearance, intercostal space, lung crossed and depth to the rib cage, and the lines that are each best at one of those |
+| Study log | `#/study` | One record per procedure (training or a large-animal study): the subject's study label, species and weight, the plan copied from an apex plan line, and what happened (intercostal space used, attempts, time to access, sheath size, closure, blood loss). A summary of the entered records, CSV export and import. Saved in the browser only; not for patient data |
 | Settings | `#/settings` | Hands and Voice switches, Light / Dark / System theme, the gesture and voice command lists |
 
 - **Cases.** The Library lists the bundled cases from `client/public/cases/index.json`:

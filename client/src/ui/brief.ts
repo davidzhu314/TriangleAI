@@ -5,7 +5,7 @@
  * Start planning. Every value is a LoadedCase field or saved progress; a field the case leaves out is a grey dash,
  * never a made-up value.
  */
-import type { LoadedCase, RiskTier, RiskZoneKind } from '../contracts';
+import type { LoadedCase, RiskTier, RiskZoneKind, Species } from '../contracts';
 import { drawCase, svgEl } from '../render/case-svg';
 import '../render/render.css';
 import { femoralSummary, verdictPill } from './access';
@@ -23,6 +23,7 @@ function field(label: string, value: Node, wide = false): HTMLDivElement {
   return h('div', { class: wide ? 'field field-wide' : 'field' }, h('dt', {}, label), h('dd', {}, value));
 }
 
+const SPECIES_NAME: Record<Species, string> = { human: 'Human', porcine: 'Pig', ovine: 'Sheep', canine: 'Dog', other: 'Other' };
 const ZONE_KIND: Record<RiskZoneKind, string> = { plaque: 'Plaque', aneurysm: 'Aneurysm', dissection: 'Dissection', critical_branch: 'Critical branch' };
 const ZONE_TIER: Record<RiskTier, string> = { forbidden: 'no-go', heavy: 'heavy', proximity: 'keep clear' };
 
@@ -133,6 +134,7 @@ function scenarioCard(c: LoadedCase, key: string): HTMLElement {
       field('Risk zones', riskList(c)),
       accessField(c, key),
       field('Vessels', h('span', { class: 'num' }, String(c.vessels.length))),
+      c.subject ? field('Subject', h('span', {}, `${SPECIES_NAME[c.subject.species]}${c.subject.label ? `, ${c.subject.label}` : ''}`)) : null,
       field('Source', source(c)),
       field('Your progress', progress(key)),
     ),
