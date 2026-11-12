@@ -1,0 +1,206 @@
+/* Apex plan: the 3D view as the work surface, the selected line and the trade-offs beside it (view + gap +
+   --size-readout), then the limits. One column on a phone. Tokens only (DESIGN.md). */
+
+.apex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.apex-draft,
+.apex-missing p {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-pill-warning-bg);
+  color: var(--color-pill-warning-ink);
+  border: var(--border-width) solid var(--color-pill-warning-border);
+  border-radius: var(--radius-control);
+}
+
+.apex-missing p {
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.apex-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--size-readout);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.apex-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.apex-figure figcaption {
+  font-size: var(--font-size-meta);
+}
+
+.apex-stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.apex-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.apex-no-3d {
+  margin: 0;
+  padding: var(--space-5);
+}
+
+.apex-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.apex-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.apex-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.apex-detail h2,
+.apex-choices h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-heading);
+}
+
+.apex-answer {
+  margin: 0;
+}
+
+.apex-answer > .tip .figure {
+  font-size: var(--font-size-figure);
+  line-height: var(--line-height-figure);
+  color: var(--color-heading);
+}
+
+.apex-figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3) var(--gap);
+  margin: 0;
+}
+
+.apex-figures dt {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.apex-figures dd {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.apex-reasons {
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--color-pill-warning-ink);
+}
+
+.apex-nearest,
+.apex-choices p {
+  margin: 0;
+  font-size: var(--font-size-meta);
+}
+
+.apex-choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.apex-choice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.apex-choice {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  text-align: left;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.apex-choice:hover {
+  background: var(--color-surface-active);
+}
+
+.apex-choice[aria-pressed='true'] {
+  background: var(--color-brand-tint);
+  border-color: var(--color-brand);
+  color: var(--color-brand-strong);
+}
+
+.apex-choice-name {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-heading);
+}
+
+.apex-choice[aria-pressed='true'] .apex-choice-name {
+  color: var(--color-brand-strong);
+}
+
+.apex-choice-figs {
+  grid-column: 1;
+  font-size: var(--font-size-meta);
+}
+
+.apex-choice .pill {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.apex-limits ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+@media (max-width: 900px) {
+  .apex-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

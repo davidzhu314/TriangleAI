@@ -60,6 +60,31 @@ The veins come from TotalSegmentator classes `inferior_vena_cava`, `superior_ven
 
 It is faint background only: no file of the case package names it, and the loader never reads it.
 
+## Apex plan: `apex.json` for the real CT cases
+
+The transapical planner (`#/case/<id>/apex`) needs three hand-marked valve hinge points and the LV apex. This dataset
+labels the heart as one piece, so they can't come from the masks (DECISIONS.md, 2026-11-12). Per subject:
+
+```sh
+# 1. The planner's masks (heart, aorta, ribs, costal cartilages, sternum, lungs) and the CT, for marking only.
+python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-apex --apex
+python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-apex --ct
+# 2. A person marks hinge:1-3 and apex, then presses "Save landmarks" (Slicer opens with its window).
+"$SLICER" --python-script slicer/mark_apex.py -- \
+  --ct /tmp/ts-s1404-apex/ct.nii.gz --masks /tmp/ts-s1404-apex \
+  --landmarks slicer/cases/ts-s1404-cta/apex-landmarks.mrk.json
+# 3. Export the geometry.
+"$SLICER" --no-main-window --no-splash --python-script slicer/export_apex.py -- \
+  --masks /tmp/ts-s1404-apex --landmarks slicer/cases/ts-s1404-cta/apex-landmarks.mrk.json \
+  --out client/public/cases/ts-s1404-cta/apex.json
+```
+
+- **Hinge points** are the lowest point of each aortic cusp's attachment. The plane through them is the annulus plane, as in TAVR sizing. They're easiest to place in a double-oblique view across the aortic root: Ctrl+Alt drag rotates a slice.
+- **Only positions are kept.** The CT stays in `/tmp`; the `.mrk.json` and `apex.json` hold positions only.
+- **Running step 2 again** reopens the saved points to move.
+- **Saving marks the points as placed by a person.** A file whose points are described `draft` was placed by a script, and the app labels its plan "Draft landmarks: not anatomy".
+- **The export refuses to run** while any of the four points is unplaced.
+
 ## Inputs for any case
 
 - **A segmentation:** one segment per vessel, each named by its ThreadSim vessel id (`aorta`, `bca`, `rcca`, …). Arterial segments only.

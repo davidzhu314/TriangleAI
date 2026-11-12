@@ -17,7 +17,7 @@ test('brief links to the access check, and the sheath size turns the verdict', a
   await expect(page.locator('[data-sheath="18f"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(right.locator('[data-verdict]')).toHaveAttribute('data-verdict', 'too_small');
   await expect(page.getByTestId('access-answer').locator('[data-verdict]')).toHaveAttribute('data-verdict', 'fits');
-  await expect(page.getByText('Needs the left ventricle and its apex', { exact: false })).toBeVisible();
+  await expect(page.getByText('Needs the valve and apex marked by hand', { exact: false })).toBeVisible();
 });
 
 test('a case whose leg route is too small points to another route', async ({ page }) => {

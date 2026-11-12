@@ -4,6 +4,7 @@
  * the only way a test reaches the Drive screen with a source. Screens never import a concrete wire source.
  */
 import { renderAccess } from './access';
+import { disposeApexView, renderApex } from './apex';
 import { renderBrief } from './brief';
 import { disposeCompareView, renderCompare } from './compare';
 import { disposeDrive, renderDrive, selectTsWireSource, type WireFactory } from './drive';
@@ -23,6 +24,7 @@ export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource
   const screens = {
     brief: (k: string) => renderBrief(root, k),
     access: (k: string) => renderAccess(root, k),
+    apex: (k: string) => renderApex(root, k),
     plan: (k: string) => renderPlan(root, k),
     compare: (k: string) => renderCompare(root, k),
     drive: (k: string) => renderDrive(root, k, getWireSource),
@@ -33,6 +35,7 @@ export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource
     disposePlanView();
     disposeCompareView();
     disposeDrive();
+    disposeApexView();
     const r = parseRoute(location.hash);
     const done = r.name === 'library' ? renderLibrary(root) : r.name === 'settings' ? renderSettings(root) : screens[r.name](r.key);
     void done.then(() => {

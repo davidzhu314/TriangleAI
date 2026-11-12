@@ -18,6 +18,8 @@ import {
 } from '../../access';
 import type { LoadedCase } from '../../contracts';
 import { svgEl } from '../../render/case-svg';
+import { icsName } from '../../apex';
+import { apexVerdictPill, loadApex, type ApexLoad } from '../apex';
 import { notFound } from '../brief';
 import { dash, h } from '../dom';
 import { href } from '../router';
@@ -192,7 +194,24 @@ function sideCard(r: AccessRoute, requiredMm: number): HTMLElement {
 
 const KIND_WORD: Record<AccessRoute['kind'], string> = { transfemoral: 'Transfemoral', subclavian: 'Subclavian or axillary', transcarotid: 'Transcarotid' };
 
-function otherRoutes(r: AccessReport): HTMLElement {
+/** The transapical row, from the case's apex plan when it has one: a different kind of route, so its own words. */
+function apexRow(key: string, apex: ApexLoad): HTMLElement | null {
+  if (apex.kind !== 'plan' || !apex.plan.suggested) return null;
+  const s = apex.plan.suggested;
+  const ics = icsName(s.ics);
+  const words = `Transapical. Suggested line ${s.coaxialDeg.toFixed(0)}° off the valve axis${ics ? `, through the ${ics}` : ''}${apex.plan.draft ? ' (draft landmarks)' : ''}.`;
+  return h(
+    'tr',
+    { 'data-testid': 'access-row-apex' },
+    h('th', { scope: 'row' }, h('a', { href: href.apex(key) }, 'Through the heart’s apex'), h('span', { class: 'muted access-kind' }, words)),
+    h('td', { class: 'num', 'data-label': 'Narrowest' }, dash('No vessel to measure')),
+    h('td', { class: 'num', 'data-label': 'Spare' }, dash('No vessel to measure')),
+    h('td', { class: 'num', 'data-label': 'Sharpest bend' }, dash('No vessel to measure')),
+    h('td', { 'data-label': 'Verdict' }, apexVerdictPill(s.verdict)),
+  );
+}
+
+function otherRoutes(r: AccessReport, key: string, apex: ApexLoad, generated: boolean): HTMLElement {
   const rows = r.routes
     .filter((x) => x.kind !== 'transfemoral')
     .map((x) =>
@@ -231,7 +250,8 @@ function otherRoutes(r: AccessReport): HTMLElement {
           'tbody',
           {},
           rows,
-          notMeasured('Through the heart’s apex', 'Transapical', 'Needs the left ventricle and its apex, which this case doesn’t have.'),
+          apexRow(key, apex) ??
+            notMeasured('Through the heart’s apex', 'Transapical', generated ? 'Generated cases have no heart to plan through.' : 'Needs the valve and apex marked by hand on the CT, which this case doesn’t have yet.'),
           notMeasured('Through the cava', 'Transcaval', 'Needs the vena cava beside the aorta.'),
         ),
       ),
@@ -241,7 +261,7 @@ function otherRoutes(r: AccessReport): HTMLElement {
 
 // ================================================================ screen
 
-function body(key: string, c: LoadedCase, rerender: () => void): HTMLElement {
+function body(key: string, c: LoadedCase, apex: ApexLoad, rerender: () => void): HTMLElement {
   const s = sheath();
   const r = accessReport(c, s.minVesselMm);
   const femoral = r.routes.filter((x) => x.kind === 'transfemoral');
@@ -261,7 +281,7 @@ function body(key: string, c: LoadedCase, rerender: () => void): HTMLElement {
         : null,
     ),
     femoral.length ? h('div', { class: 'access-sides' }, femoral.map((x) => sideCard(x, r.requiredMm))) : null,
-    r.rootNode ? otherRoutes(r) : null,
+    r.rootNode ? otherRoutes(r, key, apex, c.source.kind !== 'ct') : null,
     h(
       'section',
       { class: 'block access-limits', 'aria-labelledby': 'limits-heading' },
@@ -284,6 +304,7 @@ export async function renderAccess(root: HTMLElement, key: string): Promise<void
   const e = entry(key);
   if (!e || !e.result.ok) return notFound(root, key);
   const c = e.result.case;
+  const apex = await loadApex(e);
   const draw = (): void => {
     const y = window.scrollY;
     renderShell(
@@ -291,7 +312,7 @@ export async function renderAccess(root: HTMLElement, key: string): Promise<void
       {
         crumbs: [{ label: 'Library', href: href.library() }, { label: c.title, href: href.brief(key) }, { label: 'Access check' }],
         action: { label: 'Start planning', href: href.plan(key) },
-        body: body(key, c, () => {
+        body: body(key, c, apex, () => {
           draw();
           root.querySelector<HTMLElement>(`[data-sheath="${sheathId}"]`)?.focus();
         }),

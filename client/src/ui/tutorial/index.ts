@@ -72,7 +72,7 @@ function view(key: string): View {
   return {
     // Settings is off the case flow: the tutorial treats it like the Library (not on a case). The Access check is a
     // side page of the case: like its brief.
-    screen: route.name === 'settings' ? 'library' : route.name === 'access' ? 'brief' : route.name,
+    screen: route.name === 'settings' ? 'library' : route.name === 'access' || route.name === 'apex' ? 'brief' : route.name,
     onTutorialCase: route.name !== 'library' && route.name !== 'settings' && route.key === key,
     routeComplete: !!compare && !compare.disabled,
     targetReached: !!finish && !finish.hidden,
