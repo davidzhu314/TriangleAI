@@ -3,6 +3,7 @@
  * it with the app's wire (select.ts); the end-to-end test harness starts it with an injected wire factory, which is
  * the only way a test reaches the Drive screen with a source. Screens never import a concrete wire source.
  */
+import { renderAccess } from './access';
 import { renderBrief } from './brief';
 import { disposeCompareView, renderCompare } from './compare';
 import { disposeDrive, renderDrive, selectTsWireSource, type WireFactory } from './drive';
@@ -21,6 +22,7 @@ export interface AppOptions {
 export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource }: AppOptions = {}): void {
   const screens = {
     brief: (k: string) => renderBrief(root, k),
+    access: (k: string) => renderAccess(root, k),
     plan: (k: string) => renderPlan(root, k),
     compare: (k: string) => renderCompare(root, k),
     drive: (k: string) => renderDrive(root, k, getWireSource),
