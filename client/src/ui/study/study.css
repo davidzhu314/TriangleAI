@@ -252,3 +252,22 @@
     color: var(--color-text-muted);
   }
 }
+
+.study-row-actions {
+  white-space: nowrap;
+}
+
+.study-row-actions > * + * {
+  margin-left: var(--space-3);
+}
+
+/* A button that reads as a link, for a row's secondary action. */
+.link-button {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: var(--color-link);
+  text-decoration: underline;
+  cursor: pointer;
+}

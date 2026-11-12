@@ -208,3 +208,63 @@
 .apex-log {
   align-self: flex-start;
 }
+
+/* ---------------------------------------------------------------- 3D toolbar, over the view's top right */
+.apex-toolbar {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.apex-tool {
+  min-height: var(--size-control);
+  background: var(--color-surface);
+}
+
+.apex-tool[aria-pressed='false'] {
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------- the angle, drawn beside its figure */
+.apex-answer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.apex-angle {
+  flex: none;
+  width: 112px;
+  height: 84px;
+}
+
+.apex-angle-valve {
+  stroke: var(--color-heading);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.apex-angle-axis {
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: var(--dash-route-3);
+}
+
+.apex-angle-sheath {
+  stroke: var(--color-route-player);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.apex-angle-arc {
+  fill: none;
+  stroke: var(--color-route-player);
+  stroke-width: 2;
+}
+
+.apex-angle-centre {
+  fill: var(--color-marker-target);
+}

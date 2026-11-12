@@ -279,3 +279,97 @@
     color: var(--color-text-muted);
   }
 }
+
+/* ---------------------------------------------------------------- answer with its route map: text + gap + map */
+.access-answer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+  gap: var(--space-3) var(--space-8);
+  align-items: start;
+}
+
+.access-answer-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.access-map {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.access-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-control);
+}
+
+.access-map figcaption {
+  font-size: var(--font-size-meta);
+}
+
+.access-map-route,
+.access-map-best {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.access-map-route {
+  stroke: var(--color-text-muted);
+}
+
+.access-map-best {
+  stroke: var(--color-route-player);
+}
+
+.access-map-narrowest {
+  fill: var(--color-brand);
+}
+
+.access-map-label {
+  fill: var(--color-heading);
+  font-family: var(--font-sans);
+}
+
+/* ---------------------------------------------------------------- chart hover readout */
+.access-chart {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.access-hover-rule {
+  stroke: var(--color-text-muted);
+  stroke-width: var(--border-width);
+}
+
+.access-hover-dot {
+  fill: var(--color-chart-1);
+  stroke: var(--color-surface);
+  stroke-width: 1.5;
+}
+
+.access-hover-label {
+  fill: var(--color-heading);
+  paint-order: stroke;
+  stroke: var(--color-surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 640px) {
+  .access-answer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .access-map-svg {
+    max-height: 260px;
+  }
+}

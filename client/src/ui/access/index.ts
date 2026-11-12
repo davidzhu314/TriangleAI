@@ -17,7 +17,7 @@ import {
   type AccessVerdict,
 } from '../../access';
 import type { LoadedCase } from '../../contracts';
-import { svgEl } from '../../render/case-svg';
+import { drawCase, project, svgEl, toPoints } from '../../render/case-svg';
 import { icsName } from '../../apex';
 import { apexVerdictPill, loadApex, type ApexLoad } from '../apex';
 import { notFound } from '../brief';
@@ -27,7 +27,20 @@ import { honestyLine, renderShell } from '../shell';
 import { entry, loadBundled } from '../store';
 import './access.css';
 
-let sheathId = SHEATH_PRESETS[0]!.id;
+const SHEATH_KEY = 'threadsim.access.sheath.v1';
+
+/** The sheath size last picked in this browser, or the first preset. */
+function savedSheath(): string {
+  try {
+    const id = localStorage.getItem(SHEATH_KEY);
+    if (id && SHEATH_PRESETS.some((p) => p.id === id)) return id;
+  } catch {
+    // storage blocked: the default
+  }
+  return SHEATH_PRESETS[0]!.id;
+}
+
+let sheathId = savedSheath();
 
 const sheath = () => SHEATH_PRESETS.find((p) => p.id === sheathId) ?? SHEATH_PRESETS[0]!;
 
@@ -84,7 +97,7 @@ function headline(r: AccessReport): string {
     case 'caution':
       return `${cap(s)} sheath fits through the ${best.name.toLowerCase()} side, with a flag to check.`;
     case 'too_small':
-      return `Neither femoral side takes a ${s} sheath. Another route is needed.${alt}`;
+      return `Neither femoral side takes ${s} sheath. Another route is needed.${alt}`;
     case 'blocked':
       return `Both femoral routes cross a no-go zone. Another route is needed.${alt}`;
   }
@@ -98,6 +111,11 @@ function sheathPicker(onChange: () => void): HTMLElement {
       const b = h('button', { type: 'button', class: 'segment', 'aria-pressed': String(p.id === sheathId), 'data-sheath': p.id }, p.label);
       b.addEventListener('click', () => {
         sheathId = p.id;
+        try {
+          localStorage.setItem(SHEATH_KEY, p.id);
+        } catch {
+          // storage blocked: remembered for this visit only
+        }
         onChange();
       });
       return b;
@@ -105,6 +123,46 @@ function sheathPicker(onChange: () => void): HTMLElement {
   );
   const need = h('span', { class: 'access-need' }, 'Needs ', tipped(mm(sheath().minVesselMm), TIP.required), ' or more');
   return h('div', { class: 'access-sheath' }, h('span', { class: 'field-label' }, 'Sheath size (illustrative)'), group, need);
+}
+
+// ================================================================ route map
+
+/**
+ * The case's vessels flat, front-on, with every measured route traced: the best one at this sheath size heavy and
+ * purple, the rest thin and dashed, and each route's narrowest point as a dot labelled with its diameter.
+ */
+function routeMap(c: LoadedCase, r: AccessReport): HTMLElement | null {
+  let d: ReturnType<typeof drawCase>;
+  try {
+    d = drawCase(c, `Front view of ${c.title} with the access routes traced`, 'access-hatch');
+  } catch {
+    return null;
+  }
+  const best = r.bestFemoral && (r.bestFemoral.verdict === 'fits' || r.bestFemoral.verdict === 'caution') ? r.bestFemoral : (r.routes.find((x) => x.kind !== 'transfemoral' && x.verdict === 'fits') ?? null);
+  const shown = r.routes.filter((x) => x.kind === 'transfemoral' || x === best);
+  const u = d.handle;
+  const g = svgEl('g', { class: 'access-map-marks' });
+  // The best route draws last, on top.
+  for (const x of [...shown.filter((y) => y !== best), ...(best ? [best] : [])]) {
+    g.append(svgEl('polyline', { points: toPoints(x.samples.map((p) => p.at)), class: x === best ? 'access-map-best' : 'access-map-route', 'stroke-width': (u * (x === best ? 0.7 : 0.35)).toFixed(2), 'stroke-dasharray': x === best ? 'none' : `${(u * 1.2).toFixed(2)} ${(u * 0.8).toFixed(2)}` }));
+  }
+  for (const x of shown) {
+    const at = x.samples.find((p) => p.sMm >= x.narrowestAtMm);
+    if (!at) continue;
+    const [px, py] = project(at.at);
+    g.append(svgEl('circle', { cx: px, cy: py, r: u * 0.9, class: 'access-map-narrowest' }));
+    const t = svgEl('text', { x: px + u * 1.5, y: py + u * 0.5, class: 'access-map-label', 'font-size': (u * 1.6).toFixed(2) });
+    t.textContent = `${x.narrowestMm.toFixed(1)} mm`;
+    g.append(t);
+  }
+  d.svg.append(g);
+  d.svg.setAttribute('class', 'access-map-svg');
+  return h(
+    'figure',
+    { class: 'access-map', 'data-testid': 'access-map' },
+    d.svg,
+    h('figcaption', { class: 'muted' }, best ? `Purple: ${best.name.toLowerCase()} route, the best at this size. Dots: each route’s narrowest point.` : 'No measured route takes this sheath. Dots: each route’s narrowest point.'),
+  );
 }
 
 // ================================================================ one femoral side
@@ -154,6 +212,37 @@ function profile(r: AccessRoute, requiredMm: number, w: number): SVGSVGElement {
   req.textContent = `needs ${requiredMm.toFixed(1)} mm`;
   svg.append(req);
   svg.append(svgEl('circle', { cx: xs(r.narrowestAtMm), cy: ys(r.narrowestMm), r: 4, class: 'access-narrowest' }));
+
+  // Hover readout: the diameter and vessel at the pointer, read off the samples (no interpolation).
+  const hover = svgEl('g', { class: 'access-hover', visibility: 'hidden', 'aria-hidden': 'true' });
+  const rule = svgEl('line', { y1: top, y2: H - bottom, class: 'access-hover-rule' });
+  const dot = svgEl('circle', { r: 3.5, class: 'access-hover-dot' });
+  const label = svgEl('text', { y: top + 12, class: 'access-tick access-hover-label' });
+  hover.append(rule, dot, label);
+  svg.append(hover);
+  const ss = r.samples.map((p) => p.sMm);
+  svg.addEventListener('pointermove', (ev) => {
+    const box = svg.getBoundingClientRect();
+    const x = ((ev.clientX - box.left) / box.width) * w;
+    if (x < left || x > w - right) return hover.setAttribute('visibility', 'hidden');
+    const s = ((x - left) / (w - left - right)) * r.lengthMm;
+    let i = ss.findIndex((v) => v >= s);
+    if (i < 0) i = ss.length - 1;
+    if (i > 0 && s - ss[i - 1]! < ss[i]! - s) i--;
+    const p = r.samples[i]!;
+    const px = xs(p.sMm);
+    rule.setAttribute('x1', String(px));
+    rule.setAttribute('x2', String(px));
+    dot.setAttribute('cx', String(px));
+    dot.setAttribute('cy', String(ys(p.diameterMm)));
+    const inWindow = p.sMm >= r.windowMm[0] && p.sMm <= r.windowMm[1];
+    label.textContent = `${Math.round(p.sMm)} mm in · ${p.diameterMm.toFixed(1)} mm · ${p.vesselName}${inWindow ? '' : ' (not measured)'}`;
+    const flip = px > w / 2; // keep the label on the side with room
+    label.setAttribute('x', String(flip ? px - 8 : px + 8));
+    label.setAttribute('text-anchor', flip ? 'end' : 'start');
+    hover.setAttribute('visibility', 'visible');
+  });
+  svg.addEventListener('pointerleave', () => hover.setAttribute('visibility', 'hidden'));
   return svg;
 }
 
@@ -274,11 +363,16 @@ function body(key: string, c: LoadedCase, apex: ApexLoad, rerender: () => void):
       'section',
       { class: 'access-answer', 'aria-labelledby': 'answer-heading', 'data-testid': 'access-answer' },
       h('h2', { id: 'answer-heading', class: 'visually-hidden' }, 'Transfemoral verdict'),
-      h('div', { class: 'access-answer-head' }, h('span', { class: 'field-label' }, 'Through the leg (transfemoral)'), verdictPill(r.femoralVerdict)),
-      h('p', { class: 'access-headline', 'data-testid': 'access-headline' }, headline(r)),
-      r.bestFemoral
-        ? h('p', { class: 'access-answer-figure' }, tipped(mm(r.bestFemoral.narrowestMm), TIP.narrowest), h('span', { class: 'muted' }, ` narrowest on the ${r.bestFemoral.name.toLowerCase()} side, against `), tipped(mm(r.requiredMm), TIP.required), h('span', { class: 'muted' }, ' needed'))
-        : null,
+      h(
+        'div',
+        { class: 'access-answer-text' },
+        h('div', { class: 'access-answer-head' }, h('span', { class: 'field-label' }, 'Through the leg (transfemoral)'), verdictPill(r.femoralVerdict)),
+        h('p', { class: 'access-headline', 'data-testid': 'access-headline' }, headline(r)),
+        r.bestFemoral
+          ? h('p', { class: 'access-answer-figure' }, tipped(mm(r.bestFemoral.narrowestMm), TIP.narrowest), h('span', { class: 'muted' }, ` narrowest on the ${r.bestFemoral.name.toLowerCase()} side, against `), tipped(mm(r.requiredMm), TIP.required), h('span', { class: 'muted' }, ' needed'))
+          : null,
+      ),
+      r.rootNode ? routeMap(c, r) : null,
     ),
     femoral.length ? h('div', { class: 'access-sides' }, femoral.map((x) => sideCard(x, r.requiredMm))) : null,
     r.rootNode ? otherRoutes(r, key, apex, c.source.kind !== 'ct') : null,

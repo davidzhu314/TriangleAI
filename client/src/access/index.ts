@@ -13,7 +13,7 @@
  *  - risk zones on the route inside the window.
  * The sheath sizes and their minimum vessel diameters are illustrative, not any device's instructions for use.
  */
-import type { LoadedCase, LoadedEdge, RiskTier, RiskZoneKind } from '../contracts';
+import type { LoadedCase, LoadedEdge, RiskTier, RiskZoneKind, Vec3 } from '../contracts';
 import { windowedTurning, type Point3 } from '../optimize/measures';
 
 // ================================================================ presets and thresholds (illustrative)
@@ -58,6 +58,10 @@ export interface AccessSample {
   /** Distance from the access site along the route, mm. */
   sMm: number;
   diameterMm: number;
+  /** The centerline point, metres Y-up (the case's 3D frame), for drawing the route. */
+  at: Vec3;
+  /** Name of the vessel the point is on. */
+  vesselName: string;
 }
 
 export interface AccessRoute {
@@ -180,6 +184,8 @@ function shortestPath(adj: Map<string, Adj[]>, from: string, to: string): Adj[] 
 
 interface Walk {
   points: Point3[];
+  /** The same points as stored, metres Y-up. */
+  at: Vec3[];
   radiiMm: number[];
   s: number[];
   vessel: string[];
@@ -190,7 +196,7 @@ interface Walk {
 }
 
 function walk(steps: Adj[]): Walk {
-  const w: Walk = { points: [], radiiMm: [], s: [], vessel: [], junctionS: [], spans: [] };
+  const w: Walk = { points: [], at: [], radiiMm: [], s: [], vessel: [], junctionS: [], spans: [] };
   let s = 0;
   for (const [k, step] of steps.entries()) {
     const n = step.edge.points.length;
@@ -207,6 +213,7 @@ function walk(steps: Adj[]): Walk {
       }
       if (j === 0 && k > 0) w.junctionS.push(s);
       w.points.push(p);
+      w.at.push(step.edge.points[i]!);
       w.radiiMm.push(step.edge.radiiM[i]! * M_TO_MM);
       w.s.push(s);
       w.vessel.push(step.edge.vessel);
@@ -234,7 +241,7 @@ function measureRoute(c: LoadedCase, steps: Adj[], kind: AccessKind, name: strin
   const samples: AccessSample[] = [];
   for (let i = 0; i < w.points.length; i++) {
     const d = 2 * w.radiiMm[i]!;
-    samples.push({ sMm: w.s[i]!, diameterMm: d });
+    samples.push({ sMm: w.s[i]!, diameterMm: d, at: w.at[i]!, vesselName: vesselName(w.vessel[i]!) });
     if (w.s[i]! < lo || w.s[i]! > hi) continue;
     if (d < narrowestMm) [narrowestMm, narrowestAt, narrowestVessel] = [d, w.s[i]!, w.vessel[i]!];
   }

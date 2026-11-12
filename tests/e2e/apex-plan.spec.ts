@@ -48,6 +48,13 @@ test('a CT case with an apex plan shows it, and the trade-offs switch the line',
   await expect(page.locator('[data-candidate="c002"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(detail.getByRole('heading')).toHaveText('Through the 6th intercostal space');
   await expect(page.locator('.honesty')).toBeVisible();
+
+  // The 3D view's toolbar, where WebGL is available.
+  if (await page.getByTestId('apex-body').count()) {
+    await page.getByTestId('apex-body').click();
+    await expect(page.getByTestId('apex-body')).toHaveAttribute('aria-pressed', 'false');
+    await page.getByTestId('apex-reset').click();
+  }
 });
 
 test('a generated case has no heart to plan through', async ({ page }) => {

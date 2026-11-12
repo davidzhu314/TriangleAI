@@ -20,6 +20,15 @@ test('brief links to the access check, and the sheath size turns the verdict', a
   await expect(page.getByText('Needs the valve and apex marked by hand', { exact: false })).toBeVisible();
 });
 
+test('the sheath size is remembered, and the map traces the best route', async ({ page }) => {
+  await page.goto('/#/case/type-ii-tortuous/access');
+  await expect(page.getByTestId('access-map')).toContainText('right subclavian route');
+  await page.locator('[data-sheath="16f"]').click();
+  await page.reload();
+  await expect(page.locator('[data-sheath="16f"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('access-headline')).toContainText('a 16 Fr sheath');
+});
+
 test('a case whose leg route is too small points to another route', async ({ page }) => {
   await page.goto('/#/case/type-ii-tortuous/access');
   await expect(page.getByTestId('access-headline')).toContainText('Another route is needed');

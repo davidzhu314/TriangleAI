@@ -12,6 +12,7 @@ import {
   loadRecords,
   mergeRecords,
   newRecordId,
+  nextSubjectFrom,
   saveRecords,
   sortRecords,
   SPECIES,
@@ -106,12 +107,24 @@ function table(records: StudyRecord[]): HTMLElement {
             h('td', { class: 'num', 'data-label': 'Attempts' }, num(r.attempts)),
             h('td', { class: 'num', 'data-label': 'Time to access' }, num(r.timeToAccessMin, 'min', 1)),
             h('td', { 'data-label': 'Closure' }, r.closure ? CLOSURE_WORD[r.closure] : dash('Not entered')),
-            h('td', {}, h('a', { href: href.studyEdit(r.id), 'aria-label': `Edit ${r.subject}, ${r.date}` }, 'Edit')),
+            h('td', { class: 'study-row-actions' }, h('a', { href: href.studyEdit(r.id), 'aria-label': `Edit ${r.subject}, ${r.date}` }, 'Edit'), duplicateLink(r)),
           ),
         ),
       ),
     ),
   );
+}
+
+/** A record for the next subject on the same day and plan, opened in the form. */
+let pendingNew: StudyRecord | null = null;
+
+function duplicateLink(r: StudyRecord): HTMLElement {
+  const b = h('button', { type: 'button', class: 'link-button', 'aria-label': `New record for the next subject, from ${r.subject}, ${r.date}`, 'data-duplicate': r.id }, 'Next subject');
+  b.addEventListener('click', () => {
+    pendingNew = nextSubjectFrom(r, newRecordId());
+    location.hash = href.studyNew();
+  });
+  return b;
 }
 
 function download(name: string, text: string): void {
@@ -326,7 +339,9 @@ async function prefilled(caseKey: string | undefined, line: string | undefined):
 
 export async function renderStudy(root: HTMLElement, r: Extract<Route, { name: 'study' | 'study-new' | 'study-edit' }>): Promise<void> {
   if (r.name === 'study-new') {
-    frame(root, 'New record', formBody(root, await prefilled(r.caseKey, r.line), true));
+    const base = pendingNew && !r.caseKey ? pendingNew : await prefilled(r.caseKey, r.line);
+    pendingNew = null;
+    frame(root, 'New record', formBody(root, base, true));
     return;
   }
   const { records, ok } = loadRecords();
