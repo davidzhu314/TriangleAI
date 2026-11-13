@@ -69,6 +69,13 @@ test('log a procedure from an apex plan line, then edit, export and import', asy
   await expect(page.getByTestId('study-notice')).toContainText('Imported 1 record; 1 already in the log');
   await expect(page.getByTestId('study-notice')).toContainText('Row 4:');
   await expect(page.getByTestId('study-table').locator('tbody tr')).toHaveCount(2);
+
+  // Next subject: same day and plan, fresh subject and outcomes.
+  await page.locator('tr', { hasText: 'Pig 01' }).locator('[data-duplicate]').click();
+  await expect(page).toHaveURL(/#\/study\/new$/);
+  await expect(page.locator('[data-field=plannedIcs]')).toHaveValue('5');
+  await expect(page.locator('[data-field=subject]')).toHaveValue('');
+  await expect(page.locator('[data-field=actualIcs]')).toHaveValue('');
 });
 
 test('the study log starts empty and says where records live', async ({ page }) => {

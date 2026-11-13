@@ -108,6 +108,24 @@ export function blankRecord(today: string, id: string): StudyRecord {
   };
 }
 
+/**
+ * A new record for the next subject on the same study day: the same case, plan, species, date and sheath size; the
+ * subject and everything that happened left blank.
+ */
+export function nextSubjectFrom(r: StudyRecord, id: string): StudyRecord {
+  return {
+    ...blankRecord(r.date, id),
+    species: r.species,
+    caseKey: r.caseKey,
+    caseTitle: r.caseTitle,
+    plannedLine: r.plannedLine,
+    plannedIcs: r.plannedIcs,
+    plannedCoaxialDeg: r.plannedCoaxialDeg,
+    plannedFromDraft: r.plannedFromDraft,
+    sheathFr: r.sheathFr,
+  };
+}
+
 export function newRecordId(now = Date.now(), rand = Math.random): string {
   return `r-${now.toString(36)}-${Math.floor(rand() * 36 ** 4).toString(36).padStart(4, '0')}`;
 }

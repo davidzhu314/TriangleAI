@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blankRecord, fromCsv, loadRecords, median, mergeRecords, newRecordId, parseCsvRows, saveRecords, sortRecords, STUDY_KEY, summarize, toCsv, validateRecord, type StudyRecord } from '.';
+import { blankRecord, fromCsv, nextSubjectFrom, loadRecords, median, mergeRecords, newRecordId, parseCsvRows, saveRecords, sortRecords, STUDY_KEY, summarize, toCsv, validateRecord, type StudyRecord } from '.';
 
 const rec = (over: Partial<StudyRecord>): StudyRecord => ({ ...blankRecord('2026-11-12', 'r-1'), subject: 'Pig 01', ...over });
 
@@ -22,6 +22,14 @@ describe('study records', () => {
   it('makes distinct ids', () => {
     expect(newRecordId(1000, () => 0.5)).not.toBe(newRecordId(1001, () => 0.5));
     expect(newRecordId(1000, () => 0)).toMatch(/^r-[0-9a-z]+-0000$/);
+  });
+});
+
+describe('next subject', () => {
+  it('keeps the plan and the day, and clears the subject and outcomes', () => {
+    const r = rec({ id: 'a', species: 'ovine', weightKg: 70, caseKey: 'k', plannedLine: 'c1', plannedIcs: 5, sheathFr: 24, actualIcs: 6, attempts: 2, closure: 'yes', notes: 'x' });
+    const n = nextSubjectFrom(r, 'b');
+    expect(n).toMatchObject({ id: 'b', subject: '', species: 'ovine', date: r.date, caseKey: 'k', plannedLine: 'c1', plannedIcs: 5, sheathFr: 24, weightKg: null, actualIcs: null, attempts: null, closure: null, notes: '' });
   });
 });
 

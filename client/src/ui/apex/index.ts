@@ -23,6 +23,7 @@ import {
 } from '../../apex';
 import type { LoadedCase, Vec3 } from '../../contracts';
 import { createAnatomyLayer, type AnatomyLayer } from '../../render/anatomy-layer';
+import { svgEl } from '../../render/case-svg';
 import { createCaseScene, type CaseScene } from '../../render/scene3d';
 import { tokenNumber } from '../../render/tokens';
 import { anatomyFor } from '../body-context';
@@ -123,18 +124,36 @@ function createView(c: LoadedCase, e: CatalogEntry, plan: ApexPlan, host: HTMLEl
   }
   host.append(scene.canvas);
   view = { scene, layer: null };
+  const framed = [plan.valveAt, plan.apexAt, ...plan.frontier.flatMap((f) => (f.wallAt ? [f.at, f.wallAt] : [f.at]))];
+  let bodyOn = true;
+  const bodyState = () => ({ visible: bodyOn, arteries: false, veins: false, labels: false, body: true, bodyVeins: false, opacity: tokenNumber('--opacity-anatomy') });
+  const reset = h('button', { type: 'button', class: 'btn btn-secondary apex-tool', 'data-testid': 'apex-reset' }, 'Reset view');
+  reset.addEventListener('click', () => {
+    // Undo any turn of the case (resetView would also ease the camera to the whole tree, away from the heart).
+    scene.content.position.set(0, 0, 0);
+    scene.content.quaternion.identity();
+    scene.content.updateMatrixWorld(true);
+    frameHeart(scene, framed);
+  });
+  const toggle = h('button', { type: 'button', class: 'btn btn-secondary apex-tool', 'aria-pressed': 'true', 'data-testid': 'apex-body' }, 'Ribs and heart');
+  toggle.addEventListener('click', () => {
+    bodyOn = !bodyOn;
+    toggle.setAttribute('aria-pressed', String(bodyOn));
+    view?.layer?.apply(bodyState());
+  });
+  host.append(h('div', { class: 'apex-toolbar', role: 'toolbar', 'aria-label': '3D view' }, toggle, reset));
   // The arteries fade back: the heart, the ribs and the sheath line are what this view is about.
   scene.setVessels({ colorToken: '--color-scene-vessel', opacity: tokenNumber('--opacity-scene-vessel') / 3, zones: false });
   void anatomyFor(e, c).then((config) => {
     if (!view || view.scene !== scene || config.placeholder) return;
     const layer = createAnatomyLayer(scene, config, host);
     view.layer = layer;
-    layer.apply({ visible: true, arteries: false, veins: false, labels: false, body: true, bodyVeins: false, opacity: tokenNumber('--opacity-anatomy') });
+    layer.apply(bodyState());
   });
   scene.setPoint('valve', plan.valveAt, '--color-marker-target');
   scene.setPoint('apex', plan.apexAt, '--color-heading');
   scene.setRoute('valve-axis', [plan.valveAt, plan.valveAxisEnd], { colorToken: '--color-text-muted', dashToken: '--dash-route-3' });
-  frameHeart(scene, [plan.valveAt, plan.apexAt, ...plan.frontier.flatMap((f) => (f.wallAt ? [f.at, f.wallAt] : [f.at]))]);
+  frameHeart(scene, framed);
   return (sel) => {
     scene.setRoute('sheath', sheathLine(plan, sel), { colorToken: '--color-route-player', heavy: true });
     scene.setPoint('puncture', sel.at, '--color-route-player');
@@ -143,13 +162,36 @@ function createView(c: LoadedCase, e: CatalogEntry, plan: ApexPlan, host: HTMLEl
 
 // ================================================================ panel
 
+/**
+ * What "off the valve axis" means, drawn: the valve as a short bar with its axis dashed through it, the sheath line
+ * meeting the valve centre at the measured angle, and the angle as an arc. Purely a picture of the one number.
+ */
+function angleDiagram(deg: number): SVGSVGElement {
+  const W = 112;
+  const H = 84;
+  const cx = W / 2;
+  const cy = 14; // valve centre
+  const len = 62;
+  const a = (Math.min(deg, 90) * Math.PI) / 180;
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'apex-angle', role: 'img', 'aria-label': `The sheath line meets the valve ${Math.round(deg)} degrees off its axis` }) as SVGSVGElement;
+  svg.append(svgEl('line', { x1: cx - 16, y1: cy, x2: cx + 16, y2: cy, class: 'apex-angle-valve' }));
+  svg.append(svgEl('line', { x1: cx, y1: cy, x2: cx, y2: cy + len, class: 'apex-angle-axis' }));
+  const ex = cx + Math.sin(a) * len;
+  const ey = cy + Math.cos(a) * len;
+  svg.append(svgEl('line', { x1: cx, y1: cy, x2: ex, y2: ey, class: 'apex-angle-sheath' }));
+  const r = 30;
+  if (a > 0.01) svg.append(svgEl('path', { d: `M ${cx} ${cy + r} A ${r} ${r} 0 0 0 ${cx + Math.sin(a) * r} ${cy + Math.cos(a) * r}`, class: 'apex-angle-arc' }));
+  svg.append(svgEl('circle', { cx, cy, r: 3, class: 'apex-angle-centre' }));
+  return svg;
+}
+
 function detail(key: string, sel: ApexCandidate): HTMLElement {
   const ics = icsName(sel.ics);
   return h(
     'section',
     { class: 'apex-detail', 'aria-labelledby': 'apex-detail-heading', 'data-testid': 'apex-detail' },
     h('div', { class: 'apex-detail-head' }, h('h2', { id: 'apex-detail-heading' }, ics ? `Through the ${ics}` : 'Selected line'), apexVerdictPill(sel.verdict)),
-    h('p', { class: 'apex-answer' }, tipped(fig(sel.coaxialDeg, '°'), TIP.coaxial), h('span', { class: 'muted' }, ' off the valve axis')),
+    h('div', { class: 'apex-answer-row' }, h('p', { class: 'apex-answer' }, tipped(fig(sel.coaxialDeg, '°'), TIP.coaxial), h('span', { class: 'muted' }, ' off the valve axis')), angleDiagram(sel.coaxialDeg)),
     h(
       'dl',
       { class: 'apex-figures' },
