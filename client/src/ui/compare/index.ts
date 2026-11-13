@@ -314,7 +314,7 @@ export async function renderCompare(root: HTMLElement, key: string): Promise<voi
     groups: frontier ? groupRoutes(c, frontier) : [],
     rank: frontier ? createRanker(frontier) : null,
     measures,
-    weights: plan.weights ?? startingWeights(measures.filter((m) => frontier?.routes.some((r) => r.cost[m.key] !== undefined))),
+    weights: plan.weights ?? startingWeights(frontier ? frontier.candidates : player ? [player] : []),
     selected: null,
     note: '',
   });

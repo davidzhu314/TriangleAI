@@ -5,7 +5,7 @@
  */
 import { MEASURE_LOWER_IS_BETTER } from '../../contracts';
 import type { CostVector, Frontier, FrontierRoute, LoadedCase, MeasureKey, OptimizeResult, Ranking, Route, RouteLabel, RouteSuggestion, Weights, WirePresetId } from '../../contracts';
-import { dominates, WIRE_PRESETS } from '../../optimize';
+import { defaultWeights, dominates, WIRE_PRESETS } from '../../optimize';
 import { MEASURE_ROWS, SIMULATED_KEYS, type CostRow } from '../plan/cost-rows';
 import { vesselName, violationText, zoneLabel } from '../plan/warnings';
 
@@ -94,11 +94,12 @@ export function visibleMeasures(frontier: Frontier | null, player: Route | null)
 }
 
 /**
- * Starting weights: equal on every measure shown. The engine defines no default (normaliseWeights of nothing
- * ranks every route equal), so the neutral choice is used and favours no route (DECISIONS.md).
+ * Starting slider values: the engine's default weights (Vaibhav's `defaultWeights`, an equal share on every measure
+ * the routes carry) as whole slider steps. The sliders run 0–10, so each measure the engine weights starts at 1;
+ * normalised, that is exactly the engine's default, the weights a player who never moves a slider is scored at.
  */
-export function startingWeights(measures: readonly CostRow[]): Weights {
-  return Object.fromEntries(measures.map((m) => [m.key, 1])) as Weights;
+export function startingWeights(routes: readonly Route[]): Weights {
+  return Object.fromEntries(Object.keys(defaultWeights(routes)).map((k) => [k, 1])) as Weights;
 }
 
 /** 1-based rank of each group: the best rank among its member routes in the engine's ranking. */
