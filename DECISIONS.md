@@ -369,3 +369,12 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - The sharpest bend is measured on the access vessel's own edge, stopping one window short of its branch point, because centerlines meeting at a branch point make a kink no sheath follows.
   - Subclavian routes are measured up to 100 mm from the origin (the proximal axillary). The generated cases' "subclavian to radial" vessels taper towards the wrist.
   - Through the heart's apex (transapical) and through the cava (transcaval) are listed as **not measured**: no case has the left ventricle, the apex, or the cava beside the aorta as centerlines. No number is shown for them.
+- 2026-11-12 · David · **Apex plan** (`client/src/apex/`, `#/case/<id>/apex`; `slicer/mark_apex.py`, `slicer/export_apex.py`): where a transapical sheath would go in, on the real CT cases.
+  - **The valve and apex are marked by hand.** The TotalSegmentator v2 dataset labels the heart as one piece, with no left ventricle and no coronary arteries. Estimating them from the masks failed:
+    - the plane where the aorta label meets the heart label tilts, because the heart label touches the aortic root from the sides;
+    - a line fit to the ascending aorta varied from 27° to 72° off the apex direction across the three subjects.
+    So a person marks three cusp hinge points and the apex on the CT.
+  - **The CT is downloaded for marking only** (`fetch_totalsegmentator.py --ct`). This changes D3c's "never download the CT". It stays in `/tmp` and never enters the repo or a package; only landmark positions do. `meta.csv` is still never downloaded.
+  - **Geometry is precomputed** in `apex.json` by the export (deterministic, no AI). The client only validates it, keeps the frontier and judges it. Per candidate puncture within 30 mm of the marked apex: angle off the valve axis (normal of the hinge plane), bone clearance, depth to the rib cage (convex hull of ribs, costal cartilages and sternum), lung crossed, intercostal space.
+  - **Thresholds are illustrative**: 15° and 30° off axis; 1.5 mm and 5 mm bone clearance. No LAD, myocardium thickness or skin is measured, and the screen says so.
+  - **Draft landmarks** (points described `draft`, placed by a script) were used only to exercise the pipeline and are not committed. The app labels any draft plan "Draft landmarks: not anatomy".

@@ -1,10 +1,11 @@
-/** Hash routes: #/library, #/settings, #/case/<key> and its /access, /plan, /compare, /drive and /results. Anything else goes to the Library. */
+/** Hash routes: #/library, #/settings, #/case/<key> and its /access, /apex, /plan, /compare, /drive and /results. Anything else goes to the Library. */
 
 export type Route =
   | { name: 'library' }
   | { name: 'settings' }
   | { name: 'brief'; key: string }
   | { name: 'access'; key: string }
+  | { name: 'apex'; key: string }
   | { name: 'plan'; key: string }
   | { name: 'compare'; key: string }
   | { name: 'drive'; key: string }
@@ -17,6 +18,7 @@ export function parseRoute(hash: string): Route {
     const key = decodeURIComponent(parts[1]);
     if (parts.length === 2) return { name: 'brief', key };
     if (parts.length === 3 && parts[2] === 'access') return { name: 'access', key };
+    if (parts.length === 3 && parts[2] === 'apex') return { name: 'apex', key };
     if (parts.length === 3 && parts[2] === 'plan') return { name: 'plan', key };
     if (parts.length === 3 && parts[2] === 'compare') return { name: 'compare', key };
     if (parts.length === 3 && parts[2] === 'drive') return { name: 'drive', key };
@@ -30,6 +32,7 @@ export const href = {
   settings: (): string => '#/settings',
   brief: (key: string): string => `#/case/${encodeURIComponent(key)}`,
   access: (key: string): string => `#/case/${encodeURIComponent(key)}/access`,
+  apex: (key: string): string => `#/case/${encodeURIComponent(key)}/apex`,
   plan: (key: string): string => `#/case/${encodeURIComponent(key)}/plan`,
   compare: (key: string): string => `#/case/${encodeURIComponent(key)}/compare`,
   drive: (key: string): string => `#/case/${encodeURIComponent(key)}/drive`,

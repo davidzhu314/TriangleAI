@@ -3,13 +3,19 @@
     python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404
     python3 slicer/fetch_totalsegmentator.py s1404 /tmp/ts-s1404-context --context
 
+`--apex` fetches what the transapical planner reads (`slicer/export_apex.py`): the heart, the aorta, every rib, the
+costal cartilages, the sternum and the five lung lobes.
+
+`--ct` fetches the subject's CT image (`ct.nii.gz`) alone, for hand-marking the valve and apex landmarks in Slicer
+(`slicer/mark_apex.py`). The CT never enters the repo or a case package: only the landmark positions do.
+
 `--context` fetches the body-context masks instead: the vertebrae C7 to L5, the ribs (left and right 1 to 12),
 the sternum and the heart, and the major veins (venae cavae, iliac and brachiocephalic veins), for the faint
 background mesh (`slicer/export_context.py`). A class missing from the subject's folder is skipped and named.
 
-Reads only the needed members of the 3.2 GB Zenodo zip with HTTP range requests. Only the arterial
-masks are written. The CT image (`ct.nii.gz`) and the dataset's `meta.csv` (age, sex, scanner) are
-never downloaded, so nothing but vessel geometry reaches the export.
+Reads only the needed members of the 3.2 GB Zenodo zip with HTTP range requests. Without `--ct`, only masks are
+written. The dataset's `meta.csv` (age, sex, scanner) is never downloaded, and the CT image only with `--ct`, so
+nothing but geometry reaches an export.
 Dataset: https://doi.org/10.5281/zenodo.10047263 (THIRD_PARTY.md, D3c).
 """
 import io
@@ -50,6 +56,13 @@ VEINS = {
     "brachiocephalic_vein_right": "r_brachiocephalic_vein",
 }
 
+# Transapical planner inputs (slicer/export_apex.py), same subject, dataset and license. File name = class name.
+APEX = (
+    ["heart", "aorta", "sternum", "costal_cartilages"]
+    + [f"rib_{side}_{i}" for side in ("left", "right") for i in range(1, 13)]
+    + ["lung_upper_lobe_left", "lung_lower_lobe_left", "lung_upper_lobe_right", "lung_middle_lobe_right", "lung_lower_lobe_right"]
+)
+
 
 class HttpFile(io.RawIOBase):
     """A seekable read-only file over HTTP range requests."""
@@ -84,14 +97,21 @@ class HttpFile(io.RawIOBase):
         return len(data)
 
 
-def main(subject, out_dir, context=False):
+def main(subject, out_dir, context=False, apex=False, ct=False):
     os.makedirs(out_dir, exist_ok=True)
     z = zipfile.ZipFile(io.BufferedReader(HttpFile(URL), buffer_size=1 << 20))
-    wanted = {c: c for c in [*CONTEXT, *VEINS]} if context else MASKS
+    if ct:
+        data = z.read(f"{subject}/ct.nii.gz")
+        with open(os.path.join(out_dir, "ct.nii.gz"), "wb") as f:
+            f.write(data)
+        print("ct", len(data), "bytes")
+        return
+    wanted = {c: c for c in [*CONTEXT, *VEINS]} if context else {c: c for c in APEX} if apex else MASKS
+    optional = context or apex
     members = set(z.namelist())
     for cls, name in wanted.items():
         member = f"{subject}/segmentations/{cls}.nii.gz"
-        if context and member not in members:
+        if optional and member not in members:
             print("SKIPPED", cls, "(not in this subject's segmentations)")
             continue
         data = z.read(member)
@@ -101,4 +121,4 @@ def main(subject, out_dir, context=False):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], context="--context" in sys.argv[3:])
+    main(sys.argv[1], sys.argv[2], context="--context" in sys.argv[3:], apex="--apex" in sys.argv[3:], ct="--ct" in sys.argv[3:])
