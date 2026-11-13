@@ -143,7 +143,7 @@ function createView(c: LoadedCase, e: CatalogEntry, plan: ApexPlan, host: HTMLEl
 
 // ================================================================ panel
 
-function detail(sel: ApexCandidate): HTMLElement {
+function detail(key: string, sel: ApexCandidate): HTMLElement {
   const ics = icsName(sel.ics);
   return h(
     'section',
@@ -161,6 +161,7 @@ function detail(sel: ApexCandidate): HTMLElement {
     ),
     sel.reasons.length ? h('ul', { class: 'apex-reasons' }, sel.reasons.map((r) => h('li', {}, r))) : null,
     h('p', { class: 'muted apex-nearest' }, `Nearest bone: ${sel.nearestBone}.`),
+    h('a', { class: 'btn btn-secondary apex-log', href: href.studyNew(key, sel.id), 'data-testid': 'apex-log' }, 'Log a procedure from this line'),
   );
 }
 
@@ -233,7 +234,7 @@ function body(key: string, c: LoadedCase, e: CatalogEntry, load: ApexLoad): HTML
     const sel = plan.frontier.find((f) => f.id === selected)!;
     draw?.(sel);
     panel.replaceChildren(
-      detail(sel),
+      detail(key, sel),
       choices(plan, selected, (id) => {
         selected = id;
         render();

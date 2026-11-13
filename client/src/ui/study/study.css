@@ -1,0 +1,254 @@
+/* Study log: the summary as one card of peer figures split by hairlines, the records as one table (DESIGN.md:
+   Tables), the form as three fieldsets in a two-column grid. One column on a phone. Tokens only. */
+
+.study {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.study-note {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.study-warning,
+.study-notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-control);
+}
+
+.study-warning {
+  background: var(--color-pill-warning-bg);
+  color: var(--color-pill-warning-ink);
+  border: var(--border-width) solid var(--color-pill-warning-border);
+}
+
+.study-notice {
+  background: var(--color-surface-sunken);
+  color: var(--color-text);
+}
+
+.study-empty {
+  margin: 0;
+}
+
+/* Five peer figures: 5 × 1fr. */
+.study-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.study-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-inline: var(--space-4);
+  border-left: var(--border-width) solid var(--color-rule);
+  min-width: 0;
+}
+
+.study-stat:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.study-stat dt {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.study-stat dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-size-figure-sm);
+  color: var(--color-heading);
+}
+
+.study-stat-note,
+.study-sub {
+  display: block;
+  font-size: var(--font-size-meta);
+}
+
+.study-table-scroll {
+  overflow-x: auto;
+}
+
+.study-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.study-table th,
+.study-table td {
+  height: var(--size-row);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-rule);
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+  vertical-align: middle;
+}
+
+.study-table th:first-child,
+.study-table td:first-child {
+  padding-left: 0;
+}
+
+.study-table thead th {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.study-table tbody th {
+  color: var(--color-heading);
+}
+
+.study-table .num {
+  text-align: right;
+}
+
+.study-date {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-ics {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.study-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.study-fieldset {
+  margin: 0;
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.study-fieldset legend {
+  padding-inline: var(--space-1);
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-heading);
+}
+
+.study-plan-note {
+  margin: 0;
+}
+
+/* Two fields a row: 1fr + gap + 1fr. */
+.study-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4) var(--gap);
+}
+
+.study-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.study-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* Single-line controls share one height, the field token (a date or number input otherwise grows taller than a select). */
+.study-field input.input,
+.study-field .select {
+  box-sizing: border-box;
+  height: var(--size-field);
+}
+
+.study-field .input[readonly] {
+  background: var(--color-surface-sunken);
+}
+
+.study-hint,
+.study-error {
+  margin: 0;
+  font-size: var(--font-size-meta);
+}
+
+.study-error {
+  color: var(--color-negative);
+}
+
+.study-delete {
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  .study-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) 0;
+  }
+
+  .study-stat:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .study-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One block per record: subject across, then labelled values. */
+  .study-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .study-table tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+    border-bottom: var(--border-width) solid var(--color-rule);
+  }
+
+  .study-table th,
+  .study-table td {
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .study-table tbody th {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+
+  .study-table .num {
+    text-align: left;
+  }
+
+  .study-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--font-size-meta);
+    color: var(--color-text-muted);
+  }
+}

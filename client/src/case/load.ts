@@ -193,6 +193,7 @@ export async function loadCase(source: CaseSource, options: LoadOptions = {}): P
     ...(c.difficulty !== undefined ? { difficulty: c.difficulty } : {}),
     ...(c.fluoro_budget_s !== undefined ? { fluoroBudgetS: c.fluoro_budget_s } : {}),
     ...(c.anatomy !== undefined ? { anatomy: { ...c.anatomy } } : {}),
+    ...(c.subject !== undefined ? { subject: { ...c.subject } } : {}),
     vessels: c.vessels.map((v) => ({ ...v })),
     entries: c.entries.map((e) => ({ ...e })),
     targets: c.targets.map((t) => ({ ...t, reachable: !graph.unreachable.has(t.id) })),

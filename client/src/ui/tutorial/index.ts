@@ -6,7 +6,7 @@
 import { h } from '../dom';
 import type { Route } from '../router';
 import { catalog, loadedCase, progressHistory } from '../store';
-import { advance, shouldStart, stepText, tutorialCase, visible, type StepId, type View } from './model';
+import { advance, shouldStart, stepText, tutorialCase, visible, type Screen, type StepId, type View } from './model';
 import './tutorial.css';
 
 const DISMISS_KEY = 'threadsim.tutorial.v1';
@@ -66,14 +66,31 @@ function anchorFor(s: StepId, key: string): HTMLElement | null {
   }
 }
 
+/**
+ * The tutorial's screen for a route. Settings and the study log are off the case flow: like the Library (not on a
+ * case). The Access check and the apex plan are side pages of a case: like its brief.
+ */
+function screenOf(r: Route): Screen {
+  switch (r.name) {
+    case 'settings':
+    case 'study':
+    case 'study-new':
+    case 'study-edit':
+      return 'library';
+    case 'access':
+    case 'apex':
+      return 'brief';
+    default:
+      return r.name;
+  }
+}
+
 function view(key: string): View {
   const finish = document.querySelector<HTMLElement>('[data-testid=finish-drive]');
   const compare = document.querySelector<HTMLButtonElement>('[data-testid=compare]');
   return {
-    // Settings is off the case flow: the tutorial treats it like the Library (not on a case). The Access check is a
-    // side page of the case: like its brief.
-    screen: route.name === 'settings' ? 'library' : route.name === 'access' || route.name === 'apex' ? 'brief' : route.name,
-    onTutorialCase: route.name !== 'library' && route.name !== 'settings' && route.key === key,
+    screen: screenOf(route),
+    onTutorialCase: 'key' in route && route.key === key,
     routeComplete: !!compare && !compare.disabled,
     targetReached: !!finish && !finish.hidden,
   };

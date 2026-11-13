@@ -34,7 +34,7 @@ const stateFrame = (n = PHYSICS_WIRE_POINTS) => ({
 
 describe('contracts index', () => {
   it('is version 3', () => {
-    expect(CONTRACTS_VERSION).toBe(3);
+    expect(CONTRACTS_VERSION).toBe(4);
   });
 });
 

@@ -204,3 +204,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.apex-log {
+  align-self: flex-start;
+}

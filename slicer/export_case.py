@@ -325,6 +325,8 @@ def main(args):
         "targets": tagged("target"),
         "riskZones": meta.get("riskZones", []),
     }
+    if "subject" in meta:  # a large-animal study's CT: {"species": "porcine", "label": "Pig 03"}
+        case["subject"] = meta["subject"]
     os.makedirs(args.out, exist_ok=True)
     files = {
         "case.json": json.dumps(case, sort_keys=True, indent=2) + "\n",
