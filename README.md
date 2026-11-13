@@ -39,6 +39,7 @@ One case is one pass through six screens, each at its own hash route, plus Setti
 | Compare | `#/case/<id>/compare` | Frontier routes overlaid, weight sliders, keep or switch |
 | Drive | `#/case/<id>/drive` | Front and X-ray views, Rail / Physics (beta) switch, HUD (vessel, distance, wall force, fluoro), route overview with mistake dots, keyboard, gamepad, hands and voice, Cathy's box |
 | Results | `#/case/<id>/results` | The one thing to change, plan and drive scores, stars, replay timeline, next case |
+| Access check | `#/case/<id>/access` | Can a valve sheath (14, 16 or 18 Fr, illustrative) go in through the leg? Each femoral side's narrowest diameter, spare, sharpest bend and a diameter profile; then the subclavian and carotid routes, with the heart's apex and the cava listed as not measured |
 | Settings | `#/settings` | Hands and Voice switches, Light / Dark / System theme, the gesture and voice command lists |
 
 - **Cases.** The Library lists the bundled cases from `client/public/cases/index.json`:

@@ -8,6 +8,7 @@
 import type { LoadedCase, RiskTier, RiskZoneKind } from '../contracts';
 import { drawCase, svgEl } from '../render/case-svg';
 import '../render/render.css';
+import { femoralSummary, verdictPill } from './access';
 import { difficultyPill, modeBadge, stars } from './badges';
 import { dash, figure, h } from './dom';
 import { entryIcon, labelled } from './icons';
@@ -101,6 +102,12 @@ function vesselMap(c: LoadedCase): HTMLElement | null {
   return h('figure', { class: 'brief-map', 'data-testid': 'vessel-map' }, h('div', { class: 'brief-map-frame' }, d.svg), h('figcaption', {}, legend, h('p', { class: 'muted' }, 'Front view, flat. Plan shows it in 3D.')));
 }
 
+/** The transfemoral verdict at the chosen sheath size, linking to the Access check. */
+function accessField(c: LoadedCase, key: string): HTMLDivElement {
+  const s = femoralSummary(c);
+  return field(`Leg access (${s.label})`, h('span', { class: 'brief-access' }, verdictPill(s.verdict), ' ', h('a', { href: href.access(key), 'data-testid': 'brief-access-link' }, 'Access check')));
+}
+
 function scenarioCard(c: LoadedCase, key: string): HTMLElement {
   const arch = c.anatomy?.arch_type;
   const entries = h(
@@ -124,6 +131,7 @@ function scenarioCard(c: LoadedCase, key: string): HTMLElement {
       field('Arch type', arch ? h('span', {}, `Type ${arch}${c.anatomy?.bovine ? ', bovine' : ''}`) : c.anatomy?.bovine ? h('span', {}, 'Bovine') : dash()),
       field('Fluoro budget', c.fluoroBudgetS !== undefined ? labelled('fluoro', figure(c.fluoroBudgetS, 's')) : dash()),
       field('Risk zones', riskList(c)),
+      accessField(c, key),
       field('Vessels', h('span', { class: 'num' }, String(c.vessels.length))),
       field('Source', source(c)),
       field('Your progress', progress(key)),
@@ -161,7 +169,7 @@ function body(e: CatalogEntry, c: LoadedCase, onFixed: () => void): HTMLElement 
       ),
     ),
     checks ? h('section', { class: 'block', 'aria-labelledby': 'checks-heading' }, h('h2', { id: 'checks-heading' }, 'Checks on this case'), checks) : null,
-    h('div', { class: 'actions' }, h('a', { class: 'btn btn-primary', href: href.plan(e.key) }, 'Start planning'), h('a', { class: 'btn btn-secondary', href: href.library() }, 'Back to Library')),
+    h('div', { class: 'actions' }, h('a', { class: 'btn btn-primary', href: href.plan(e.key) }, 'Start planning'), h('a', { class: 'btn btn-secondary', href: href.access(e.key) }, 'Access check'), h('a', { class: 'btn btn-secondary', href: href.library() }, 'Back to Library')),
     isTutorialKey(e.key) ? tutorialButton() : null,
     honestyLine(),
   );

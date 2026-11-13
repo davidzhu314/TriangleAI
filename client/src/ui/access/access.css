@@ -1,0 +1,281 @@
+/* Access check: the transfemoral answer first and largest, then one card per femoral side with its diameter
+   profile, then the other routes as one table. One column on a phone. Tokens only (DESIGN.md). */
+
+.access {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.pill-positive {
+  background: var(--color-pill-positive-bg);
+  color: var(--color-pill-positive-ink);
+}
+
+.access-sheath {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.access-need {
+  color: var(--color-text-muted);
+}
+
+.access-answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.access-answer-head,
+.access-side-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.access-headline {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: var(--font-size-figure-sm);
+  line-height: var(--line-height-figure-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.access-answer-figure {
+  margin: 0;
+}
+
+.access-answer-figure > .tip:first-child .figure {
+  font-size: var(--font-size-figure);
+  line-height: var(--line-height-figure);
+  color: var(--color-heading);
+}
+
+/* Two sides side by side: 1fr + gap + 1fr. */
+.access-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.access-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-5);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.access-side h3 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  line-height: var(--line-height-lead);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-heading);
+}
+
+.access-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.access-figures > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-inline: var(--space-3);
+  border-left: var(--border-width) solid var(--color-rule);
+}
+
+.access-figures > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.access-figures dt {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.access-figures dd {
+  margin: 0;
+  font-size: var(--font-size-figure-sm);
+  color: var(--color-heading);
+}
+
+.access-where,
+.access-reasons {
+  margin: 0;
+}
+
+.access-reasons {
+  padding-left: var(--space-5);
+  color: var(--color-pill-warning-ink);
+}
+
+.access-profile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.access-profile figcaption {
+  font-size: var(--font-size-meta);
+}
+
+.access-chart-frame {
+  min-width: 0;
+}
+
+.access-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.access-grid {
+  stroke: var(--color-grid);
+  stroke-width: var(--border-width);
+}
+
+.access-unmeasured {
+  fill: var(--color-surface-sunken);
+}
+
+.access-tick {
+  fill: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  font-family: var(--font-sans);
+}
+
+.access-line {
+  fill: none;
+  stroke: var(--color-chart-1);
+  stroke-width: var(--stroke-route);
+  stroke-linejoin: round;
+}
+
+.access-required {
+  stroke: var(--color-heading);
+  stroke-width: var(--border-width);
+  stroke-dasharray: var(--dash-route-3);
+}
+
+.access-required-label {
+  fill: var(--color-heading);
+}
+
+.access-narrowest {
+  fill: var(--color-brand);
+}
+
+.access-table-scroll {
+  overflow-x: auto;
+}
+
+.access-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.access-table th,
+.access-table td {
+  height: var(--size-row);
+  padding-inline: var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-rule);
+  text-align: left;
+  font-weight: var(--font-weight-regular);
+}
+
+.access-table th:first-child,
+.access-table td:first-child {
+  padding-left: 0;
+}
+
+.access-table thead th {
+  font-size: var(--font-size-meta);
+  color: var(--color-text-muted);
+}
+
+.access-table tbody th {
+  color: var(--color-heading);
+}
+
+.access-table .num {
+  text-align: right;
+}
+
+.access-table tbody th {
+  padding-block: var(--space-2);
+}
+
+.access-kind {
+  display: block;
+  font-size: var(--font-size-meta);
+}
+
+.access-limits ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+@media (max-width: 640px) {
+  .access-sides {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .access-figures dd {
+    font-size: var(--font-size-lead);
+  }
+
+  /* The routes table becomes one block per route: the name across, then four labelled values (3 × 1fr + auto). */
+  .access-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .access-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: var(--space-2);
+    padding-block: var(--space-3);
+    border-bottom: var(--border-width) solid var(--color-rule);
+  }
+
+  .access-table th,
+  .access-table td {
+    height: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .access-table tbody th {
+    grid-column: 1 / -1;
+  }
+
+  .access-table .num {
+    text-align: left;
+  }
+
+  .access-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: var(--font-size-meta);
+    color: var(--color-text-muted);
+  }
+}
