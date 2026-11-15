@@ -12,7 +12,7 @@ import { h, replace } from '../ui/dom';
 import { href } from '../ui/router';
 import { honestyLine, renderShell } from '../ui/shell';
 import './heart.css';
-import { DEFAULT_LIGHTING, GROUPS, HEARTS_URL, isLighting, LIGHTINGS, type HeartEntry, type HeartIndex, type HeartPart, type LightingId } from './parts';
+import { DEFAULT_LIGHTING, DEFAULT_MODE, GROUPS, HEARTS_URL, isLighting, isMode, LIGHTINGS, MODES, type HeartEntry, type HeartIndex, type HeartPart, type LightingId, type ViewMode } from './parts';
 import type { HeartViewer } from './viewer';
 
 let viewer: HeartViewer | null = null;
@@ -81,6 +81,41 @@ function lightingSwitch(v: HeartViewer, current: LightingId): HTMLElement {
     return b;
   });
   return h('div', { class: 'heart-lighting' }, h('span', { class: 'label', id: 'heart-lighting-label' }, 'Light'), h('div', { class: 'segmented', role: 'group', 'aria-labelledby': 'heart-lighting-label' }, segments));
+}
+
+const modeKey = (id: string): string => `threadsim.heart.mode.v1.${id}`;
+
+/** The view mode is kept per heart for the session, like the hidden parts. */
+function readMode(id: string): ViewMode {
+  try {
+    const saved = sessionStorage.getItem(modeKey(id));
+    return isMode(saved) ? saved : DEFAULT_MODE;
+  } catch {
+    return DEFAULT_MODE;
+  }
+}
+
+function writeMode(id: string, mode: ViewMode): void {
+  try {
+    sessionStorage.setItem(modeKey(id), mode);
+  } catch {
+    // Nothing depends on it.
+  }
+}
+
+/** "View: Solid | See-through | X-ray". `onMode` also tells the page, so the well and swatches follow the X-ray look. */
+function modeSwitch(v: HeartViewer, heartId: string, current: ViewMode, onMode: (mode: ViewMode) => void): HTMLElement {
+  const segments = MODES.map((m) => {
+    const b = h('button', { type: 'button', class: 'segment', 'aria-pressed': String(m.id === current), title: m.hint, 'data-mode-choice': m.id }, m.label);
+    b.addEventListener('click', () => {
+      v.setMode(m.id);
+      writeMode(heartId, m.id);
+      onMode(m.id);
+      for (const s of segments) s.setAttribute('aria-pressed', String(s === b));
+    });
+    return b;
+  });
+  return h('div', { class: 'heart-lighting' }, h('span', { class: 'label', id: 'heart-mode-label' }, 'View'), h('div', { class: 'segmented', role: 'group', 'aria-labelledby': 'heart-mode-label' }, segments));
 }
 
 async function loadIndex(): Promise<HeartEntry[]> {
@@ -193,7 +228,8 @@ export async function renderHeart(root: HTMLElement, id: string | undefined): Pr
   try {
     const { createHeartViewer } = await import('./viewer');
     const lighting = readLighting();
-    const v = await createHeartViewer(`${HEARTS_URL}${heart.glb}`, `${heart.title}, in 3D. Drag to turn, scroll to zoom.`, lighting, (fraction) => {
+    const mode = readMode(heart.id);
+    const v = await createHeartViewer(`${HEARTS_URL}${heart.glb}`, `${heart.title}, in 3D. Drag to turn, scroll to zoom.`, lighting, mode, (fraction) => {
       if (fraction === null) progress.removeAttribute('value');
       else progress.value = fraction;
     });
@@ -204,7 +240,11 @@ export async function renderHeart(root: HTMLElement, id: string | undefined): Pr
     viewer = v;
     const reset = h('button', { type: 'button', class: 'btn btn-secondary', 'data-testid': 'heart-reset' }, 'Reset view');
     reset.addEventListener('click', () => v.resetView());
-    replace(stage, h('div', { class: 'view-toolbar' }, reset, lightingSwitch(v, lighting)), h('div', { class: 'heart-view' }, v.canvas));
+    const onMode = (m: ViewMode): void => {
+      body.dataset['mode'] = m;
+    };
+    onMode(mode);
+    replace(stage, h('div', { class: 'view-toolbar' }, reset, modeSwitch(v, heart.id, mode, onMode), lightingSwitch(v, lighting)), h('div', { class: 'heart-view' }, v.canvas));
     replace(panel, partList(heart, v.parts, v));
     stage.dataset['triangles'] = String(v.triangles);
     // Two frames, so the heart is drawn before it fades in.

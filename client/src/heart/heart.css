@@ -63,6 +63,20 @@
   padding-left: var(--space-2);
 }
 
+/* X-ray: the well takes the X-ray ground and the list's swatches the X-ray ink, as the 3D view has no part colours
+   then. Light does nothing to an X-ray, so its switch steps back. */
+.heart[data-mode='xray'] .heart-stage {
+  background: var(--color-xray-bg);
+}
+
+.heart[data-mode='xray'] .heart-swatch {
+  background: var(--color-xray-ink) !important; /* over the swatch's own token, set inline */
+}
+
+.heart[data-mode='xray'] [data-lighting] {
+  color: var(--color-text-muted);
+}
+
 .heart-message {
   position: absolute;
   inset: 0;
@@ -216,7 +230,7 @@
 /* ---------------------------------------------------------------- phone: one column, rows a full tap target */
 @media (max-width: 640px) {
   .heart-layout {
-    grid-template-rows: 56dvh auto;
+    grid-template-rows: 66dvh auto; /* the toolbar's three rows sit above the view here */
   }
 
   .heart-groups {

@@ -117,7 +117,10 @@
   --color-heart-aorta: #b23a3a;      /* aorta: arterial red */
   --color-heart-pulmonary: #3f6498;  /* pulmonary trunk: venous blue */
   --color-heart-valve: #f1e7cf;      /* valve tissue: light ivory */
-  --duration-camera: 500ms;          /* eased camera moves between views; instant with reduced motion */
+  --opacity-heart-see-through: 0.26; /* See-through mode: a wall facing you; denser toward its silhouette */
+  --opacity-heart-xray-wall: 0.05;   /* X-ray mode: one layer of wall facing you; --opacity-xray-contrast at its edge */
+  --opacity-heart-xray-valve: 0.35;  /* X-ray mode: valve tissue, denser so the valves read through the walls */
+  --duration-camera: 500ms;         /* eased camera moves between views; instant with reduced motion */
 
   /* Type: DM Sans for the whole app (2026-11-08, Aroovee), self-hosted. Display sizes over 32px dropped: app titles stay at or under 32. */
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;

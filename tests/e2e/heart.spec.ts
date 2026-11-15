@@ -99,6 +99,38 @@ test('the Light switch changes how the heart is lit and is remembered', async ({
   for (const id of ['studio', 'soft', 'contrast', 'overhead']) await expect(pressed(id)).toBeVisible();
 });
 
+test('the View switch: Solid, See-through and X-ray each draw differently, and the mode is kept for the session', async ({ page }) => {
+  test.setTimeout(90_000);
+  const errors = watchConsole(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHeart(page);
+  const choice = (id: string) => page.locator(`[data-mode-choice=${id}]`);
+  const view = page.locator('.heart-view');
+  await expect(choice('solid')).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(600);
+  const solid = await view.screenshot();
+
+  await page.getByRole('group', { name: 'View' }).getByRole('button', { name: 'See-through' }).click();
+  await expect(choice('see-through')).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(300);
+  const through = await view.screenshot();
+  expect(through.equals(solid)).toBe(false);
+
+  await page.getByRole('group', { name: 'View' }).getByRole('button', { name: 'X-ray' }).click();
+  await expect(page.locator('.screen.heart')).toHaveAttribute('data-mode', 'xray');
+  await page.waitForTimeout(300);
+  const xray = await view.screenshot();
+  expect(xray.equals(solid)).toBe(false);
+  expect(xray.equals(through)).toBe(false);
+
+  await page.reload();
+  await expect(page.getByTestId('heart-stage')).toHaveAttribute('data-state', 'ready', { timeout: 30_000 });
+  await expect(choice('xray')).toHaveAttribute('aria-pressed', 'true');
+  await choice('solid').click();
+  await expect(page.locator('.screen.heart')).toHaveAttribute('data-mode', 'solid');
+  expect(errors).toEqual([]);
+});
+
 test('empty and error states say what happened and what to do', async ({ page }) => {
   await page.goto('/#/heart/no-such-heart');
   await expect(page.getByRole('heading', { name: 'No heart with that name' })).toBeVisible();

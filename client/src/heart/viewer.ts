@@ -13,8 +13,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import { THEME_EVENT, token, tokenMs } from '../render/tokens';
-import { partLook, type HeartPart, type LightingId, type Tissue } from './parts';
+import { THEME_EVENT, token, tokenMs, tokenNumber } from '../render/tokens';
+import { partLook, type HeartPart, type LightingId, type Tissue, type ViewMode } from './parts';
 
 /**
  * Lighting versions. Light is white in all of them, so the tokens alone colour the parts. `room` is the strength of
@@ -48,6 +48,8 @@ export interface HeartViewer {
   readonly triangles: number;
   setVisible(name: string, on: boolean): void;
   setLighting(id: LightingId): void;
+  /** Solid, see-through walls, or the neutral X-ray look. */
+  setMode(mode: ViewMode): void;
   /** Ease back to the starting anterior view (instant with reduced motion). */
   resetView(): void;
   dispose(): void;
@@ -61,7 +63,7 @@ interface Extras {
 
 const text = (v: unknown, fallback: string): string => (typeof v === 'string' && v ? v : fallback);
 
-export async function createHeartViewer(url: string, label: string, lighting: LightingId, onProgress: (fraction: number | null) => void): Promise<HeartViewer> {
+export async function createHeartViewer(url: string, label: string, lighting: LightingId, startMode: ViewMode, onProgress: (fraction: number | null) => void): Promise<HeartViewer> {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf = await loader.loadAsync(url, (e) => onProgress(e.lengthComputable && e.total > 0 ? e.loaded / e.total : null));
@@ -86,6 +88,8 @@ export async function createHeartViewer(url: string, label: string, lighting: Li
   // ---- parts: one material each, coloured from its token
   const meshes = new Map<string, THREE.Mesh>();
   const materials = new Map<string, THREE.MeshStandardMaterial>();
+  /** Per part: how much denser a see-through wall gets toward its silhouette (0 when solid). */
+  const rims = new Map<string, { value: number }>();
   const parts: HeartPart[] = [];
   let triangles = 0;
   gltf.scene.traverse((o) => {
@@ -94,17 +98,80 @@ export async function createHeartViewer(url: string, label: string, lighting: Li
     const group = text(extras.group, o.parent?.name ?? '');
     const look = partLook(o.name, group);
     const material = new THREE.MeshStandardMaterial({ metalness: 0, ...SURFACE[look.tissue] });
+    // As the case scene's vessel walls (render/scene3d.ts): a translucent wall is denser toward its silhouette, so
+    // it still reads as a rounded surface when you look through it.
+    const rim = { value: 0 };
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms['uRim'] = rim;
+      shader.fragmentShader = `uniform float uRim;\n${shader.fragmentShader}`.replace(
+        '#include <opaque_fragment>',
+        `float rim = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
+        diffuseColor.a = mix(diffuseColor.a, min(1.0, diffuseColor.a * 3.0), rim * rim * uRim);
+        #include <opaque_fragment>`,
+      );
+    };
     o.material = material;
     meshes.set(o.name, o);
     materials.set(o.name, material);
+    rims.set(o.name, rim);
     parts.push({ name: o.name, displayName: text(extras.display_name, o.name), description: text(extras.description, ''), group, look });
     const geometry = o.geometry as THREE.BufferGeometry;
     triangles += (geometry.index ? geometry.index.count : geometry.getAttribute('position').count) / 3;
   });
+
+  // X-ray: no light and no part colours. Every surface is a thin layer of the X-ray ink, denser where the view
+  // grazes it, so layers add up to a silhouette you can see through (the same neutral look as Drive's X-ray).
+  const xray = (): THREE.ShaderMaterial =>
+    new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color() }, uBase: { value: 0 }, uPeak: { value: 0 } },
+      vertexShader: `varying vec3 vNormal; varying vec3 vView;
+        void main() {
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vNormal = normalMatrix * normal;
+          vView = -mv.xyz;
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `uniform vec3 uColor; uniform float uBase; uniform float uPeak; varying vec3 vNormal; varying vec3 vView;
+        void main() {
+          float rim = 1.0 - abs(dot(normalize(vNormal), normalize(vView)));
+          gl_FragColor = vec4(uColor, mix(uBase, uPeak, rim * rim));
+          #include <colorspace_fragment>
+        }`,
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+  const xrayWall = xray();
+  const xrayValve = xray();
+
+  let mode: ViewMode = startMode;
+  /** Colours and opacities from the tokens, for the current mode. Run again when the mode or the theme changes. */
   const paint = (): void => {
+    for (const m of [xrayWall, xrayValve]) {
+      (m.uniforms['uColor']!.value as THREE.Color).set(token('--color-xray-ink') || '#000');
+      m.uniforms['uPeak']!.value = tokenNumber('--opacity-xray-contrast');
+    }
+    xrayWall.uniforms['uBase']!.value = tokenNumber('--opacity-heart-xray-wall');
+    xrayValve.uniforms['uBase']!.value = tokenNumber('--opacity-heart-xray-valve');
     for (const part of parts) {
+      const mesh = meshes.get(part.name)!;
+      const material = materials.get(part.name)!;
+      const valve = part.look.tissue === 'valve';
+      if (mode === 'xray') {
+        mesh.material = valve ? xrayValve : xrayWall;
+        continue;
+      }
+      // See-through: the walls turn translucent and the valves stay solid, so what is inside shows.
+      const through = mode === 'see-through' && !valve;
       const colour = token(part.look.token);
-      if (colour) materials.get(part.name)?.color.set(colour);
+      if (colour) material.color.set(colour);
+      material.transparent = through;
+      material.opacity = through ? tokenNumber('--opacity-heart-see-through') : 1;
+      material.depthWrite = !through;
+      rims.get(part.name)!.value = through ? 1 : 0;
+      material.needsUpdate = true;
+      mesh.material = material;
+      mesh.renderOrder = through ? 1 : 0;
     }
   };
   paint();
@@ -224,6 +291,10 @@ export async function createHeartViewer(url: string, label: string, lighting: Li
       const mesh = meshes.get(name);
       if (mesh) mesh.visible = on;
     },
+    setMode(next) {
+      mode = next;
+      paint();
+    },
     setLighting(id) {
       light(id);
     },
@@ -238,6 +309,8 @@ export async function createHeartViewer(url: string, label: string, lighting: Li
       controls.dispose();
       for (const mesh of meshes.values()) mesh.geometry.dispose();
       for (const material of materials.values()) material.dispose();
+      xrayWall.dispose();
+      xrayValve.dispose();
       environment.dispose();
       renderer.dispose();
     },
