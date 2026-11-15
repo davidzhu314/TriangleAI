@@ -1,0 +1,13 @@
+{
+  "schema": "heartgen.index/1",
+  "hearts": [
+    {
+      "id": "kcl-average",
+      "title": "Average adult heart (shape model)",
+      "source": "Rodero et al. 2021, King's College London shape model",
+      "license": "CC BY 4.0",
+      "triangles": 388106,
+      "glb": "kcl-average/heart.glb"
+    }
+  ]
+}

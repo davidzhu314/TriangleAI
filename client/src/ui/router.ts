@@ -1,8 +1,9 @@
-/** Hash routes: #/library, #/settings, #/study (and /new[/<case>/<line>], /edit/<id>), #/case/<key> and its /access, /apex, /plan, /compare, /drive and /results. Anything else goes to the Library. */
+/** Hash routes: #/library, #/settings, #/heart (and /<heart id>), #/study (and /new[/<case>/<line>], /edit/<id>), #/case/<key> and its /access, /apex, /plan, /compare, /drive and /results. Anything else goes to the Library. */
 
 export type Route =
   | { name: 'library' }
   | { name: 'settings' }
+  | { name: 'heart'; id?: string }
   | { name: 'study' }
   | { name: 'study-new'; caseKey?: string; line?: string }
   | { name: 'study-edit'; id: string }
@@ -17,6 +18,7 @@ export type Route =
 export function parseRoute(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   if (parts.length === 1 && parts[0] === 'settings') return { name: 'settings' };
+  if (parts[0] === 'heart' && parts.length <= 2) return { name: 'heart', ...(parts[1] ? { id: decodeURIComponent(parts[1]) } : {}) };
   if (parts[0] === 'study') {
     if (parts.length === 1) return { name: 'study' };
     if (parts[1] === 'new' && parts.length <= 4) {
@@ -41,6 +43,7 @@ export function parseRoute(hash: string): Route {
 export const href = {
   library: (): string => '#/library',
   settings: (): string => '#/settings',
+  heart: (id?: string): string => (id ? `#/heart/${encodeURIComponent(id)}` : '#/heart'),
   study: (): string => '#/study',
   studyNew: (caseKey?: string, line?: string): string => ['#/study/new', ...(caseKey ? [encodeURIComponent(caseKey)] : []), ...(caseKey && line ? [encodeURIComponent(line)] : [])].join('/'),
   studyEdit: (id: string): string => `#/study/edit/${encodeURIComponent(id)}`,

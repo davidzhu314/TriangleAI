@@ -1,0 +1,7 @@
+{
+  "dataset": "Virtual cohort of extreme and average four-chamber heart meshes from statistical shape model (average.tar.gz)",
+  "url": "https://doi.org/10.5281/zenodo.4593739",
+  "license": "CC BY 4.0",
+  "citation": "Rodero C, Strocchi M, Marciniak M, Longobardi S, Whitaker J, O'Neill MD, et al. (2021) Linking statistical shape models and simulated function in the healthy adult human heart. PLoS Comput Biol 17(4): e1008851.",
+  "citation_short": "Rodero et al. 2021, King's College London shape model"
+}

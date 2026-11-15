@@ -24,5 +24,9 @@ metrics/**/*.log
 .DS_Store
 Thumbs.db
 
+# heartgen: downloaded sources and build output (client files are published to client/public/hearts/)
+tools/heartgen/.cache/
+tools/heartgen/out/
+
 # Vercel CLI project link (never committed)
 .vercel

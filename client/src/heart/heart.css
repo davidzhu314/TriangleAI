@@ -1,0 +1,210 @@
+/* Heart tab. Every value is a token from styles/tokens.css; the only raw numbers are the media-query widths
+   (DESIGN.md: Responsive Behavior), viewport shares and unitless ratios. */
+
+/* The screen fills the sheet, so the 3D view takes all the height the window has. */
+.screen.heart {
+  gap: var(--space-4);
+  max-width: none;
+  /* sheet height = window − top bar − bottom inset; minus the sheet's padding and edges */
+  min-height: calc(100dvh - var(--size-topbar) - var(--size-sheet-inset) - 2 * var(--size-sheet-padding) - 2 * var(--border-width));
+}
+
+.heart-layout {
+  flex: 1 1 0;
+  display: grid;
+  /* view + gutter + panel = the sheet's content width */
+  grid-template-columns: minmax(0, 1fr) calc(var(--size-palette) + var(--space-16));
+  grid-template-rows: minmax(calc(var(--space-16) * 6), 1fr);
+  gap: var(--gap);
+  min-height: 0;
+}
+
+/* The view is a well: a tone step and an edge, no shadow. */
+.heart-stage {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--color-scene-ground);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.heart-canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-standard);
+}
+
+.heart-stage[data-state='ready'] .heart-canvas {
+  opacity: 1;
+}
+
+.heart-stage .view-toolbar {
+  z-index: 1;
+}
+
+.heart-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.heart-message .btn {
+  align-self: center;
+}
+
+.heart-progress {
+  width: calc(var(--space-16) * 3);
+  max-width: 100%;
+  height: var(--space-1);
+  accent-color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------- part list */
+.heart-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.heart-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.heart-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.heart-panel-head .btn {
+  align-self: center;
+}
+
+.heart-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.heart-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.heart-group h3 {
+  font-weight: var(--font-weight-regular);
+}
+
+.heart-parts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.heart-part {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--size-nav-row);
+  /* the row's tone reaches the panel's padding, the text stays on the panel's edge */
+  margin-inline: calc(-1 * var(--space-2));
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--color-heading);
+  cursor: pointer;
+}
+
+.heart-part:hover {
+  background: var(--color-surface-active);
+}
+
+.heart-part input {
+  flex: none;
+  width: var(--size-icon);
+  height: var(--size-icon);
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.heart-swatch {
+  flex: none;
+  width: var(--space-3);
+  height: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-field);
+}
+
+.heart-part-name {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------- foot */
+.heart-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heart-source {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-meta);
+  line-height: var(--line-height-meta);
+}
+
+.heart-foot .honesty {
+  padding-top: var(--space-2);
+}
+
+/* ---------------------------------------------------------------- tablet: the view on top, the parts in columns below */
+@media (max-width: 1100px) {
+  .screen.heart {
+    min-height: 0;
+  }
+
+  .heart-layout {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 62dvh auto;
+  }
+
+  .heart-panel {
+    overflow-y: visible;
+  }
+
+  .heart-groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--gap);
+  }
+}
+
+/* ---------------------------------------------------------------- phone: one column, rows a full tap target */
+@media (max-width: 640px) {
+  .heart-layout {
+    grid-template-rows: 56dvh auto;
+  }
+
+  .heart-groups {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .heart-part {
+    min-height: var(--size-touch);
+  }
+}

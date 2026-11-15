@@ -1,0 +1,222 @@
+/**
+ * The Heart tab's three.js view: one heart GLB (metres, Y-up, +X patient left, +Z anterior), every part its own mesh.
+ *
+ * - Same three.js and conventions as render/scene3d.ts: colours are design tokens read from the page and read again
+ *   when the theme changes; the camera starts on +Z, an anterior view with the patient's left on the viewer's right.
+ * - Lit like a studio: a soft room environment map, a key light that travels with the camera and a weak fill, with
+ *   neutral tone mapping so token colours stay true.
+ * - Orbit, pan and zoom are limited so the heart cannot be lost or entered by accident.
+ */
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+import { THEME_EVENT, token, tokenMs } from '../render/tokens';
+import { partLook, type HeartPart, type Tissue } from './parts';
+
+/** How each tissue takes light. Muscle is matte, vessel walls a little glossier, valve tissue smooth and pale. */
+const SURFACE: Record<Tissue, { roughness: number; envMapIntensity: number }> = {
+  muscle: { roughness: 0.72, envMapIntensity: 0.9 },
+  vessel: { roughness: 0.48, envMapIntensity: 1.1 },
+  valve: { roughness: 0.55, envMapIntensity: 1 },
+};
+
+const FOV_DEG = 30;
+/** Camera distance limits, in bounding-sphere radii: never inside the heart, never so far it is a dot. */
+const NEAREST = 0.9;
+const FARTHEST = 6;
+/** Room around the heart at the starting view. */
+const FIT_MARGIN = 1.18;
+
+export interface HeartViewer {
+  readonly canvas: HTMLCanvasElement;
+  /** The parts found in the GLB, in file order. */
+  readonly parts: readonly HeartPart[];
+  readonly triangles: number;
+  setVisible(name: string, on: boolean): void;
+  /** Ease back to the starting anterior view (instant with reduced motion). */
+  resetView(): void;
+  dispose(): void;
+}
+
+interface Extras {
+  display_name?: unknown;
+  description?: unknown;
+  group?: unknown;
+}
+
+const text = (v: unknown, fallback: string): string => (typeof v === 'string' && v ? v : fallback);
+
+export async function createHeartViewer(url: string, label: string, onProgress: (fraction: number | null) => void): Promise<HeartViewer> {
+  const loader = new GLTFLoader();
+  loader.setMeshoptDecoder(MeshoptDecoder);
+  const gltf = await loader.loadAsync(url, (e) => onProgress(e.lengthComputable && e.total > 0 ? e.loaded / e.total : null));
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'scene-canvas heart-canvas';
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', label);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.NeutralToneMapping;
+
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const room = new RoomEnvironment();
+  const environment = pmrem.fromScene(room, 0.04);
+  scene.environment = environment.texture;
+  scene.environmentIntensity = 0.4;
+  room.dispose();
+  pmrem.dispose();
+
+  // ---- parts: one material each, coloured from its token
+  const meshes = new Map<string, THREE.Mesh>();
+  const materials = new Map<string, THREE.MeshStandardMaterial>();
+  const parts: HeartPart[] = [];
+  let triangles = 0;
+  gltf.scene.traverse((o) => {
+    if (!(o instanceof THREE.Mesh)) return;
+    const extras = o.userData as Extras;
+    const group = text(extras.group, o.parent?.name ?? '');
+    const look = partLook(o.name, group);
+    const material = new THREE.MeshStandardMaterial({ metalness: 0, ...SURFACE[look.tissue] });
+    o.material = material;
+    meshes.set(o.name, o);
+    materials.set(o.name, material);
+    parts.push({ name: o.name, displayName: text(extras.display_name, o.name), description: text(extras.description, ''), group, look });
+    const geometry = o.geometry as THREE.BufferGeometry;
+    triangles += (geometry.index ? geometry.index.count : geometry.getAttribute('position').count) / 3;
+  });
+  const paint = (): void => {
+    for (const part of parts) {
+      const colour = token(part.look.token);
+      if (colour) materials.get(part.name)?.color.set(colour);
+    }
+  };
+  paint();
+  scene.add(gltf.scene);
+
+  // ---- camera and light
+  const box = new THREE.Box3().setFromObject(gltf.scene);
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const extent = box.getSize(new THREE.Vector3());
+  /** Distance from the centre at which the front of the heart fills the view, whichever of width or height binds. */
+  const fitDistance = (aspect: number): number => {
+    const tan = Math.tan(THREE.MathUtils.degToRad(FOV_DEG / 2));
+    return Math.max(extent.y / 2 / tan, extent.x / 2 / (tan * aspect)) * FIT_MARGIN + extent.z / 2;
+  };
+  const camera = new THREE.PerspectiveCamera(FOV_DEG, 1, sphere.radius / 20, sphere.radius * 40);
+  const key = new THREE.DirectionalLight(undefined, 1.7);
+  key.position.set(-0.6, 0.9, 1); // over the viewer's left shoulder
+  const fill = new THREE.DirectionalLight(undefined, 0.3);
+  fill.position.set(1, -0.2, 0.6);
+  camera.add(key, key.target, fill, fill.target);
+  key.target.position.set(0, 0, -1);
+  fill.target.position.set(0, 0, -1);
+  scene.add(camera);
+
+  const controls = new OrbitControls(camera, canvas);
+  controls.enableDamping = true;
+  controls.minDistance = sphere.radius * NEAREST;
+  controls.maxDistance = sphere.radius * FARTHEST;
+  controls.addEventListener('change', () => {
+    // Panning may move the target, but never off the heart.
+    const offset = controls.target.clone().sub(sphere.center);
+    if (offset.length() > sphere.radius) {
+      const back = offset.setLength(sphere.radius).add(sphere.center).sub(controls.target);
+      controls.target.add(back);
+      camera.position.add(back);
+    }
+  });
+
+  const home = (): { position: THREE.Vector3; target: THREE.Vector3 } => ({
+    position: sphere.center.clone().add(new THREE.Vector3(0, 0, fitDistance(camera.aspect))),
+    target: sphere.center.clone(),
+  });
+  const place = (to: { position: THREE.Vector3; target: THREE.Vector3 }): void => {
+    camera.position.copy(to.position);
+    controls.target.copy(to.target);
+    controls.update();
+  };
+
+  // ---- eased camera moves
+  const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let move: { from: { position: THREE.Vector3; target: THREE.Vector3 }; to: { position: THREE.Vector3; target: THREE.Vector3 }; start: number; ms: number } | null = null;
+  const moveTo = (to: { position: THREE.Vector3; target: THREE.Vector3 }): void => {
+    const ms = reducedMotion() ? 0 : tokenMs('--duration-camera');
+    if (ms <= 0) {
+      move = null;
+      place(to);
+      return;
+    }
+    move = { from: { position: camera.position.clone(), target: controls.target.clone() }, to, start: performance.now(), ms };
+  };
+  controls.addEventListener('start', () => {
+    move = null; // the user's hand wins
+  });
+
+  // ---- size
+  let sized = false;
+  const resize = (): void => {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    if (!sized) {
+      sized = true;
+      place(home());
+    }
+  };
+  const observer = new ResizeObserver(resize);
+  observer.observe(canvas);
+
+  // ---- frames
+  let frame = 0;
+  const tick = (now: number): void => {
+    frame = requestAnimationFrame(tick);
+    if (!sized) resize();
+    if (move) {
+      const t = Math.min(1, (now - move.start) / move.ms);
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // ease in and out
+      camera.position.lerpVectors(move.from.position, move.to.position, eased);
+      controls.target.lerpVectors(move.from.target, move.to.target, eased);
+      if (t >= 1) move = null;
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  };
+  frame = requestAnimationFrame(tick);
+
+  const onTheme = (): void => paint();
+  const scheme = window.matchMedia('(prefers-color-scheme: dark)');
+  window.addEventListener(THEME_EVENT, onTheme);
+  scheme.addEventListener('change', onTheme);
+
+  return {
+    canvas,
+    parts,
+    triangles,
+    setVisible(name, on) {
+      const mesh = meshes.get(name);
+      if (mesh) mesh.visible = on;
+    },
+    resetView() {
+      moveTo(home());
+    },
+    dispose() {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener(THEME_EVENT, onTheme);
+      scheme.removeEventListener('change', onTheme);
+      controls.dispose();
+      for (const mesh of meshes.values()) mesh.geometry.dispose();
+      for (const material of materials.values()) material.dispose();
+      environment.dispose();
+      renderer.dispose();
+    },
+  };
+}
