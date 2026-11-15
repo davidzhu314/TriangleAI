@@ -6,6 +6,8 @@ Where: `slicer/`, `tools/`, `physics/server/`, `client/src/case/` (David); `clie
 Needed by: not blocking. Post-demo work, in phases.
 Meanwhile: I'll mock the screens (an upload, a quality card, a correction tool) against a fake quality report until the contract lands.
 
+**Update, 2026-11-15:** I built Phase 0 in my own lane, in `client/src/ui/scan-accuracy/` (see its README, `DECISIONS.md` 2026-11-15, and `metrics/aroovee/scan-accuracy/summary.md`). It scores a classical stand-in pipeline, not the Slicer export. What I still need from you: David, run the Slicer export on a phantom volume and score it with `scoreAgainstTruth`; Vaibhav, look at the junction finding (route verdicts change because branch take-off angles are off by 14 to 24°, and the engine's 5 mm steering window sits inside the aorta) and say whether take-off should be measured at the ostium for imported scans.
+
 ---
 
 ## The prompt (paste into your Claude Code session)

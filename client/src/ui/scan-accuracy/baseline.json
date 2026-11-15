@@ -1,0 +1,53 @@
+{
+  "fixture-y 1x1 cnr10": {
+    "higher": {
+      "dice": 0.9884,
+      "clDice": 1,
+      "edgesRecovered": 3,
+      "frontiersSame": 2,
+      "bestSame": 2
+    },
+    "lower": {
+      "ahdMm": 0.4218,
+      "meanOffsetMm": 0.0257,
+      "radiusMeanAbsErrPct": 2.5397,
+      "narrowestAbsErrPct": 6.0862,
+      "branchAngleMeanErrDeg": 4.1141,
+      "verdictFlips": 0
+    }
+  },
+  "fixture-y 2x2 cnr10": {
+    "higher": {
+      "dice": 0.9734,
+      "clDice": 1,
+      "edgesRecovered": 3,
+      "frontiersSame": 2,
+      "bestSame": 2
+    },
+    "lower": {
+      "ahdMm": 0.9351,
+      "meanOffsetMm": 0.0572,
+      "radiusMeanAbsErrPct": 5.4286,
+      "narrowestAbsErrPct": 9.1821,
+      "branchAngleMeanErrDeg": 4.5859,
+      "verdictFlips": 0
+    }
+  },
+  "low-tort 1.5x1.5 cnr10": {
+    "higher": {
+      "dice": 0.9819,
+      "clDice": 1,
+      "edgesRecovered": 11,
+      "frontiersSame": 1,
+      "bestSame": 1
+    },
+    "lower": {
+      "ahdMm": 0.6216,
+      "meanOffsetMm": 0.0551,
+      "radiusMeanAbsErrPct": 5.2748,
+      "narrowestAbsErrPct": 26.2092,
+      "branchAngleMeanErrDeg": 11.1301,
+      "verdictFlips": 3
+    }
+  }
+}
