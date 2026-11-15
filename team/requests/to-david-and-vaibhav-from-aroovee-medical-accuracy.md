@@ -20,6 +20,18 @@ Meanwhile: I'll mock the screens (an upload, a quality card, a correction tool) 
 | **Wu et al.** (*J. Med. Imaging* 11(2):024002, 2024) | **Digital-phantom validation:** a vascular phantom with known geometry, a virtual scanner that images it at chosen spatial resolution and SNR, and the pipeline run on the result, so every error is measured against true values. Their key finding: **spatial resolution of the segmentation images is what matters**. SNR mattered little in their range. | A rat-kidney phantom and DCE-MRI. They say a human use needs a modified phantom. We already have one: our generator's known geometry. |
 | **VascuViz** (Bhargava et al., *Nat. Methods*, 2022) | **Multimodal, multiscale co-registration:** the same vessels imaged in MRI, CT and optical, with one labelling step, so the modalities can be compared and fused. | Ex vivo murine tissue with special contrast agents. For us it's the *idea* of checking one modality against another (for example, CTA against MRA of the same subject). Stretch only. |
 
+### What past simulators teach us, and where we can do better
+
+| Simulator | What it does well (take it) | What it leaves open (improve on it) |
+| --- | --- | --- |
+| **CathSim** (AIR Lab; [docs](https://airvlab.github.io/cathsim/docs/introduction/); our `physics/` already runs it on MuJoCo) | The guidewire is a segmented body with a **softer tip**, joined by revolute or spherical joints, with capsule collisions: cheap and real-time. Vessel meshes are made collision-ready with **V-HACD convex hulls**. **Validated against hardware:** the simulator's force distribution was compared with a real robot's (Mann-Whitney test) on a half-body silicone phantom, and there were animal trials (pigs, brachiocephalic and left common carotid targets) under bi-planar X-ray. A 10-person novice user study rated anatomical accuracy highest (4.57/5) and **visual realism lowest (3.67/5)**. | **Anatomy comes from silicone phantoms, not patient scans**, so it's one fixed geometry. Its walls are rigid and blood is modelled as Newtonian, with **no sliding friction** in the actuation. Validation covers *forces*, not *geometry*. Convex decomposition can close narrow lumens and small branches, and the docs don't measure how much. → Our user-scan pipeline gives patient-specific anatomy. Phase 0 measures the **mesh-simplification error** (hull or decimated mesh vs. the mask). Our forces stay labelled a contact-load proxy. |
+| **Pescio et al.** ([repo](https://github.com/matteopescio/A-simulation-environment-for-endovascular-interventions), MIT; *Int J CARS* 20:2259–2267, 2025) | SOFA with **BeamAdapter** (beam and Kirchhoff-rod catheters). **Deformable FEM aorta and aneurysm**, where the material model is a switch: Elastic, Ogden, Mooney-Rivlin, Neo-Hookean. A **centerline-based virtual fixture** (close to our rail mode). A clean **per-step log**: insertion speed and length, rotation, tip position and orientation, tip–wall force, force modulus, tip–target distance. | It loads a **"simplified" hand-made aorta mesh** and names no segmentation source. The README reports no validation or results (the paper is paywalled; we couldn't read it). → We feed the same ideas *our* scan-derived geometry. We adopt a matching log schema so our runs can be compared with theirs. We test whether the **wall material choice changes a route's verdict** (if it doesn't, rigid walls are fine for teaching, and we can say so with evidence). |
+| **Paccia & Galasso** ([repo](https://github.com/AdrianoPaccia/Catheter_insertion_simulator)) | SOFA catheter insertion with a **bilateral haptic loop** (a Geomagic device over UDP), so the user *feels* the wall. It runs several anatomies (carotids, a midline cephalic vein, three artificial test models), i.e. **artificial models as a test set** next to real ones. | Thin documentation: an 11-line README, no licence, no metrics or results stated, and the geometry source isn't named. → Our version of "feel the wall" is the existing contact feedback plus hands input. Every anatomy we ship gets a documented source and a quality report (Phase 1). Artificial phantoms are our Phase 0 truth set. |
+
+**Common gaps across all three that Cathy can close:** none of them goes from **an arbitrary user scan** to a simulator case; none reports **geometry accuracy against ground truth**; and none tells the trainee **how far to trust** the anatomy in front of them. That's this plan.
+
+**Licence boundary, unchanged:** CathSim code and meshes stay in `physics/` and never go into `client/`. Pescio's code is MIT, so we can read it and adapt ideas with attribution in `THIRD_PARTY.md`. Paccia's has no licence, so it's ideas only, no code. SOFA itself (LGPL) would be a new runtime dependency → a request to David before anyone builds on it.
+
 ### Rules that do not move
 
 - **The route engine computes every route, measure, score and number.** Cathy's LLM only words engine facts, behind the grounding check (`score/grounding.ts`). This doesn't change.
@@ -34,6 +46,7 @@ Meanwhile: I'll mock the screens (an upload, a quality card, a correction tool) 
 2. **Run the real pipeline on each volume:** pre-segmentation → `slicer/export_case.py` → a case package.
 3. **Score it against truth, two layers:**
    - *Geometry:* Dice, MCC, clDice, AHD (mm), centerline distance (mean and max, mm), **radius error (% per vessel, and at the narrowest point)**, branch angle error (°), and topology (same vessels, same parents, no missing or extra branches).
+   - *Mesh simplification (after CathSim's V-HACD hulls):* distance between the collision or decimated mesh and the mask's surface, and whether any lumen narrower than the wire closes or any small branch disappears. Do this for the meshes the rail wire and the physics wire actually use.
    - *Downstream (Vaibhav):* does the optimizer return the same frontier, the same best route and the same steerability verdict as on the true geometry? A route whose verdict flips under segmentation error is the number that matters most for teaching.
 4. **Output:** `metrics/david/segmentation-accuracy.md` (a summary table per spacing) and a fixture set in `tests/fixtures/engine/` (Gibran). One `DECISIONS.md` line sets the **minimum scan resolution Cathy accepts**, taken from the table, not guessed.
 
@@ -67,12 +80,22 @@ Done when a phantom with a cut branch is repaired in ≤ 5 clicks, back to the t
 
 Done when every measure shown on screen for a user-scan case either carries its uncertainty or the flag, and the `tests/engine/` cases prove the flag trips on a phantom where it should.
 
+### Phase 3b: physics fidelity, learning from CathSim and Pescio (David: physics; Vaibhav: comparison)
+
+1. **One run log schema** across rail and physics, matching Pescio's fields: insertion length and speed, rotation, tip position and orientation, tip–wall contact load, tip–target distance. Commit summaries to `metrics/`, never raw high-rate logs.
+2. **Rail vs. physics on the same phantom:** the tip path distance between them, and where they disagree. That's the honest size of "rail mode is a simplification".
+3. **Wall sensitivity:** if the physics stays MuJoCo with rigid walls (as CathSim's does), run a stiffness sweep where possible. If a SOFA FEM scene is ever approved (as Pescio's is), run the material models over one phantom. The question is only whether **the route verdict or the contact-risk ranking changes**. Record the answer in `DECISIONS.md`.
+4. **Friction:** CathSim leaves out sliding friction. Measure whether adding a simple sliding term changes push-to-tip transmission on the tortuous cases, and keep it only if it does.
+
+Done when the rail-vs-physics and wall-sensitivity tables exist in `metrics/`, and every "simplified" label on screen points to them.
+
 ### Phase 4: Cathy's accuracy (Vaibhav: facts; me: screens; David: the server prompt)
 
 1. **`cathyFacts` gains the quality fields:** source, spacing, corrected vessels, uncertain routes.
 2. **New template lines,** engine-built, for "How sure are you?", "Where did this model come from?" and "Was anything corrected?". For example: "This model is from a scan with 1.5 mm slices; at that spacing, radii measured on our phantoms were off by up to {radiusErrPct}%." Every number is a placeholder filled from facts.
 3. **Grounding check:** when facts contain an uncertainty flag, an LLM answer that leaves it out fails and falls back to the template. Claude can reword a caveat but not drop it.
 4. **Screens (me):** a Quality card on the Case brief, "Corrected by you" badges on vessels, and an uncertainty marker on Plan and Results.
+5. **Visual realism (CathSim's lowest-rated item, 3.67/5; me):** draw the user-scan model from the same corrected mask the engine measures, with its body context (bones, heart, veins) from the same scan. What the trainee sees is then what the engine measured, never a prettier stand-in.
 
 Done when e2e tests with a stubbed `/api/cathy` show that an answer omitting the caveat is rejected, and every number on the Quality card traces to a contract field.
 
@@ -96,6 +119,7 @@ For a subject with both CTA and MRA, register them (rigid, then affine), segment
 | 1 User scans | import CLI, robustness, quality report | — | upload + Quality card (mock first) | export tests on new subjects |
 | 2 Correction | ray pick, enhancement, local re-seg, re-export | frontier re-run + diff | click tool, before/after view | per-click curve check |
 | 3 Uncertainty | radius ± from VMTK | robustness check, flag | markers on Plan/Results | flag-trips tests |
+| 3b Physics | log schema, wall/friction sweeps | rail-vs-physics comparison | "simplified" labels link to the tables | fidelity checks in CI |
 | 4 Cathy | server prompt keeps caveats | facts + templates + grounding rule | Cathy box, badges | e2e/crosscheck |
 
 ## Answer
