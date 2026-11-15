@@ -11,7 +11,7 @@ import { disposeDrive, renderDrive, selectTsWireSource, type WireFactory } from 
 import { renderLibrary } from './library';
 import { disposePlanView, renderPlan } from './plan';
 import { renderResults } from './results';
-import { parseRoute } from './router';
+import { parseRoute, type Route } from './router';
 import { renderSettings } from './settings';
 import { renderStudy } from './study';
 import { applyTheme, readSettings } from './settings-store';
@@ -31,18 +31,29 @@ export function startApp(root: HTMLElement, { getWireSource = selectTsWireSource
     drive: (k: string) => renderDrive(root, k, getWireSource),
     results: (k: string) => renderResults(root, k),
   };
+  // The Heart tab is its own chunk: its code, three.js and the heart model load only when the tab is opened.
+  let disposeHeart: (() => void) | null = null;
+  const heart = async (r: Extract<Route, { name: 'heart' }>): Promise<void> => {
+    const m = await import('../heart');
+    if (parseRoute(location.hash).name !== 'heart') return; // left the tab while the chunk was loading
+    disposeHeart = m.disposeHeart;
+    await m.renderHeart(root, r.id);
+  };
   const route = (): void => {
     // Free the view of the screen being left; each screen makes a new one on entry.
     disposePlanView();
     disposeCompareView();
     disposeDrive();
     disposeApexView();
+    disposeHeart?.();
     const r = parseRoute(location.hash);
     const done =
       r.name === 'library'
         ? renderLibrary(root)
         : r.name === 'settings'
           ? renderSettings(root)
+          : r.name === 'heart'
+            ? heart(r)
           : r.name === 'study' || r.name === 'study-new' || r.name === 'study-edit'
             ? renderStudy(root, r)
             : screens[r.name](r.key);

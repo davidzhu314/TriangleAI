@@ -107,6 +107,21 @@
   --opacity-body-heart: 0.18;
   --duration-contrast-fade: 1500ms; /* spec §5.5 */
 
+  /* Heart tab (client/src/heart): one part palette for the 3D heart, the part list swatches and, later, labels.
+     Teaching convention: left heart warm, right heart cool, muscle darker than its atrium, valves light so they
+     stand out. three.js materials read these with getComputedStyle. Never the only signal: every part is named. */
+  --color-heart-lv: #a5524c;         /* left ventricle muscle */
+  --color-heart-la: #cf8f7c;         /* left atrium */
+  --color-heart-rv: #6d86a8;         /* right ventricle wall */
+  --color-heart-ra: #8fa9c8;         /* right atrium */
+  --color-heart-aorta: #b23a3a;      /* aorta: arterial red */
+  --color-heart-pulmonary: #3f6498;  /* pulmonary trunk: venous blue */
+  --color-heart-valve: #f1e7cf;      /* valve tissue: light ivory */
+  --opacity-heart-see-through: 0.26; /* See-through mode: a wall facing you; denser toward its silhouette */
+  --opacity-heart-xray-wall: 0.05;   /* X-ray mode: one layer of wall facing you; --opacity-xray-contrast at its edge */
+  --opacity-heart-xray-valve: 0.35;  /* X-ray mode: valve tissue, denser so the valves read through the walls */
+  --duration-camera: 500ms;         /* eased camera moves between views; instant with reduced motion */
+
   /* Type: DM Sans for the whole app (2026-11-08, Aroovee), self-hosted. Display sizes over 32px dropped: app titles stay at or under 32. */
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-size-meta: 12px;       /* labels, meta, axis ticks, pills; nothing smaller */
@@ -245,6 +260,13 @@
     --color-body-heart: #9a6f6a;
     --color-marker-entry: #f4f2f1;
     --color-marker-target: #e08591;
+    --color-heart-lv: #b8655e;
+    --color-heart-la: #d9a08e;
+    --color-heart-rv: #7f99bc;
+    --color-heart-ra: #a3bbd6;
+    --color-heart-aorta: #c9504e;
+    --color-heart-pulmonary: #5a80b6;
+    --color-heart-valve: #f3ead6;
 
     --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
@@ -321,6 +343,13 @@
   --color-body-heart: #9a6f6a;
   --color-marker-entry: #f4f2f1;
   --color-marker-target: #e08591;
+  --color-heart-lv: #b8655e;
+  --color-heart-la: #d9a08e;
+  --color-heart-rv: #7f99bc;
+  --color-heart-ra: #a3bbd6;
+  --color-heart-aorta: #c9504e;
+  --color-heart-pulmonary: #5a80b6;
+  --color-heart-valve: #f3ead6;
 
   --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.4);
 }

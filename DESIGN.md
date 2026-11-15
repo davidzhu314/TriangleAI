@@ -289,6 +289,14 @@ Feedback only: press, hover, focus, a menu opening. `--duration-fast` for hover 
 - "…" on a card: "Download case (.zip)", the package as loaded. Never "MRI": the cases are CT angiograms and generated models.
 - The suggested next case is first, marked "Suggested next" and edged in oxblood.
 
+### Heart tab (2026-11-15, M0)
+
+- A sidebar page, `#/heart`: "What does this heart look like, part by part?" The 3D heart is a well that fills the sheet's height; the part list is a card beside it (below it on a tablet, in two columns; one column on a phone).
+- **Part palette:** `--color-heart-lv`, `-la`, `-rv`, `-ra`, `-aorta`, `-pulmonary`, `-valve`. Left heart warm, right heart cool, muscle darker than its atrium, valve tissue ivory. The same token colours a part in 3D and its swatch in the list, and every part is named, so colour is never the only signal. Added by David (DECISIONS.md); Aroovee may change the values.
+- **Light:** a soft room environment, a key light that travels with the camera, neutral tone mapping. Muscle is matte, vessel walls a little glossier.
+- **Motion:** camera moves ease over `--duration-camera`; the heart fades in once over `--duration-slow`. Both are instant with reduced motion.
+- The honesty line sits under the view, with one line naming the shape's source and licence.
+
 ## Iconography & Graphics
 
 **Icons** live in `client/src/assets/icons/`, one file each, drawn with `/draw-svg`. The family: 24 canvas, 2 units of padding, stroke 1.75 (`--stroke-icon`, measured), round caps and joins, outline only, a coordinate step of 0.5 where the geometry allows, and paint on the root in `currentColor`. A solid dot is a stroked circle of `r=".75"`, so it needs no fill. No `transform`, no `<use>`, no text inside. Inline them, because `currentColor` can't reach inside an `<img>`. Show them at `--size-icon` beside a label or `--size-icon-lg` on controls, grey, never in a container. The caller sets colour: risk icons take `--color-risk-*`, and everything else takes the text colour around it.

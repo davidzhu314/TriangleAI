@@ -1,0 +1,7 @@
+# heartgen, offline only. Python 3.9+. M0 uses numpy alone; the rest is for M1 (repair, remeshing, landmarks).
+numpy==2.0.2
+scipy==1.13.1
+vtk==9.5.2
+pyvista==0.46.5
+pymeshfix==0.17.2
+trimesh==4.12.2

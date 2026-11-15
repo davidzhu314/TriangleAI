@@ -1,0 +1,134 @@
+{
+  "schema": "heartgen.provenance/1",
+  "case": "kcl-average",
+  "title": "Average adult heart (shape model)",
+  "input": {
+    "type": "template",
+    "dataset": "Virtual cohort of extreme and average four-chamber heart meshes from statistical shape model (average.tar.gz)",
+    "url": "https://doi.org/10.5281/zenodo.4593739",
+    "license": "CC BY 4.0",
+    "citation": "Rodero C, Strocchi M, Marciniak M, Longobardi S, Whitaker J, O'Neill MD, et al. (2021) Linking statistical shape models and simulated function in the healthy adult human heart. PLoS Comput Biol 17(4): e1008851.",
+    "citation_short": "Rodero et al. 2021, King's College London shape model",
+    "file": "average.vtk",
+    "sha256": "b8e013832ccf9262d677ad3d6f140a76de6bb0a2d9734132ec9924a29eba8356"
+  },
+  "stage": "M0: raw label surfaces of the template. No repair, remeshing, landmarks or generated valves yet.",
+  "tools": {
+    "heartgen": "M0",
+    "python": "3.9.25",
+    "numpy": "2.0.2",
+    "gltf-transform": "@gltf-transform/cli@4.2.1"
+  },
+  "source_frame": "LPS, millimetres (scanner coordinates of the template)",
+  "pipeline_frame": "RAS, millimetres (+x right, +y anterior, +z superior), as Cathy's case packages",
+  "export_frame": "metres, Y-up (+x patient left, +y superior, +z anterior), baked into the vertices",
+  "matrices": {
+    "lps_mm_to_ras_mm": [
+      [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "ras_mm_to_view_m": [
+      [
+        -0.001,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.001
+      ],
+      [
+        0.0,
+        0.001,
+        0.0
+      ]
+    ]
+  },
+  "parts": {
+    "lv_myocardium": {
+      "kcl_labels": [
+        1
+      ],
+      "triangles": 104390
+    },
+    "rv_wall": {
+      "kcl_labels": [
+        2
+      ],
+      "triangles": 89122
+    },
+    "la": {
+      "kcl_labels": [
+        3,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "triangles": 59280
+    },
+    "ra": {
+      "kcl_labels": [
+        4,
+        23,
+        24
+      ],
+      "triangles": 61676
+    },
+    "aorta": {
+      "kcl_labels": [
+        5
+      ],
+      "triangles": 39220
+    },
+    "pulmonary_trunk": {
+      "kcl_labels": [
+        6
+      ],
+      "triangles": 12424
+    },
+    "mv_plane": {
+      "kcl_labels": [
+        7
+      ],
+      "triangles": 4892
+    },
+    "tv_plane": {
+      "kcl_labels": [
+        8
+      ],
+      "triangles": 7338
+    },
+    "av_plane": {
+      "kcl_labels": [
+        9
+      ],
+      "triangles": 5022
+    },
+    "pv_plane": {
+      "kcl_labels": [
+        10
+      ],
+      "triangles": 4742
+    }
+  },
+  "triangles": 388106,
+  "parameters": {},
+  "manual_edits": [],
+  "not_for": "Education only. Not a clinical device; measurements are illustrative, never diagnostic."
+}

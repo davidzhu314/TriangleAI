@@ -67,12 +67,13 @@ function anchorFor(s: StepId, key: string): HTMLElement | null {
 }
 
 /**
- * The tutorial's screen for a route. Settings and the study log are off the case flow: like the Library (not on a
+ * The tutorial's screen for a route. Settings, the Heart tab and the study log are off the case flow: like the Library (not on a
  * case). The Access check and the apex plan are side pages of a case: like its brief.
  */
 function screenOf(r: Route): Screen {
   switch (r.name) {
     case 'settings':
+    case 'heart':
     case 'study':
     case 'study-new':
     case 'study-edit':

@@ -1,0 +1,89 @@
+/**
+ * The Heart tab's part palette and grouping. The words for each part (name, description, group) come from the GLB's
+ * extras, written by tools/heartgen; this file only says which design token colours a mesh and how it is shaded.
+ * No three.js here, so the screen can draw the part list's swatches without the 3D code.
+ */
+
+export type Tissue = 'muscle' | 'vessel' | 'valve';
+
+export interface PartLook {
+  /** A colour token from styles/tokens.css. */
+  token: string;
+  tissue: Tissue;
+}
+
+const LOOKS: Record<string, PartLook> = {
+  lv_myocardium: { token: '--color-heart-lv', tissue: 'muscle' },
+  rv_wall: { token: '--color-heart-rv', tissue: 'muscle' },
+  la: { token: '--color-heart-la', tissue: 'muscle' },
+  la_appendage: { token: '--color-heart-la', tissue: 'muscle' },
+  ra: { token: '--color-heart-ra', tissue: 'muscle' },
+  aorta: { token: '--color-heart-aorta', tissue: 'vessel' },
+  aorta_root: { token: '--color-heart-aorta', tissue: 'vessel' },
+  pulmonary_trunk: { token: '--color-heart-pulmonary', tissue: 'vessel' },
+};
+
+/** Valve tissue is one light colour everywhere, so leaflets stand out against every chamber. */
+const VALVE: PartLook = { token: '--color-heart-valve', tissue: 'valve' };
+/** A mesh this build does not know keeps the app's neutral scene colour instead of an invented one. */
+const UNKNOWN: PartLook = { token: '--color-scene-vessel', tissue: 'muscle' };
+
+export function partLook(meshName: string, group: string): PartLook {
+  return LOOKS[meshName] ?? (group === 'valves' ? VALVE : UNKNOWN);
+}
+
+/** Group order and headings, as in the GLB's hierarchy. */
+export const GROUPS: readonly { id: string; label: string }[] = [
+  { id: 'chambers', label: 'Chambers' },
+  { id: 'myocardium', label: 'Heart muscle' },
+  { id: 'great_vessels', label: 'Great vessels' },
+  { id: 'valves', label: 'Valves' },
+  { id: 'subvalvular', label: 'Under the valves' },
+];
+
+/** The lighting versions the view offers. The numbers are in viewer.ts; these are the names on the switch. */
+export const LIGHTINGS = [
+  { id: 'studio', label: 'Studio', hint: 'Balanced: a key light over your left shoulder and soft room light' },
+  { id: 'soft', label: 'Soft', hint: 'Even light from all sides, few shadows, as in an atlas plate' },
+  { id: 'contrast', label: 'Contrast', hint: 'A strong side light and little fill, so grooves and edges stand out' },
+  { id: 'overhead', label: 'Overhead', hint: 'Lit from above, like a theatre lamp' },
+] as const;
+export type LightingId = (typeof LIGHTINGS)[number]['id'];
+export const DEFAULT_LIGHTING: LightingId = 'studio';
+export const isLighting = (v: unknown): v is LightingId => LIGHTINGS.some((l) => l.id === v);
+
+/** How the heart is drawn: as it is, with walls you can see through, or as a neutral X-ray silhouette. */
+export const MODES = [
+  { id: 'solid', label: 'Solid', hint: 'The heart as it looks from outside' },
+  { id: 'see-through', label: 'See-through', hint: 'Walls turn translucent, so you can look inside; valves stay solid' },
+  { id: 'xray', label: 'X-ray', hint: 'A grey silhouette of every layer at once, without the part colours' },
+] as const;
+export type ViewMode = (typeof MODES)[number]['id'];
+export const DEFAULT_MODE: ViewMode = 'solid';
+export const isMode = (v: unknown): v is ViewMode => MODES.some((m) => m.id === v);
+
+export interface HeartPart {
+  /** The mesh's name in the GLB, e.g. lv_myocardium. */
+  name: string;
+  displayName: string;
+  description: string;
+  group: string;
+  look: PartLook;
+}
+
+/** One heart in client/public/hearts/index.json (written by `heartgen publish`). */
+export interface HeartEntry {
+  id: string;
+  title: string;
+  source: string;
+  license: string;
+  triangles: number;
+  glb: string;
+}
+
+export interface HeartIndex {
+  schema: 'heartgen.index/1';
+  hearts: HeartEntry[];
+}
+
+export const HEARTS_URL = `${import.meta.env.BASE_URL}hearts/`;

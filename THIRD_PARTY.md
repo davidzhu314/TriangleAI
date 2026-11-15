@@ -107,3 +107,14 @@ Shipped in the client build with no third-party license: the client runtime is e
 | --- | --- | --- | --- | --- |
 | MediaPipe Tasks Vision (`@mediapipe/tasks-vision`, runtime; JS and its WASM runtime, served from the app, not a CDN) | 1.2.2 | Apache 2.0 (package metadata) | https://www.npmjs.com/package/@mediapipe/tasks-vision | Hand tracking for the hands input (`client/src/input/`, wired by Aroovee's screens) |
 | MediaPipe Hand Landmarker model (`hand_landmarker.task`, float16, version 1: `hand_detector.tflite` + `hand_landmarks_detector.tflite`), SHA-256 `fbc2a30080c3c557093b5ddfc334698132eb341044ccee322ccf8bcf3607cde1` | float16/1 | Apache 2.0 (MediaPipe Hand Landmarker model card) | https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task | `client/public/models/hand_landmarker.task`, loaded in the browser; no hand images leave the device |
+
+## Heart tab (heartgen, 2026-11-15)
+
+| Name | Version | License | URL | Where used |
+| --- | --- | --- | --- | --- |
+| KCL virtual cohort of extreme and average four-chamber heart meshes, `average.tar.gz` (`average.vtk`, SHA-256 in `client/public/hearts/kcl-average/provenance.json`). Cite Rodero et al., "Linking statistical shape models and simulated function in the healthy adult human heart", PLoS Comput Biol 17(4): e1008851 (2021) | Zenodo record 4593739 | CC BY 4.0 (the record's license field, read 2026-11-15) | https://doi.org/10.5281/zenodo.4593739 | Converted by `tools/heartgen` into `client/public/hearts/kcl-average/heart.glb`, shipped in the client. The source file is downloaded to `tools/heartgen/.cache/` and never committed |
+| three.js addons `RoomEnvironment`, `MeshoptDecoder` (part of `three`) | 0.187.0 | MIT | https://threejs.org | `client/src/heart/viewer.ts` |
+| glTF Transform CLI (`@gltf-transform/cli`), run with `pnpm dlx`; not a project dependency | 4.2.1 | MIT | https://gltf-transform.dev | `tools/heartgen` (offline: meshopt compression of the GLB) |
+| meshoptimizer (via glTF Transform, and three's decoder) | as bundled | MIT | https://github.com/zeux/meshoptimizer | offline compression; decoding in the Heart tab |
+| NumPy | 2.0.2 | BSD-3-Clause | https://numpy.org | `tools/heartgen` (offline) |
+| SciPy 1.13.1, VTK 9.5.2, PyVista 0.46.5, pymeshfix 0.17.2, trimesh 4.12.2 | pinned in `tools/heartgen/requirements.txt` | BSD, BSD, MIT, GPLv3, MIT, in that order (each package's own metadata, read 2026-11-15). pymeshfix is GPLv3: it may only ever run as an offline tool, never be linked into or shipped with the app | — | `tools/heartgen` (offline). Installed for M1; M0 does not import them |
