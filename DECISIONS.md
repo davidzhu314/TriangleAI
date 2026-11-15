@@ -396,3 +396,8 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Fade-in:** the heart fades in over `--duration-slow` once drawn. DESIGN.md says nothing performs an entrance; this one covers the first frames of a large model and is off with reduced motion.
   - **Screenshots, not pixel baselines, at M0:** the e2e test saves 1440, 768 and 390 px screenshots to `test-results/heart/` on every run. Pixel baselines wait for M3, when the look has passed its gates; software and hardware WebGL also differ too much to share one baseline yet.
   - **pnpm through npx:** `heartgen` runs glTF Transform with `pnpm dlx`, or `npx -y pnpm@9.15.9 dlx` on a machine with no global pnpm. No lockfile changes; glTF Transform is not a project dependency.
+- 2026-11-15 · David · **Heart tab, look gate 1.** David's answers and what changed:
+  - **Placement: approved.** "Heart" stays in the sidebar, under Library.
+  - **Palette: approved** as it is (left heart warm, right heart cool, valves ivory).
+  - **Lighting: not one look, a choice.** David asked for versions to switch between. The view's toolbar now has "Light": Studio (the M0 look, the default), Soft (even, atlas-like), Contrast (a strong side light) and Overhead (lit from above). All four use white light, so the tokens still colour the parts. The choice is kept per browser (`threadsim.heart.lighting.v1`) for every heart. Whether one becomes the only look, or the switch stays, is open at look gate 2.
+  - On a phone the toolbar wraps to two rows, so it sits above the view there instead of over the heart.

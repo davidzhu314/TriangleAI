@@ -78,6 +78,27 @@ test('parts hide and show, by mouse and by keyboard, and the choice is kept for 
   await page.getByTestId('heart-reset').click();
 });
 
+test('the Light switch changes how the heart is lit and is remembered', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openHeart(page);
+  const pressed = (id: string) => page.locator(`[data-lighting=${id}]`);
+  await expect(pressed('studio')).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(600);
+  const studio = await page.getByTestId('heart-stage').screenshot();
+
+  await page.getByRole('group', { name: 'Light' }).getByRole('button', { name: 'Contrast' }).click();
+  await expect(pressed('contrast')).toHaveAttribute('aria-pressed', 'true');
+  await expect(pressed('studio')).toHaveAttribute('aria-pressed', 'false');
+  await page.waitForTimeout(300);
+  expect((await page.getByTestId('heart-stage').screenshot()).equals(studio)).toBe(false);
+
+  await page.reload();
+  await expect(page.getByTestId('heart-stage')).toHaveAttribute('data-state', 'ready', { timeout: 30_000 });
+  await expect(pressed('contrast')).toHaveAttribute('aria-pressed', 'true');
+  for (const id of ['studio', 'soft', 'contrast', 'overhead']) await expect(pressed(id)).toBeVisible();
+});
+
 test('empty and error states say what happened and what to do', async ({ page }) => {
   await page.goto('/#/heart/no-such-heart');
   await expect(page.getByRole('heading', { name: 'No heart with that name' })).toBeVisible();

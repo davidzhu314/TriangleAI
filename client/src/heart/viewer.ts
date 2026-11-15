@@ -14,7 +14,18 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { THEME_EVENT, token, tokenMs } from '../render/tokens';
-import { partLook, type HeartPart, type Tissue } from './parts';
+import { partLook, type HeartPart, type LightingId, type Tissue } from './parts';
+
+/**
+ * Lighting versions. Light is white in all of them, so the tokens alone colour the parts. `room` is the strength of
+ * the environment map; key and fill are in the camera's frame (x right, y up, z toward the viewer).
+ */
+const LIGHT: Record<LightingId, { room: number; key: number; keyFrom: [number, number, number]; fill: number }> = {
+  studio: { room: 0.4, key: 1.7, keyFrom: [-0.6, 0.9, 1], fill: 0.3 },
+  soft: { room: 0.95, key: 0.55, keyFrom: [-0.3, 0.6, 1], fill: 0.25 },
+  contrast: { room: 0.14, key: 2.7, keyFrom: [-1.4, 0.5, 0.35], fill: 0.08 },
+  overhead: { room: 0.3, key: 2.3, keyFrom: [0, 1.7, 0.35], fill: 0.2 },
+};
 
 /** How each tissue takes light. Muscle is matte, vessel walls a little glossier, valve tissue smooth and pale. */
 const SURFACE: Record<Tissue, { roughness: number; envMapIntensity: number }> = {
@@ -36,6 +47,7 @@ export interface HeartViewer {
   readonly parts: readonly HeartPart[];
   readonly triangles: number;
   setVisible(name: string, on: boolean): void;
+  setLighting(id: LightingId): void;
   /** Ease back to the starting anterior view (instant with reduced motion). */
   resetView(): void;
   dispose(): void;
@@ -49,7 +61,7 @@ interface Extras {
 
 const text = (v: unknown, fallback: string): string => (typeof v === 'string' && v ? v : fallback);
 
-export async function createHeartViewer(url: string, label: string, onProgress: (fraction: number | null) => void): Promise<HeartViewer> {
+export async function createHeartViewer(url: string, label: string, lighting: LightingId, onProgress: (fraction: number | null) => void): Promise<HeartViewer> {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
   const gltf = await loader.loadAsync(url, (e) => onProgress(e.lengthComputable && e.total > 0 ? e.loaded / e.total : null));
@@ -115,6 +127,14 @@ export async function createHeartViewer(url: string, label: string, onProgress: 
   camera.add(key, key.target, fill, fill.target);
   key.target.position.set(0, 0, -1);
   fill.target.position.set(0, 0, -1);
+  const light = (id: LightingId): void => {
+    const l = LIGHT[id];
+    scene.environmentIntensity = l.room;
+    key.intensity = l.key;
+    key.position.set(l.keyFrom[0], l.keyFrom[1], l.keyFrom[2] - 1); // relative to the target, one unit ahead
+    fill.intensity = l.fill;
+  };
+  light(lighting);
   scene.add(camera);
 
   const controls = new OrbitControls(camera, canvas);
@@ -203,6 +223,9 @@ export async function createHeartViewer(url: string, label: string, onProgress: 
     setVisible(name, on) {
       const mesh = meshes.get(name);
       if (mesh) mesh.visible = on;
+    },
+    setLighting(id) {
+      light(id);
     },
     resetView() {
       moveTo(home());

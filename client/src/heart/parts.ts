@@ -41,6 +41,17 @@ export const GROUPS: readonly { id: string; label: string }[] = [
   { id: 'subvalvular', label: 'Under the valves' },
 ];
 
+/** The lighting versions the view offers. The numbers are in viewer.ts; these are the names on the switch. */
+export const LIGHTINGS = [
+  { id: 'studio', label: 'Studio', hint: 'Balanced: a key light over your left shoulder and soft room light' },
+  { id: 'soft', label: 'Soft', hint: 'Even light from all sides, few shadows, as in an atlas plate' },
+  { id: 'contrast', label: 'Contrast', hint: 'A strong side light and little fill, so grooves and edges stand out' },
+  { id: 'overhead', label: 'Overhead', hint: 'Lit from above, like a theatre lamp' },
+] as const;
+export type LightingId = (typeof LIGHTINGS)[number]['id'];
+export const DEFAULT_LIGHTING: LightingId = 'studio';
+export const isLighting = (v: unknown): v is LightingId => LIGHTINGS.some((l) => l.id === v);
+
 export interface HeartPart {
   /** The mesh's name in the GLB, e.g. lv_myocardium. */
   name: string;

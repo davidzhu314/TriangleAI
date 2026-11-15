@@ -12,7 +12,7 @@ import { h, replace } from '../ui/dom';
 import { href } from '../ui/router';
 import { honestyLine, renderShell } from '../ui/shell';
 import './heart.css';
-import { GROUPS, HEARTS_URL, type HeartEntry, type HeartIndex, type HeartPart } from './parts';
+import { DEFAULT_LIGHTING, GROUPS, HEARTS_URL, isLighting, LIGHTINGS, type HeartEntry, type HeartIndex, type HeartPart, type LightingId } from './parts';
 import type { HeartViewer } from './viewer';
 
 let viewer: HeartViewer | null = null;
@@ -47,7 +47,41 @@ function writeHidden(id: string, hidden: Set<string>): void {
   }
 }
 
+/** The lighting version is a taste, not a fact about one heart: kept per browser, for every heart. */
+const LIGHTING_KEY = 'threadsim.heart.lighting.v1';
+
+function readLighting(): LightingId {
+  try {
+    const saved = localStorage.getItem(LIGHTING_KEY);
+    return isLighting(saved) ? saved : DEFAULT_LIGHTING;
+  } catch {
+    return DEFAULT_LIGHTING;
+  }
+}
+
+function writeLighting(id: LightingId): void {
+  try {
+    localStorage.setItem(LIGHTING_KEY, id);
+  } catch {
+    // Nothing depends on it.
+  }
+}
+
 // ---------------------------------------------------------------- pieces
+
+/** "Light: Studio | Soft | Contrast | Overhead", the same segmented control as the case views' switches. */
+function lightingSwitch(v: HeartViewer, current: LightingId): HTMLElement {
+  const segments = LIGHTINGS.map((l) => {
+    const b = h('button', { type: 'button', class: 'segment', 'aria-pressed': String(l.id === current), title: l.hint, 'data-lighting': l.id }, l.label);
+    b.addEventListener('click', () => {
+      v.setLighting(l.id);
+      writeLighting(l.id);
+      for (const s of segments) s.setAttribute('aria-pressed', String(s === b));
+    });
+    return b;
+  });
+  return h('div', { class: 'heart-lighting' }, h('span', { class: 'label', id: 'heart-lighting-label' }, 'Light'), h('div', { class: 'segmented', role: 'group', 'aria-labelledby': 'heart-lighting-label' }, segments));
+}
 
 async function loadIndex(): Promise<HeartEntry[]> {
   const res = await fetch(`${HEARTS_URL}index.json`);
@@ -158,7 +192,8 @@ export async function renderHeart(root: HTMLElement, id: string | undefined): Pr
   // ---- the view: three.js and the model load now, behind the progress bar
   try {
     const { createHeartViewer } = await import('./viewer');
-    const v = await createHeartViewer(`${HEARTS_URL}${heart.glb}`, `${heart.title}, in 3D. Drag to turn, scroll to zoom.`, (fraction) => {
+    const lighting = readLighting();
+    const v = await createHeartViewer(`${HEARTS_URL}${heart.glb}`, `${heart.title}, in 3D. Drag to turn, scroll to zoom.`, lighting, (fraction) => {
       if (fraction === null) progress.removeAttribute('value');
       else progress.value = fraction;
     });
@@ -169,7 +204,7 @@ export async function renderHeart(root: HTMLElement, id: string | undefined): Pr
     viewer = v;
     const reset = h('button', { type: 'button', class: 'btn btn-secondary', 'data-testid': 'heart-reset' }, 'Reset view');
     reset.addEventListener('click', () => v.resetView());
-    replace(stage, v.canvas, h('div', { class: 'view-toolbar' }, reset));
+    replace(stage, h('div', { class: 'view-toolbar' }, reset, lightingSwitch(v, lighting)), h('div', { class: 'heart-view' }, v.canvas));
     replace(panel, partList(heart, v.parts, v));
     stage.dataset['triangles'] = String(v.triangles);
     // Two frames, so the heart is drawn before it fades in.

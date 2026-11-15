@@ -29,6 +29,11 @@
   border-radius: var(--radius-card);
 }
 
+.heart-view {
+  position: absolute;
+  inset: 0;
+}
+
 .heart-canvas {
   position: absolute;
   inset: 0;
@@ -42,6 +47,20 @@
 
 .heart-stage .view-toolbar {
   z-index: 1;
+}
+
+/* The toolbar may wrap, but never runs under the view's right edge. */
+.heart-stage .view-toolbar {
+  right: var(--space-3);
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--space-3));
+}
+
+.heart-lighting {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-2);
 }
 
 .heart-message {
@@ -202,6 +221,27 @@
 
   .heart-groups {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* The toolbar wraps to two rows here, so it sits above the view instead of over the heart. */
+  .heart-stage[data-state='ready'] {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .heart-stage .view-toolbar {
+    position: static;
+    flex: none;
+    width: auto;
+    max-width: none;
+    margin: var(--space-3) var(--space-3) 0;
+  }
+
+  .heart-view {
+    position: relative;
+    inset: auto;
+    flex: 1 1 0;
+    min-height: 0;
   }
 
   .heart-part {
