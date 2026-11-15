@@ -495,7 +495,7 @@ test("Cathy's box answers without voice or an AI model: question buttons and typ
   );
   await page.goto('/#/case/fixture-y/plan');
   const box = page.getByTestId('cathy-box');
-  await expect(box).toContainText('not an AI model');
+  await expect(box).toContainText('The numbers come from the route engine, never from the AI.'); // the privacy line (AI wording on by default)
   await box.getByRole('button', { name: 'Am I on the right path', exact: true }).click();
   await expect(page.getByTestId('voice-answer')).toHaveText('Your route already reaches the Left branch.');
   await page.getByTestId('cathy-field').fill('what is the weather');
