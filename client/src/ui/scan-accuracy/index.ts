@@ -25,6 +25,7 @@ export { truthOf } from './grid';
 export { compareRoutes } from './downstream';
 export { recoveredCase, type RecoveredGeometry } from './recovered';
 export { scoreGeometry } from './score';
+export { scoreMesh, scoreMeshBytes, type MeshScore } from './mesh';
 
 /** Above this many voxels a run is refused (memory: about six bytes a voxel). */
 export const MAX_VOXELS = 140_000_000;

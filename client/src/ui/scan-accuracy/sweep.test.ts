@@ -11,7 +11,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, test } from 'vitest';
 import { loadBundled } from './cases.testutil';
-import { runScanAccuracy, ScanTooLargeError, type ScanAccuracy, type ScanSettings } from './index';
+import { runScanAccuracy, ScanTooLargeError, scoreMesh, type MeshScore, type ScanAccuracy, type ScanSettings } from './index';
 
 const OUT = join(import.meta.dirname, '../../../../metrics/aroovee/scan-accuracy');
 const CASES = (process.env.SCAN_CASES ?? 'fixture-y,low-tort,type-iii,ts-s1404-cta').split(',');
@@ -48,7 +48,36 @@ function table(rows: Row[]): string {
   return [head, sep, ...body].join('\n');
 }
 
-function summary(rows: Row[]): string {
+type MeshRows = Record<string, { share: number; score: MeshScore }[]>;
+
+/** One line per setting: the worst case for each number, over the anatomy cases (the fixture is left out). */
+function headline(rows: Row[]): string {
+  const anatomy = rows.filter((r) => r.caseId !== 'fixture-y');
+  const keys = [...new Set(anatomy.map((r) => `${r.settings.spacingMm}|${r.settings.sliceMm}|${r.settings.cnr}`))];
+  const lines = keys.map((k) => {
+    const set = anatomy.filter((r) => `${r.settings.spacingMm}|${r.settings.sliceMm}|${r.settings.cnr}` === k);
+    const done = set.filter((r) => r.result).map((r) => r.result!);
+    const s = set[0]!.settings;
+    if (done.length === 0) return `| ${s.spacingMm} | ${s.sliceMm} | ${s.cnr} | not run | | | | | |`;
+    const worst = (pick: (r: (typeof done)[number]) => number): number => Math.max(...done.map(pick));
+    const lost = done.reduce((n, r) => n + (r.topology.edges - r.topology.edgesRecovered), 0);
+    const targets = done.reduce((n, r) => n + r.downstream.targetsCompared, 0);
+    const same = done.reduce((n, r) => n + r.downstream.frontiersSame, 0);
+    const flips = done.reduce((n, r) => n + r.downstream.verdictFlips, 0);
+    const cands = done.reduce((n, r) => n + r.downstream.candidates, 0);
+    return `| ${s.spacingMm} | ${s.sliceMm} | ${s.cnr} | ${f(worst((r) => r.geometry.centerline.meanOffsetMm))} | ${f(worst((r) => r.geometry.radius.meanAbsErrPct), 1)} | ${f(worst((r) => Math.abs(r.geometry.radius.narrowestErrPct ?? 100)), 0)} | ${lost} | ${same} of ${targets} | ${flips} of ${cands} |`;
+  });
+  return ['| In-plane mm | Slice mm | CNR | Worst centerline offset mm | Worst mean radius err. % | Worst narrowest pt. err. % | Vessels lost | Same frontier | Verdict flips |', '| --- | --- | --- | --- | --- | --- | --- | --- | --- |', ...lines].join('\n');
+}
+
+function meshTable(mesh: MeshRows): string {
+  const lines = Object.entries(mesh).flatMap(([id, list]) =>
+    list.map((m) => `| ${id} | ${m.share === 1 ? 'as shipped' : `${m.share * 100}% of triangles`} | ${m.score.triangles} | ${f(m.score.meanAbsMm)} | ${f(m.score.p95AbsMm)} | ${f(m.score.maxAbsMm)} | ${f(m.score.biasMm)} | ${f(m.score.insideOver1mmPct, 1)} |`),
+  );
+  return ['| Case | Mesh | Triangles | Mean dist. mm | p95 mm | Max mm | Bias mm (− = inside) | Over 1 mm inside, % |', '| --- | --- | --- | --- | --- | --- | --- | --- |', ...lines].join('\n');
+}
+
+function summary(rows: Row[], mesh: MeshRows): string {
   const parts = [
     '# Scan accuracy: what a scan at each resolution does to the geometry and to the routes',
     '',
@@ -64,6 +93,15 @@ function summary(rows: Row[]): string {
     '- *Vessels kept:* edges of the case the scan still has. *Same frontier / same best route:* targets where the engine gives the same answer on the scanned geometry. *Verdict flips:* candidate routes whose feasible / not feasible verdict changed, or that vanished.',
     '',
   ];
+  parts.push('## Headline: the worst anatomy case at each setting', '', 'Over low-tort, type-iii and ts-s1404-cta. Counts are summed over the three.', '', headline(rows), '');
+  parts.push(
+    '## The vessel mesh against the lumen',
+    '',
+    'How far each case\'s shipped mesh (`vessels.glb`) sits from the lumen its centerlines and radii describe, and what the app\'s own decimator does to that. No scan is involved. For the three CT-derived cases the centerlines were measured from the mesh, so this checks that the two agree; for generated cases it checks the mesh builder. The largest distances (around 10 to 13 mm, inside) are at junctions, where a branch\'s tube runs on into its parent: that is how the meshes are built, not a fault in the wall.',
+    '',
+    meshTable(mesh),
+    '',
+  );
   for (const id of [...new Set(rows.map((r) => r.caseId))]) parts.push(`## ${id}`, '', table(rows.filter((r) => r.caseId === id)), '');
   return parts.join('\n');
 }
@@ -72,8 +110,10 @@ describe.skipIf(!process.env.SCAN_SWEEP)('scan accuracy sweep', () => {
   test('sweep', { timeout: 6 * 3600_000 }, async () => {
     mkdirSync(OUT, { recursive: true });
     const rows: Row[] = [];
+    const mesh: MeshRows = {};
     for (const id of CASES) {
       const c = await loadBundled(id);
+      mesh[id] = scoreMesh(c);
       for (const s of settings) {
         try {
           const { caseId, settings: used, ...result } = runScanAccuracy(c, s);
@@ -85,7 +125,8 @@ describe.skipIf(!process.env.SCAN_SWEEP)('scan accuracy sweep', () => {
         const last = rows[rows.length - 1]!;
         console.log(`${id} ${s.spacingMm}×${s.sliceMm} cnr ${s.cnr}: ${last.result ? `${last.result.ms} ms` : last.skipped}`);
         writeFileSync(join(OUT, 'results.json'), JSON.stringify(rows, (_, v) => (typeof v === 'number' ? Math.round(v * 10000) / 10000 : v), 1));
-        writeFileSync(join(OUT, 'summary.md'), summary(rows));
+        writeFileSync(join(OUT, 'summary.md'), summary(rows, mesh));
+        writeFileSync(join(OUT, 'mesh.json'), JSON.stringify(mesh, (_, v) => (typeof v === 'number' ? Math.round(v * 10000) / 10000 : v), 1));
       }
     }
   });

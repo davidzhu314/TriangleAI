@@ -11,6 +11,55 @@ Made by `client/src/ui/scan-accuracy/sweep.test.ts`; every number is in `results
 - *Angle error at node:* the direction a vessel leaves a branch point over the engine's 5 mm window. For a branch off the aorta that window is inside the aorta, where no scan sees the branch. *At ostium:* the same where the branch leaves its parent, which a scan can see.
 - *Vessels kept:* edges of the case the scan still has. *Same frontier / same best route:* targets where the engine gives the same answer on the scanned geometry. *Verdict flips:* candidate routes whose feasible / not feasible verdict changed, or that vanished.
 
+## Headline: the worst anatomy case at each setting
+
+Over low-tort, type-iii and ts-s1404-cta. Counts are summed over the three.
+
+| In-plane mm | Slice mm | CNR | Worst centerline offset mm | Worst mean radius err. % | Worst narrowest pt. err. % | Vessels lost | Same frontier | Verdict flips |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0.5 | 1 | 10 | 0.13 | 2.2 | 9 | 0 | 3 of 6 | 16 of 42 |
+| 0.5 | 2 | 10 | 0.26 | 2.7 | 26 | 0 | 3 of 6 | 14 of 42 |
+| 0.5 | 3 | 10 | 0.49 | 3.4 | 100 | 0 | 2 of 6 | 18 of 42 |
+| 0.8 | 1 | 10 | 0.13 | 3.4 | 14 | 0 | 2 of 6 | 12 of 42 |
+| 0.8 | 2 | 10 | 0.26 | 3.8 | 22 | 0 | 4 of 6 | 16 of 42 |
+| 0.8 | 3 | 10 | 0.48 | 4.2 | 67 | 1 | 1 of 6 | 35 of 42 |
+| 1 | 1 | 10 | 0.13 | 4.3 | 18 | 0 | 2 of 6 | 17 of 42 |
+| 1 | 2 | 10 | 0.27 | 4.6 | 33 | 0 | 3 of 6 | 18 of 42 |
+| 1 | 3 | 10 | 0.49 | 5.1 | 49 | 0 | 2 of 6 | 22 of 42 |
+| 1.5 | 1 | 10 | 0.17 | 6.4 | 37 | 0 | 1 of 6 | 21 of 42 |
+| 1.5 | 2 | 10 | 0.26 | 6.8 | 60 | 0 | 2 of 6 | 28 of 42 |
+| 1.5 | 3 | 10 | 0.48 | 7.0 | 100 | 0 | 2 of 6 | 28 of 42 |
+| 2 | 1 | 10 | 0.37 | 7.8 | 55 | 2 | 1 of 6 | 27 of 42 |
+| 2 | 2 | 10 | 0.41 | 9.9 | 85 | 1 | 1 of 6 | 25 of 42 |
+| 2 | 3 | 10 | 0.57 | 9.9 | 100 | 2 | 2 of 6 | 36 of 42 |
+| 0.8 | 1 | 5 | 0.14 | 5.7 | 29 | 0 | 2 of 6 | 21 of 42 |
+| 0.8 | 1 | 20 | 0.13 | 2.2 | 9 | 0 | 2 of 6 | 13 of 42 |
+| 1.5 | 2 | 5 | 0.27 | 8.9 | 100 | 3 | 2 of 6 | 32 of 42 |
+| 1.5 | 2 | 20 | 0.26 | 5.0 | 48 | 0 | 2 of 6 | 28 of 42 |
+
+## The vessel mesh against the lumen
+
+How far each case's shipped mesh (`vessels.glb`) sits from the lumen its centerlines and radii describe, and what the app's own decimator does to that. No scan is involved. For the three CT-derived cases the centerlines were measured from the mesh, so this checks that the two agree; for generated cases it checks the mesh builder. The largest distances (around 10 to 13 mm, inside) are at junctions, where a branch's tube runs on into its parent: that is how the meshes are built, not a fault in the wall.
+
+| Case | Mesh | Triangles | Mean dist. mm | p95 mm | Max mm | Bias mm (− = inside) | Over 1 mm inside, % |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| fixture-y | as shipped | 6720 | 0.63 | 5.65 | 9.53 | -0.63 | 10.0 |
+| fixture-y | 50% of triangles | 3344 | 0.63 | 5.51 | 9.53 | -0.63 | 9.5 |
+| fixture-y | 25% of triangles | 1679 | 0.61 | 4.76 | 9.01 | -0.61 | 7.9 |
+| fixture-y | 10% of triangles | 671 | 0.73 | 3.52 | 9.61 | -0.73 | 15.6 |
+| low-tort | as shipped | 37024 | 0.33 | 1.57 | 12.83 | -0.33 | 5.8 |
+| low-tort | 50% of triangles | 18500 | 0.39 | 1.89 | 12.69 | -0.39 | 6.5 |
+| low-tort | 25% of triangles | 9256 | 0.44 | 1.59 | 12.64 | -0.44 | 6.1 |
+| low-tort | 10% of triangles | 3702 | 0.68 | 1.98 | 12.45 | -0.68 | 15.7 |
+| type-iii | as shipped | 60448 | 0.25 | 0.77 | 12.79 | -0.25 | 4.8 |
+| type-iii | 50% of triangles | 30210 | 0.31 | 1.30 | 12.66 | -0.31 | 5.5 |
+| type-iii | 25% of triangles | 15112 | 0.39 | 1.20 | 12.51 | -0.39 | 5.5 |
+| type-iii | 10% of triangles | 6041 | 0.63 | 1.74 | 11.92 | -0.63 | 16.6 |
+| ts-s1404-cta | as shipped | 78432 | 0.51 | 1.83 | 11.01 | 0.40 | 1.7 |
+| ts-s1404-cta | 50% of triangles | 39179 | 0.50 | 1.82 | 11.01 | 0.35 | 1.8 |
+| ts-s1404-cta | 25% of triangles | 19595 | 0.48 | 1.74 | 10.93 | 0.30 | 1.7 |
+| ts-s1404-cta | 10% of triangles | 7836 | 0.55 | 1.80 | 10.81 | 0.13 | 3.4 |
+
 ## fixture-y
 
 | In-plane mm | Slice mm | CNR | Dice | clDice | Wall dist. mm | Centerline offset mm | Radius err. % (mean / p95) | Narrowest pt. err. % | Angle err. at node ° (mean / max) | Angle err. at ostium ° (mean / max) | Vessels kept | Same frontier | Same best route | Verdict flips |

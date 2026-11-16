@@ -122,7 +122,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 1875
+   "ms": 1862
   }
  },
  {
@@ -248,7 +248,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 979
+   "ms": 1239
   }
  },
  {
@@ -374,7 +374,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 707
+   "ms": 906
   }
  },
  {
@@ -500,7 +500,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 732
+   "ms": 922
   }
  },
  {
@@ -626,7 +626,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 416
+   "ms": 494
   }
  },
  {
@@ -752,7 +752,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 300
+   "ms": 368
   }
  },
  {
@@ -878,7 +878,7 @@
     "candidates": 3,
     "verdictFlips": 0
    },
-   "ms": 451
+   "ms": 663
   }
  },
  {
@@ -1004,7 +1004,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 238
+   "ms": 327
   }
  },
  {
@@ -1130,7 +1130,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 192
+   "ms": 263
   }
  },
  {
@@ -1256,7 +1256,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 289
+   "ms": 337
   }
  },
  {
@@ -1382,7 +1382,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 148
+   "ms": 162
   }
  },
  {
@@ -1508,7 +1508,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 100
+   "ms": 108
   }
  },
  {
@@ -1634,7 +1634,7 @@
     "candidates": 3,
     "verdictFlips": 0
    },
-   "ms": 229
+   "ms": 289
   }
  },
  {
@@ -1760,7 +1760,7 @@
     "candidates": 3,
     "verdictFlips": 0
    },
-   "ms": 78
+   "ms": 100
   }
  },
  {
@@ -1886,7 +1886,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 60
+   "ms": 88
   }
  },
  {
@@ -2012,7 +2012,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 816
+   "ms": 977
   }
  },
  {
@@ -2138,7 +2138,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 672
+   "ms": 913
   }
  },
  {
@@ -2264,7 +2264,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 142
+   "ms": 182
   }
  },
  {
@@ -2390,7 +2390,7 @@
     "candidates": 3,
     "verdictFlips": 1
    },
-   "ms": 127
+   "ms": 163
   }
  },
  {
@@ -2588,7 +2588,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 19771
+   "ms": 20649
   }
  },
  {
@@ -2786,7 +2786,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 9813
+   "ms": 9445
   }
  },
  {
@@ -2984,7 +2984,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 6030
+   "ms": 6660
   }
  },
  {
@@ -3182,7 +3182,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 6669
+   "ms": 7503
   }
  },
  {
@@ -3380,7 +3380,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 3324
+   "ms": 3810
   }
  },
  {
@@ -3578,7 +3578,7 @@
     "candidates": 6,
     "verdictFlips": 1
    },
-   "ms": 2355
+   "ms": 2847
   }
  },
  {
@@ -3776,7 +3776,7 @@
     "candidates": 6,
     "verdictFlips": 3
    },
-   "ms": 4224
+   "ms": 6306
   }
  },
  {
@@ -3974,7 +3974,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 2267
+   "ms": 2945
   }
  },
  {
@@ -4172,7 +4172,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 1546
+   "ms": 1640
   }
  },
  {
@@ -4370,7 +4370,7 @@
     "candidates": 6,
     "verdictFlips": 3
    },
-   "ms": 2148
+   "ms": 2415
   }
  },
  {
@@ -4568,7 +4568,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 1114
+   "ms": 1247
   }
  },
  {
@@ -4766,7 +4766,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 788
+   "ms": 865
   }
  },
  {
@@ -4964,7 +4964,7 @@
     "candidates": 6,
     "verdictFlips": 3
    },
-   "ms": 1488
+   "ms": 1739
   }
  },
  {
@@ -5162,7 +5162,7 @@
     "candidates": 6,
     "verdictFlips": 3
    },
-   "ms": 697
+   "ms": 744
   }
  },
  {
@@ -5360,7 +5360,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 523
+   "ms": 544
   }
  },
  {
@@ -5558,7 +5558,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 6407
+   "ms": 9101
   }
  },
  {
@@ -5756,7 +5756,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 6718
+   "ms": 9449
   }
  },
  {
@@ -5958,7 +5958,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 1064
+   "ms": 1031
   }
  },
  {
@@ -6156,7 +6156,7 @@
     "candidates": 6,
     "verdictFlips": 0
    },
-   "ms": 1108
+   "ms": 1175
   }
  },
  {
@@ -6354,7 +6354,7 @@
     "candidates": 24,
     "verdictFlips": 6
    },
-   "ms": 25693
+   "ms": 36356
   }
  },
  {
@@ -6552,7 +6552,7 @@
     "candidates": 24,
     "verdictFlips": 4
    },
-   "ms": 11982
+   "ms": 18129
   }
  },
  {
@@ -6750,7 +6750,7 @@
     "candidates": 24,
     "verdictFlips": 8
    },
-   "ms": 8573
+   "ms": 12508
   }
  },
  {
@@ -6948,7 +6948,7 @@
     "candidates": 24,
     "verdictFlips": 4
    },
-   "ms": 9282
+   "ms": 12377
   }
  },
  {
@@ -7146,7 +7146,7 @@
     "candidates": 24,
     "verdictFlips": 4
    },
-   "ms": 4957
+   "ms": 5506
   }
  },
  {
@@ -7346,7 +7346,7 @@
     "candidates": 24,
     "verdictFlips": 24
    },
-   "ms": 3945
+   "ms": 45724
   }
  },
  {
@@ -7544,7 +7544,7 @@
     "candidates": 24,
     "verdictFlips": 6
    },
-   "ms": 7531
+   "ms": 7192
   }
  },
  {
@@ -7742,7 +7742,7 @@
     "candidates": 24,
     "verdictFlips": 6
    },
-   "ms": 3525
+   "ms": 3539
   }
  },
  {
@@ -7940,7 +7940,7 @@
     "candidates": 24,
     "verdictFlips": 10
    },
-   "ms": 2540
+   "ms": 2639
   }
  },
  {
@@ -8138,7 +8138,7 @@
     "candidates": 24,
     "verdictFlips": 10
    },
-   "ms": 3470
+   "ms": 3349
   }
  },
  {
@@ -8336,7 +8336,7 @@
     "candidates": 24,
     "verdictFlips": 16
    },
-   "ms": 1807
+   "ms": 1784
   }
  },
  {
@@ -8534,7 +8534,7 @@
     "candidates": 24,
     "verdictFlips": 16
    },
-   "ms": 1309
+   "ms": 1355
   }
  },
  {
@@ -8736,7 +8736,7 @@
     "candidates": 24,
     "verdictFlips": 12
    },
-   "ms": 2292
+   "ms": 2252
   }
  },
  {
@@ -8934,7 +8934,7 @@
     "candidates": 24,
     "verdictFlips": 10
    },
-   "ms": 1269
+   "ms": 1218
   }
  },
  {
@@ -9134,7 +9134,7 @@
     "candidates": 24,
     "verdictFlips": 24
    },
-   "ms": 919
+   "ms": 882
   }
  },
  {
@@ -9332,7 +9332,7 @@
     "candidates": 24,
     "verdictFlips": 13
    },
-   "ms": 12560
+   "ms": 10558
   }
  },
  {
@@ -9530,7 +9530,7 @@
     "candidates": 24,
     "verdictFlips": 5
    },
-   "ms": 12326
+   "ms": 9798
   }
  },
  {
@@ -9734,7 +9734,7 @@
     "candidates": 24,
     "verdictFlips": 20
    },
-   "ms": 1894
+   "ms": 1622
   }
  },
  {
@@ -9932,7 +9932,7 @@
     "candidates": 24,
     "verdictFlips": 16
    },
-   "ms": 1944
+   "ms": 1700
   }
  },
  {
@@ -10112,7 +10112,7 @@
     "candidates": 12,
     "verdictFlips": 10
    },
-   "ms": 26260
+   "ms": 21788
   }
  },
  {
@@ -10292,7 +10292,7 @@
     "candidates": 12,
     "verdictFlips": 10
    },
-   "ms": 12955
+   "ms": 10401
   }
  },
  {
@@ -10472,7 +10472,7 @@
     "candidates": 12,
     "verdictFlips": 10
    },
-   "ms": 7726
+   "ms": 7186
   }
  },
  {
@@ -10652,7 +10652,7 @@
     "candidates": 12,
     "verdictFlips": 8
    },
-   "ms": 7970
+   "ms": 8814
   }
  },
  {
@@ -10832,7 +10832,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 3819
+   "ms": 4012
   }
  },
  {
@@ -11012,7 +11012,7 @@
     "candidates": 12,
     "verdictFlips": 10
    },
-   "ms": 2760
+   "ms": 2933
   }
  },
  {
@@ -11192,7 +11192,7 @@
     "candidates": 12,
     "verdictFlips": 8
    },
-   "ms": 4709
+   "ms": 4962
   }
  },
  {
@@ -11372,7 +11372,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 2536
+   "ms": 3112
   }
  },
  {
@@ -11552,7 +11552,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 1896
+   "ms": 2235
   }
  },
  {
@@ -11732,7 +11732,7 @@
     "candidates": 12,
     "verdictFlips": 8
    },
-   "ms": 2454
+   "ms": 2594
   }
  },
  {
@@ -11912,7 +11912,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 1308
+   "ms": 1301
   }
  },
  {
@@ -12092,7 +12092,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 978
+   "ms": 983
   }
  },
  {
@@ -12274,7 +12274,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 1698
+   "ms": 1758
   }
  },
  {
@@ -12456,7 +12456,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 799
+   "ms": 817
   }
  },
  {
@@ -12638,7 +12638,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 625
+   "ms": 647
   }
  },
  {
@@ -12818,7 +12818,7 @@
     "candidates": 12,
     "verdictFlips": 8
    },
-   "ms": 8965
+   "ms": 9191
   }
  },
  {
@@ -12998,7 +12998,7 @@
     "candidates": 12,
     "verdictFlips": 8
    },
-   "ms": 11065
+   "ms": 9153
   }
  },
  {
@@ -13178,7 +13178,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 2014
+   "ms": 1273
   }
  },
  {
@@ -13358,7 +13358,7 @@
     "candidates": 12,
     "verdictFlips": 12
    },
-   "ms": 2007
+   "ms": 1314
   }
  }
 ]

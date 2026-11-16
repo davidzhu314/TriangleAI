@@ -8,7 +8,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 import { loadBundled } from './cases.testutil';
-import { runScanAccuracy, scoreAgainstTruth, type ScanAccuracy, type ScanSettings } from './index';
+import { runScanAccuracy, scoreAgainstTruth, scoreMesh, type ScanAccuracy, type ScanSettings } from './index';
 
 const BASELINE = join(import.meta.dirname, 'baseline.json');
 const RUNS: { caseId: string; settings: ScanSettings }[] = [
@@ -71,6 +71,17 @@ describe('scan accuracy harness', () => {
     const x = RUNS[1]!;
     const again = runScanAccuracy(await loadBundled(x.caseId), x.settings);
     expect(pick(again)).toEqual(pick(results.get(key(x))!));
+  });
+
+  test('the fixture\'s mesh sits on its lumen, and a simplified copy has fewer triangles and stays near it', async () => {
+    const list = scoreMesh(await loadBundled('fixture-y'));
+    const shipped = list[0]!.score;
+    expect(shipped.triangles).toBeGreaterThan(0);
+    expect(shipped.meanAbsMm).toBeLessThan(1);
+    for (const m of list.slice(1)) {
+      expect(m.score.triangles).toBeLessThanOrEqual(shipped.triangles);
+      expect(m.score.meanAbsMm).toBeLessThan(3);
+    }
   });
 
   test('a case scored against itself has no error and the same routes', async () => {

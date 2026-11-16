@@ -11,6 +11,7 @@ It is test and analysis code. Nothing in the app imports it, and it shows no num
 3. **Pipeline** (`pipeline.ts`): half-maximum threshold → the vessels connected to the marked ends → wall distance → a centerline tree of minimum-cost paths → branches joined to their parent along the branch's own axis → radii as the largest circle that fits each cross-section, from rays through the image. No AI model.
 4. **Match** (`recovered.ts`): recovered stretches are matched to the case's edges by which marked ends lie beyond them, and a recovered `LoadedCase` is built with the true case's ids.
 5. **Score** (`score.ts`, `downstream.ts`): Dice, MCC, clDice, average Hausdorff distance (the measures iVesseger reports: Li et al., 2025), centerline offset, radius error, branch angles, lost vessels; then the unchanged optimizer on both cases: same frontier, same best route, verdict flips.
+6. **Mesh** (`mesh.ts`): how far a case's shipped `vessels.glb` sits from the lumen its centerlines describe, and what the app's decimator does to that. No scan involved.
 
 ## Run it
 
@@ -18,7 +19,7 @@ It is test and analysis code. Nothing in the app imports it, and it shows no num
 # The harness's tests and baseline (part of the normal unit run, about 4 s):
 pnpm exec vitest run client/src/ui/scan-accuracy/scan-accuracy.test.ts
 
-# The full sweep; writes metrics/aroovee/scan-accuracy/summary.md and results.json:
+# The full sweep; writes metrics/aroovee/scan-accuracy/summary.md, results.json and mesh.json (about 6 minutes):
 SCAN_SWEEP=1 pnpm exec vitest run client/src/ui/scan-accuracy/sweep.test.ts
 ```
 
