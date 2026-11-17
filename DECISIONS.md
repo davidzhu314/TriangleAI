@@ -406,3 +406,11 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **X-ray:** every surface is a thin layer of `--color-xray-ink` on `--color-xray-bg`, denser where the view grazes it (`--opacity-heart-xray-wall`, `--opacity-heart-xray-valve`, up to `--opacity-xray-contrast`). No light and no part colours, the same neutral look as Drive's X-ray, so the list's swatches turn to the ink too and the Light switch is greyed. It is a drawing style, not a simulated radiograph.
   - The mode is kept per heart for the session. This replaces the brief's single "X-ray toggle"; the cutaway plane is still M3.
   - Translucent walls are drawn without depth writes and sorted per part, not per triangle, so where several walls overlap the blend can shift slightly as the heart turns. Revisit in M3 if it shows.
+- 2026-11-16 · Aroovee · **Access module, Phase 0 (inventory only; no code).** From a brief for a transapical access and autonomy module, worked in phases with a stop after each.
+  - **Docs:** `docs/MESH_INVENTORY.md` (every node of David's heart, units and axes, the name mapping, what Cathy already has, the test baseline) and `docs/ASSUMPTIONS.md` (every default the brief names, before any is coded).
+  - **Decisions file:** the brief asks for `docs/DECISIONS.md`. This repo's record is the root `DECISIONS.md`, so entries go here and no second file is made.
+  - **Branch:** `aroovee/access-phase0`, cut from `feature/heart-m0` (PR #111), because the heart mesh is not on main yet. It lands after #111.
+  - **Nothing of David's is renamed.** The mapping table in the inventory carries the brief's part names.
+  - **What the inventory found, which the next phases depend on:** the heart is a static template with flat valve markers and no leaflets, chordae, papillary muscles, coronaries or motion; it is a different patient from every CT case and in its own frame; there are no venous centerlines; no bundled case has an `apex.json`.
+  - **Open, for a person to decide before Phase 1:** how the heart and a body become one patient (register the template into a CT case, build a synthetic torso around the template, or segment a labelled heart from CT).
+  - **The brief's clinical sources are unread.** Until checked, statements resting on them are assumptions and stay off the screens.
