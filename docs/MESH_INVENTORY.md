@@ -82,7 +82,7 @@ Source tags: **segmented** (from a scan), **template** (the KCL shape model), **
 | `lv_wall_thickness` (per vertex) | – | generated | **To add,** measured from `lv_myocardium` once its two faces are split |
 | `apical_access_zone` | – | generated | **To add** (computed) |
 | `pericardium` | – | generated, [ASSUMPTION] | **To add** |
-| `chest_wall`, `ribs`, `intercostal_4..7` | `bone` in `context.glb` (CT cases), ribs not separate | segmented | **Partly:** one bone mesh in another frame. Separate ribs and skin to add |
+| `chest_wall`, `ribs`, `intercostal_4..7` | `bone` in `context.glb` (CT cases), ribs not separate | segmented | **Partly:** one bone mesh, now in the fitted heart's frame (`heart-fit.json`). Separate ribs, costal cartilage and skin to add |
 | `lung_left` | – | segmented | **To add.** `export_apex.py` reads lung masks but ships no mesh |
 | `septum_primum`, `septum_secundum`, `fossa_ovalis`, `eustachian_valve` | – | generated, [ASSUMPTION] | **To add** (parametric) |
 | `ivc`, `svc`, `femoral_vein_*` | `inferior_vena_cava`, `superior_vena_cava`, `*_iliac_vein` in `context.glb` | segmented | **Partly:** display meshes, no centerlines, so the wire cannot drive in them yet |
@@ -109,7 +109,7 @@ Source tags: **segmented** (from a scan), **template** (the KCL shape model), **
 
 ## 5. Things that change the plan
 
-1. **The heart and the cases are different patients.** The heart is a shape-model average in its own frame. The CT cases are three TotalSegmentator subjects whose heart is a single unlabelled mesh. "Compare routes on the same patient" needs one of: (a) register the template heart into a CT case (fit to the case's `heart` mesh and aortic root); (b) build a synthetic torso and vessel tree around the template heart; (c) segment a four-chamber heart from a CT with chamber labels. This decides Phases 1 and 4.
+1. **Resolved 2026-11-17: the template is fitted into each CT case** (`client/src/heart-access/`, `heart-fit.json` per case; primary patient `ts-s1404-cta`; see `DECISIONS.md`). Originally: **The heart and the cases are different patients.** The heart is a shape-model average in its own frame. The CT cases are three TotalSegmentator subjects whose heart is a single unlabelled mesh. "Compare routes on the same patient" needs one of: (a) register the template heart into a CT case (fit to the case's `heart` mesh and aortic root); (b) build a synthetic torso and vessel tree around the template heart; (c) segment a four-chamber heart from a CT with chamber labels. This decides Phases 1 and 4.
 2. **No leaflets, chordae or papillary muscles.** Scenarios A and B score snagging on exactly these. They will be generated, so every clearance number near them rests on an assumption.
 3. **No cardiac motion.** One static phase: runs are static until heartgen produces a second phase, and reports must say so.
 4. **No venous centerlines.** The PFO baseline needs a drivable path from the femoral vein to the right atrium.

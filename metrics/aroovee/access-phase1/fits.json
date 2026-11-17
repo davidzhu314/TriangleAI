@@ -1,0 +1,226 @@
+[
+  {
+    "case": "ts-s1404-cta",
+    "verdict": "good",
+    "reasons": [],
+    "metrics": {
+      "ctToTemplateMeanMm": 7.731734,
+      "ctToTemplateMedianMm": 2.119471,
+      "ctToTemplateP95Mm": 36.127752,
+      "ctWithin5mmPct": 71.704716,
+      "aorticRootMm": 8.343867,
+      "aortaAxisDeg": 13.818606,
+      "apexToCtMm": 1.093695,
+      "scale": 0.946599,
+      "rotationDeg": 18.311863
+    },
+    "starts": [
+      {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "costMm": 4.294168
+      },
+      {
+        "rotation": [
+          20,
+          0,
+          0
+        ],
+        "costMm": 4.249035
+      },
+      {
+        "rotation": [
+          -20,
+          0,
+          0
+        ],
+        "costMm": 4.76185
+      },
+      {
+        "rotation": [
+          0,
+          20,
+          0
+        ],
+        "costMm": 4.222455
+      },
+      {
+        "rotation": [
+          0,
+          -20,
+          0
+        ],
+        "costMm": 4.541365
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          20
+        ],
+        "costMm": 4.282455
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          -20
+        ],
+        "costMm": 5.35138
+      }
+    ]
+  },
+  {
+    "case": "ts-s1336-cta",
+    "verdict": "good",
+    "reasons": [],
+    "metrics": {
+      "ctToTemplateMeanMm": 9.21872,
+      "ctToTemplateMedianMm": 2.629672,
+      "ctToTemplateP95Mm": 40,
+      "ctWithin5mmPct": 64.552115,
+      "aorticRootMm": 13.344834,
+      "aortaAxisDeg": 31.798157,
+      "apexToCtMm": 3.310413,
+      "scale": 0.96664,
+      "rotationDeg": 29.561552
+    },
+    "starts": [
+      {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "costMm": 4.451451
+      },
+      {
+        "rotation": [
+          20,
+          0,
+          0
+        ],
+        "costMm": 4.281133
+      },
+      {
+        "rotation": [
+          -20,
+          0,
+          0
+        ],
+        "costMm": 5.432679
+      },
+      {
+        "rotation": [
+          0,
+          20,
+          0
+        ],
+        "costMm": 4.315193
+      },
+      {
+        "rotation": [
+          0,
+          -20,
+          0
+        ],
+        "costMm": 4.824705
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          20
+        ],
+        "costMm": 4.630625
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          -20
+        ],
+        "costMm": 4.87607
+      }
+    ]
+  },
+  {
+    "case": "ts-s0727-cta",
+    "verdict": "approximate",
+    "reasons": [
+      "the LV apex lands 18.7 mm from the CT heart surface (limit 10 mm): this heart is shaped differently from the template there"
+    ],
+    "metrics": {
+      "ctToTemplateMeanMm": 9.867318,
+      "ctToTemplateMedianMm": 3.152879,
+      "ctToTemplateP95Mm": 40,
+      "ctWithin5mmPct": 62.222963,
+      "aorticRootMm": 6.657123,
+      "aortaAxisDeg": 8.282903,
+      "apexToCtMm": 18.724105,
+      "scale": 0.983064,
+      "rotationDeg": 22.065335
+    },
+    "starts": [
+      {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "costMm": 6.096315
+      },
+      {
+        "rotation": [
+          20,
+          0,
+          0
+        ],
+        "costMm": 4.842592
+      },
+      {
+        "rotation": [
+          -20,
+          0,
+          0
+        ],
+        "costMm": 6.304606
+      },
+      {
+        "rotation": [
+          0,
+          20,
+          0
+        ],
+        "costMm": 5.898195
+      },
+      {
+        "rotation": [
+          0,
+          -20,
+          0
+        ],
+        "costMm": 6.585143
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          20
+        ],
+        "costMm": 5.066516
+      },
+      {
+        "rotation": [
+          0,
+          0,
+          -20
+        ],
+        "costMm": 6.591538
+      }
+    ]
+  }
+]

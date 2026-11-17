@@ -414,3 +414,19 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **What the inventory found, which the next phases depend on:** the heart is a static template with flat valve markers and no leaflets, chordae, papillary muscles, coronaries or motion; it is a different patient from every CT case and in its own frame; there are no venous centerlines; no bundled case has an `apex.json`.
   - **Open, for a person to decide before Phase 1:** how the heart and a body become one patient (register the template into a CT case, build a synthetic torso around the template, or segment a labelled heart from CT).
   - **The brief's clinical sources are unread.** Until checked, statements resting on them are assumptions and stay off the screens.
+- 2026-11-17 · Aroovee · **Access module, Phase 1 step 1: the template heart fitted into the CT cases** (`client/src/heart-access/`). Aroovee chose to fit the template into a CT case, over a synthetic torso or segmenting a labelled heart.
+  - **Method:** one rotation, one uniform scale and one translation (the template keeps its shape), by iterative closest point in both directions, trimmed (CT → template keeps 85%, template → CT 50%, because the template has inner cavity faces and the CT does not). It is anchored at the CT aorta's root and along the ascending aorta from 10 to 35 mm, skipping the curl a centerline makes where its segmentation is cut off. Seven starting rotations are compared at low resolution and the best is refined. Deterministic. No AI model.
+  - **Results** (`metrics/aroovee/access-phase1/`):
+
+    | Case | Median surface distance, mm | CT surface within 5 mm | LV apex to CT surface, mm | Aortic root, mm | Aorta direction | Scale | Rotation | Verdict |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    | `ts-s1404-cta` | 2.1 | 72% | 1.1 | 8.3 | 14° | 0.95 | 18° | good |
+    | `ts-s1336-cta` | 2.6 | 65% | 3.3 | 13.3 | 32° | 0.97 | 30° | good |
+    | `ts-s0727-cta` | 3.2 | 62% | 18.7 | 6.7 | 8° | 0.98 | 22° | approximate |
+
+  - **The mean and 95th-percentile distances are left out of the verdict:** the CT heart surface includes the left and right pulmonary arteries past the trunk, which the template does not have, so 14 to 17% of CT points sit far from any template point by design.
+  - **No stretching.** `ts-s0727-cta`'s heart is shorter and rounder than the template, so the template's apex lands 18.7 mm past the CT outline. An affine fit would close that, but it would also scale wall thickness, which Phase 1's access zone thresholds. The fit is kept shape-preserving and marked "approximate" with the reason.
+  - **Limits for "good"** (`FIT_LIMITS`): median ≤ 5 mm, apex ≤ 10 mm, aortic root ≤ 15 mm, aorta direction ≤ 35°. Set from these three fits.
+  - **Primary patient: `ts-s1404-cta`** (apex 1.1 mm from the CT surface, aorta 14°). The access module's scenarios and route comparisons use it first.
+  - **Apex against the ribs, as a sanity check:** every fitted apex points left, anterior and inferior, 15 to 43 mm from the nearest bone. The `bone` mesh holds ribs, sternum and spine but no costal cartilage, which Phase 1's entry-line check needs.
+  - **Files:** `client/public/cases/<case>/heart-fit.json` (David's case folders; lanes are retired). Unit tests re-score the committed fits in about 6 s; refitting (about 2 minutes) runs with `HEART_FIT=check` or `write`.

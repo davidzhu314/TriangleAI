@@ -1,0 +1,116 @@
+{
+  "schema": "cathy.heart-fit/1",
+  "heart": "kcl-average",
+  "case": "ts-s0727-cta",
+  "method": "similarity ICP, both directions trimmed (CT→template 85%, template→CT 50%), anchored at the aortic root and along the ascending aorta (10 to 35 mm), 7 starting rotations compared at low resolution and the best refined",
+  "matrixRasMm": [
+    0.973701,
+    -0.059352,
+    0.121647,
+    -47.354482,
+    0.09838,
+    0.91714,
+    -0.339987,
+    162.90372,
+    -0.092963,
+    0.348923,
+    0.914344,
+    663.642846,
+    0,
+    0,
+    0,
+    1
+  ],
+  "matrixYupM": [
+    0.973701,
+    0.092963,
+    -0.09838,
+    0,
+    -0.121647,
+    0.914344,
+    -0.339987,
+    0,
+    0.059352,
+    0.348923,
+    0.91714,
+    0,
+    0.047354,
+    0.663643,
+    0.162904,
+    1
+  ],
+  "metrics": {
+    "ctToTemplateMeanMm": 9.867318,
+    "ctToTemplateMedianMm": 3.152879,
+    "ctToTemplateP95Mm": 40,
+    "ctWithin5mmPct": 62.222963,
+    "aorticRootMm": 6.657123,
+    "aortaAxisDeg": 8.282903,
+    "apexToCtMm": 18.724105,
+    "scale": 0.983064,
+    "rotationDeg": 22.065335
+  },
+  "verdict": "approximate",
+  "reasons": [
+    "the LV apex lands 18.7 mm from the CT heart surface (limit 10 mm): this heart is shaped differently from the template there"
+  ],
+  "starts": [
+    {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "costMm": 6.096315
+    },
+    {
+      "rotation": [
+        20,
+        0,
+        0
+      ],
+      "costMm": 4.842592
+    },
+    {
+      "rotation": [
+        -20,
+        0,
+        0
+      ],
+      "costMm": 6.304606
+    },
+    {
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "costMm": 5.898195
+    },
+    {
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "costMm": 6.585143
+    },
+    {
+      "rotation": [
+        0,
+        0,
+        20
+      ],
+      "costMm": 5.066516
+    },
+    {
+      "rotation": [
+        0,
+        0,
+        -20
+      ],
+      "costMm": 6.591538
+    }
+  ],
+  "note": "A shape-model average placed and scaled into this CT case. Chamber sizes, wall thickness and valves are the template's, not this patient's. The CT heart surface also has vessels the template lacks (the pulmonary arteries past the trunk), so the mean and 95th-percentile distances overstate the misfit; the median and the share within 5 mm do not. Research and education only."
+}

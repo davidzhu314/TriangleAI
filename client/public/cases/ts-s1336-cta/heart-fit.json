@@ -1,0 +1,114 @@
+{
+  "schema": "cathy.heart-fit/1",
+  "heart": "kcl-average",
+  "case": "ts-s1336-cta",
+  "method": "similarity ICP, both directions trimmed (CT→template 85%, template→CT 50%), anchored at the aortic root and along the ascending aorta (10 to 35 mm), 7 starting rotations compared at low resolution and the best refined",
+  "matrixRasMm": [
+    0.958925,
+    -0.071745,
+    0.098525,
+    -27.794465,
+    0.110226,
+    0.843943,
+    -0.458261,
+    219.471607,
+    -0.052006,
+    0.465839,
+    0.845389,
+    -107.846346,
+    0,
+    0,
+    0,
+    1
+  ],
+  "matrixYupM": [
+    0.958925,
+    0.052006,
+    -0.110226,
+    0,
+    -0.098525,
+    0.845389,
+    -0.458261,
+    0,
+    0.071745,
+    0.465839,
+    0.843943,
+    0,
+    0.027794,
+    -0.107846,
+    0.219472,
+    1
+  ],
+  "metrics": {
+    "ctToTemplateMeanMm": 9.21872,
+    "ctToTemplateMedianMm": 2.629672,
+    "ctToTemplateP95Mm": 40,
+    "ctWithin5mmPct": 64.552115,
+    "aorticRootMm": 13.344834,
+    "aortaAxisDeg": 31.798157,
+    "apexToCtMm": 3.310413,
+    "scale": 0.96664,
+    "rotationDeg": 29.561552
+  },
+  "verdict": "good",
+  "reasons": [],
+  "starts": [
+    {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "costMm": 4.451451
+    },
+    {
+      "rotation": [
+        20,
+        0,
+        0
+      ],
+      "costMm": 4.281133
+    },
+    {
+      "rotation": [
+        -20,
+        0,
+        0
+      ],
+      "costMm": 5.432679
+    },
+    {
+      "rotation": [
+        0,
+        20,
+        0
+      ],
+      "costMm": 4.315193
+    },
+    {
+      "rotation": [
+        0,
+        -20,
+        0
+      ],
+      "costMm": 4.824705
+    },
+    {
+      "rotation": [
+        0,
+        0,
+        20
+      ],
+      "costMm": 4.630625
+    },
+    {
+      "rotation": [
+        0,
+        0,
+        -20
+      ],
+      "costMm": 4.87607
+    }
+  ],
+  "note": "A shape-model average placed and scaled into this CT case. Chamber sizes, wall thickness and valves are the template's, not this patient's. The CT heart surface also has vessels the template lacks (the pulmonary arteries past the trunk), so the mean and 95th-percentile distances overstate the misfit; the median and the share within 5 mm do not. Research and education only."
+}
