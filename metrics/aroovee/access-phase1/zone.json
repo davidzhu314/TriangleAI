@@ -1,0 +1,53 @@
+{
+  "case": "ts-s1404-cta",
+  "lv": {
+    "lengthMm": 87.2
+  },
+  "lad": {
+    "lengthMm": 113.3
+  },
+  "zones": [
+    {
+      "target": "aortic_valve",
+      "sampled": "every 4th outer-wall vertex, 7839 points",
+      "rules": {
+        "coronaryClearanceMm": 10,
+        "minWallMm": 8,
+        "coaxialMaxDeg": 30
+      },
+      "allowed": 0,
+      "failCounts": {
+        "coronary": 1954,
+        "wall": 3905,
+        "entry": 1540,
+        "coaxial": 5967
+      },
+      "best": null
+    },
+    {
+      "target": "mitral_valve",
+      "sampled": "every 4th outer-wall vertex, 7839 points",
+      "rules": {
+        "coronaryClearanceMm": 10,
+        "minWallMm": 8,
+        "coaxialMaxDeg": 30
+      },
+      "allowed": 21,
+      "failCounts": {
+        "coronary": 1954,
+        "wall": 3905,
+        "entry": 539,
+        "coaxial": 5595
+      },
+      "best": {
+        "coaxialDeg": 12.1,
+        "wallMm": 8.3,
+        "coronaryMm": 37,
+        "fromApexMm": 33.9,
+        "window": "left 7th intercostal space",
+        "boneMm": 6.3,
+        "lungMm": 5.6
+      }
+    }
+  ]
+}

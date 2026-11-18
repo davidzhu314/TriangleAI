@@ -139,20 +139,22 @@ export interface Layer {
  * A scene as point layers in the three views, framed on `focus`. For review pictures in metrics/, not app UI.
  * `legend` is a list of [colour, words] shown under the heading.
  */
-export function renderLayersSvg(heading: string, caption: string, layers: Layer[], focus: V3[], legend: [string, string][], colours: Pick<PartColours, 'ink' | 'muted' | 'paper' | 'context'>, marks: { at: V3; colour: string; label: string }[] = []): string {
+export function renderLayersSvg(heading: string, caption: string | string[], layers: Layer[], focus: V3[], legend: [string, string][], colours: Pick<PartColours, 'ink' | 'muted' | 'paper' | 'context'>, marks: { at: V3; colour: string; label: string }[] = []): string {
   const PANEL = 360;
   const PAD = 16;
-  const HEAD = 78;
+  const lines = Array.isArray(caption) ? caption : [caption];
+  const HEAD = 62 + 18 * lines.length;
   const W = PAD + PROJ.length * (PANEL + PAD);
   const H = HEAD + PANEL + PAD;
   const out: string[] = [];
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="DM Sans, system-ui, sans-serif" role="img" aria-label="${esc(heading)}">`);
   out.push(`<rect width="${W}" height="${H}" fill="${colours.paper}"/>`);
   out.push(`<text x="${PAD}" y="24" font-size="16" font-weight="600" fill="${colours.ink}">${esc(heading)}</text>`);
-  out.push(`<text x="${PAD}" y="42" font-size="12" fill="${colours.muted}">${esc(caption)}</text>`);
+  lines.forEach((l, i) => out.push(`<text x="${PAD}" y="${42 + 18 * i}" font-size="12" fill="${colours.muted}">${esc(l)}</text>`));
+  const ly = 42 + 18 * lines.length;
   let lx = PAD;
   for (const [fill, words] of legend) {
-    out.push(`<circle cx="${lx + 5}" cy="60" r="5" fill="${fill}"/><text x="${lx + 14}" y="64" font-size="12" fill="${colours.ink}">${esc(words)}</text>`);
+    out.push(`<circle cx="${lx + 5}" cy="${ly - 4}" r="5" fill="${fill}"/><text x="${lx + 14}" y="${ly}" font-size="12" fill="${colours.ink}">${esc(words)}</text>`);
     lx += 24 + words.length * 6.6;
   }
   PROJ.forEach((pr, col) => {

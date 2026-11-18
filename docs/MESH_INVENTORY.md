@@ -67,7 +67,7 @@ Source tags: **segmented** (from a scan), **template** (the KCL shape model), **
 | Part the access module uses | Existing name | Source | Status |
 | --- | --- | --- | --- |
 | `lv_myocardium` | `lv_myocardium` | template | **Have.** Epicardial and endocardial faces are one surface; they must be split to get wall thickness and an epicardial access zone |
-| `lv_cavity` | – | generated | **To add:** the endocardial face of `lv_myocardium`, closed by `mv_plane` and `av_plane` |
+| `lv_cavity` | inner faces of `lv_myocardium` (`leftVentricle().inner`) | generated | **Partly** (2026-11-18): the inner wall is split out; not yet closed into a volume |
 | `rv_myocardium` | `rv_wall` | template | Have |
 | `la` | `la` (wall, veins merged) | template | Have. Cavity to derive as for the LV |
 | `ra` | `ra` (wall, cavae merged) | template | Have. IVC and SVC are not separate from it |
@@ -79,16 +79,16 @@ Source tags: **segmented** (from a scan), **template** (the KCL shape model), **
 | `mv_anterior_leaflet`, `mv_posterior_leaflet` | – | generated | **To add** |
 | `chordae_mv` | – | generated, [ASSUMPTION] | **To add** |
 | `lv_papillary_anterolateral`, `lv_papillary_posteromedial` | – | generated, [ASSUMPTION] | **To add** |
-| `lad`, `diagonals` | – | generated, [ASSUMPTION] | **To add:** no coronaries anywhere in the repo |
-| `lv_wall_thickness` (per vertex) | – | generated | **To add,** measured from `lv_myocardium` once its two faces are split |
-| `apical_access_zone` | – | generated | **To add** (computed) |
-| `pericardium` | – | generated, [ASSUMPTION] | **To add** |
+| `lad`, `diagonals` | `generateCoronaries()` in `client/src/heart-access/coronary.ts` | generated, [ASSUMPTION] | **Have** (2026-11-18): centerlines with radii, computed per scene |
+| `lv_wall_thickness` (per vertex) | `leftVentricle().thicknessMm` in `lv.ts` | generated (measured from the template) | **Have** (2026-11-18), per outer vertex |
+| `apical_access_zone` | `accessZone()` in `access-zone.ts` | generated | **Have** (2026-11-18), per target, with the reason each point is ruled out |
+| `pericardium` | `pericardium()` in `coronary.ts` (over the LV only) | generated, [ASSUMPTION] | **Have** (2026-11-18) |
 | `ribs` | `rib_left_1..12`, `rib_right_1..12` in `chest.glb` (`ts-s1404-cta`) | segmented | **Have** (2026-11-18), one node per rib |
 | `costal_cartilages`, `sternum` | `costal_cartilages`, `sternum` in `chest.glb` | segmented | **Have** (2026-11-18) |
-| `intercostal_4..7` | – | generated | **To add,** between neighbouring ribs in `chest.glb` |
+| `intercostal_4..7` | computed per entry line (`EntryLine.space` in `access-zone.ts`) | generated | **Have** (2026-11-18), as labels, not meshes |
 | `chest_wall` (skin) | – | segmented | **To add:** TotalSegmentator has no skin class; the body outline needs the CT image or a body-mask class |
 | `lung_left` (lingula included) | `lung_left` in `chest.glb` (upper and lower lobes merged) | segmented | **Have** (2026-11-18) for `ts-s1404-cta`. The lingula is part of the upper lobe mask, not separate |
-| `septum_primum`, `septum_secundum`, `fossa_ovalis`, `eustachian_valve` | – | generated, [ASSUMPTION] | **To add** (parametric) |
+| `septum_primum`, `septum_secundum`, `fossa_ovalis`, `eustachian_valve` | `pfoSeptum()` in `septum.ts` | generated, [ASSUMPTION] | **Have** (2026-11-18), parametric, as point samples and a tunnel line |
 | `ivc`, `svc`, `femoral_vein_*` | `inferior_vena_cava`, `superior_vena_cava`, `*_iliac_vein` in `context.glb` | segmented | **Partly:** display meshes, no centerlines, so the wire cannot drive in them yet |
 | `tv_*`, `pv_*`, `pulmonary_trunk` | `tv_plane`, `pv_plane`, `pulmonary_trunk` | template | Have (position only for the valves); not needed by the listed scenarios |
 

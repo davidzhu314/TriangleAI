@@ -34,3 +34,20 @@ HEART_FIT=write pnpm exec vitest run client/src/heart-access/fit.test.ts    # fi
 pnpm exec vitest run client/src/heart-access/chest.test.ts
 CHEST=write pnpm exec vitest run client/src/heart-access/chest.test.ts   # also the picture and chest.json in metrics/aroovee/access-phase1/
 ```
+
+## Phase 1, step 3: the LV, coronaries, access zone and PFO septum
+
+| File | What it does |
+| --- | --- |
+| `scene.ts` | One patient: the case, the fitted heart, its chest, the split LV, the generated coronaries and the two targets |
+| `lv.ts` | Splits the LV wall into outer and inner faces, measures wall thickness, fits planes |
+| `coronary.ts` | Generates the LAD, two diagonals and the pericardium [ASSUMPTION] |
+| `access-zone.ts` | The four rules, per outer vertex and target; the entry line and its intercostal space |
+| `septum.ts` | The parametric PFO septum [ASSUMPTION] |
+
+```sh
+pnpm exec vitest run client/src/heart-access/                                     # everything (about 15 s)
+ACCESS=write pnpm exec vitest run client/src/heart-access/access-zone.test.ts      # also the heat maps and zone.json
+```
+
+Every threshold is a named constant with a row in `docs/ASSUMPTIONS.md`. The zone reports why each point is ruled out, so a heat map shows which rule cuts where.
