@@ -55,6 +55,7 @@ Hierarchy: `heart` → four groups → meshes. Each mesh node carries `extras`: 
 | File | Where | Nodes | Units, axes | Notes |
 | --- | --- | --- | --- | --- |
 | `vessels.glb` | every case, `client/public/cases/<id>/` | one node per vessel id: `aorta`, `bca`, `rcca`, `lcca`, `r_subclavian`, `l_subclavian`, `r_iliac`, `l_iliac` | mm, RAS in the file; the loader maps to metres Y-up | Arteries only. With `centerlines.json` (points and inscribed radii) this is the graph the wire drives on |
+| `chest.glb` | `ts-s1404-cta` only (2026-11-18) | `lung_left`, `lung_right`, `rib_left_1..12`, `rib_right_1..12`, `costal_cartilages`, `sternum` | mm, RAS (no node transforms) | TotalSegmentator v2.0.1, CC BY 4.0; built by `tools/chestgen`. Frame checked against `context.glb` (1.0 mm) |
 | `context.glb` | the three CT cases (`ts-s1404-cta`, `ts-s1336-cta`, `ts-s0727-cta`) | `bone` (vertebrae C7–L5, ribs, sternum, one mesh), `heart` (one mesh), `inferior_vena_cava`, `superior_vena_cava`, `l_iliac_vein`, `r_iliac_vein`, `l_brachiocephalic_vein`, `r_brachiocephalic_vein` | mm, RAS | TotalSegmentator v2.0.1 subjects, CC BY 4.0. Ribs are not separate; veins are display meshes with no centerlines |
 | `apex.json` | none committed | – | mm, RAS | `slicer/export_apex.py` writes it (needs 3D Slicer, lung and rib masks, four hand-marked landmarks). `client/src/apex` and the Apex plan screen read it. **No bundled case ships one**, so the Apex plan screen has nothing to show today |
 | `assets/vascular/` | repo root, outside `client/` | BodyParts3D mesh, staged | – | CC BY-SA 2.1 JP; share-alike, so keep it out of client builds unless that licence is accepted |
@@ -82,8 +83,11 @@ Source tags: **segmented** (from a scan), **template** (the KCL shape model), **
 | `lv_wall_thickness` (per vertex) | – | generated | **To add,** measured from `lv_myocardium` once its two faces are split |
 | `apical_access_zone` | – | generated | **To add** (computed) |
 | `pericardium` | – | generated, [ASSUMPTION] | **To add** |
-| `chest_wall`, `ribs`, `intercostal_4..7` | `bone` in `context.glb` (CT cases), ribs not separate | segmented | **Partly:** one bone mesh, now in the fitted heart's frame (`heart-fit.json`). Separate ribs, costal cartilage and skin to add |
-| `lung_left` | – | segmented | **To add.** `export_apex.py` reads lung masks but ships no mesh |
+| `ribs` | `rib_left_1..12`, `rib_right_1..12` in `chest.glb` (`ts-s1404-cta`) | segmented | **Have** (2026-11-18), one node per rib |
+| `costal_cartilages`, `sternum` | `costal_cartilages`, `sternum` in `chest.glb` | segmented | **Have** (2026-11-18) |
+| `intercostal_4..7` | – | generated | **To add,** between neighbouring ribs in `chest.glb` |
+| `chest_wall` (skin) | – | segmented | **To add:** TotalSegmentator has no skin class; the body outline needs the CT image or a body-mask class |
+| `lung_left` (lingula included) | `lung_left` in `chest.glb` (upper and lower lobes merged) | segmented | **Have** (2026-11-18) for `ts-s1404-cta`. The lingula is part of the upper lobe mask, not separate |
 | `septum_primum`, `septum_secundum`, `fossa_ovalis`, `eustachian_valve` | – | generated, [ASSUMPTION] | **To add** (parametric) |
 | `ivc`, `svc`, `femoral_vein_*` | `inferior_vena_cava`, `superior_vena_cava`, `*_iliac_vein` in `context.glb` | segmented | **Partly:** display meshes, no centerlines, so the wire cannot drive in them yet |
 | `tv_*`, `pv_*`, `pulmonary_trunk` | `tv_plane`, `pv_plane`, `pulmonary_trunk` | template | Have (position only for the valves); not needed by the listed scenarios |

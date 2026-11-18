@@ -430,3 +430,11 @@ One line per decision: date · who · decision · why. Append only. A decision t
   - **Primary patient: `ts-s1404-cta`** (apex 1.1 mm from the CT surface, aorta 14°). The access module's scenarios and route comparisons use it first.
   - **Apex against the ribs, as a sanity check:** every fitted apex points left, anterior and inferior, 15 to 43 mm from the nearest bone. The `bone` mesh holds ribs, sternum and spine but no costal cartilage, which Phase 1's entry-line check needs.
   - **Files:** `client/public/cases/<case>/heart-fit.json` (David's case folders; lanes are retired). Unit tests re-score the committed fits in about 6 s; refitting (about 2 minutes) runs with `HEART_FIT=check` or `write`.
+- 2026-11-18 · Aroovee · **Access module, Phase 1 step 2: the chest of the primary patient** (`chest.glb` for `ts-s1404-cta`, `tools/chestgen/`, `client/src/heart-access/chest.ts`).
+  - **Source:** the subject's own TotalSegmentator masks (lungs by lobe, each rib, costal cartilages, sternum), downloaded with Aroovee's OK on 2026-11-18 using the existing `slicer/fetch_totalsegmentator.py --apex`. 1.8 MB, kept outside the repo; only meshes are committed.
+  - **No Slicer needed:** `tools/chestgen/build_chest.py` uses nibabel and scikit-image in a scratch Python 3.12 environment. Python 3.15 is the machine default but had no prebuilt wheels for these.
+  - **Specks dropped** (a speck of `rib_left_2` sat half a metre below the rib). **Simplified** by vertex clustering to 92,822 triangles, 2.2 MB.
+  - **Frame checked in the file:** the heart mask, meshed the same way, matches the heart in `context.glb` to 1.0 mm.
+  - **Ribs are separate nodes,** so Phase 1 can find intercostal spaces between neighbours.
+  - **The fitted heart sits in it as a heart does:** between the lungs, behind the sternum, apex inside the ribs. The apex is 14.6 mm from the left rib 6 and 23.7 mm from the left rib 5, 7.5 mm from the left lung and 17.7 mm from the costal cartilage (`metrics/aroovee/access-phase1/chest.json`). Tests check each of these.
+  - **Only `ts-s1404-cta` has a chest.** The other two CT cases would need the same download, one per subject.

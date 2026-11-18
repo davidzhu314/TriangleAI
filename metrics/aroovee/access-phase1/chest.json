@@ -1,0 +1,25 @@
+{
+  "case": "ts-s1404-cta",
+  "apexRasMm": [
+    -63.5,
+    206.2,
+    -157.5
+  ],
+  "nearestRibs": [
+    {
+      "rib": "rib_left_6",
+      "mm": 14.6
+    },
+    {
+      "rib": "rib_left_5",
+      "mm": 23.7
+    },
+    {
+      "rib": "rib_left_7",
+      "mm": 38.6
+    }
+  ],
+  "nearestLungMm": 7.5,
+  "nearestCartilageMm": 17.7,
+  "triangles": 92822
+}

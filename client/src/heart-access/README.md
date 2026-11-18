@@ -19,9 +19,18 @@ The heart (`client/public/hearts/kcl-average/heart.glb`, a shape-model average) 
 **Run:**
 
 ```sh
-pnpm exec vitest run client/src/heart-access/fit.test.ts                    # checks the committed fits (about 6 s)
+pnpm exec vitest run client/src/heart-access/fit.test.ts                    # checks the committed fits (under a second)
 HEART_FIT=check pnpm exec vitest run client/src/heart-access/fit.test.ts    # fits again; matrices must match (about 2 min)
 HEART_FIT=write pnpm exec vitest run client/src/heart-access/fit.test.ts    # fits again and rewrites the files and pictures
 ```
 
 **What a fit is and is not:** the template keeps its shape. Chamber sizes, wall thickness and valve positions are the template's, placed and scaled into the patient. Where the patient's heart is shaped differently, the fit says so in its verdict instead of stretching the template (which would also change wall thickness, a number the access zone depends on).
+
+## Phase 1, step 2: the chest of the primary patient
+
+`chest.ts` loads `client/public/cases/ts-s1404-cta/chest.glb` (built by `tools/chestgen` from the subject's own masks): both lungs, each rib, the costal cartilages and the sternum, in RAS mm. `chest.test.ts` checks that every part is present, the frame matches the case, the anatomy is in place, no speck strays, and the fitted heart sits inside the chest with its apex by the left 5th and 6th ribs.
+
+```sh
+pnpm exec vitest run client/src/heart-access/chest.test.ts
+CHEST=write pnpm exec vitest run client/src/heart-access/chest.test.ts   # also the picture and chest.json in metrics/aroovee/access-phase1/
+```

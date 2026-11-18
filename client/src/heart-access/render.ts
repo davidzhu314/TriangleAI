@@ -126,3 +126,67 @@ export function coloursFromTokens(css: string): PartColours {
     paper: pick('--color-surface'),
   };
 }
+
+/** One set of points to draw, in RAS mm, with its colour and dot size. Later layers draw over earlier ones at equal depth. */
+export interface Layer {
+  pts: V3[];
+  fill: string;
+  r: number;
+  opacity: number;
+}
+
+/**
+ * A scene as point layers in the three views, framed on `focus`. For review pictures in metrics/, not app UI.
+ * `legend` is a list of [colour, words] shown under the heading.
+ */
+export function renderLayersSvg(heading: string, caption: string, layers: Layer[], focus: V3[], legend: [string, string][], colours: Pick<PartColours, 'ink' | 'muted' | 'paper' | 'context'>, marks: { at: V3; colour: string; label: string }[] = []): string {
+  const PANEL = 360;
+  const PAD = 16;
+  const HEAD = 78;
+  const W = PAD + PROJ.length * (PANEL + PAD);
+  const H = HEAD + PANEL + PAD;
+  const out: string[] = [];
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="DM Sans, system-ui, sans-serif" role="img" aria-label="${esc(heading)}">`);
+  out.push(`<rect width="${W}" height="${H}" fill="${colours.paper}"/>`);
+  out.push(`<text x="${PAD}" y="24" font-size="16" font-weight="600" fill="${colours.ink}">${esc(heading)}</text>`);
+  out.push(`<text x="${PAD}" y="42" font-size="12" fill="${colours.muted}">${esc(caption)}</text>`);
+  let lx = PAD;
+  for (const [fill, words] of legend) {
+    out.push(`<circle cx="${lx + 5}" cy="60" r="5" fill="${fill}"/><text x="${lx + 14}" y="64" font-size="12" fill="${colours.ink}">${esc(words)}</text>`);
+    lx += 24 + words.length * 6.6;
+  }
+  PROJ.forEach((pr, col) => {
+    const x0 = PAD + col * (PANEL + PAD);
+    const top = HEAD;
+    const fp = focus.map(pr.f);
+    const xs = fp.map((q) => q[0]);
+    const ys = fp.map((q) => q[1]);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) * 1.08;
+    const k = PANEL / span;
+    const S = (p: V3): [number, number, number] => {
+      const q = pr.f(p);
+      return [x0 + PANEL / 2 + (q[0] - cx) * k, top + PANEL / 2 + (q[1] - cy) * k, q[2]];
+    };
+    const inside = (q: [number, number, number]) => q[0] >= x0 && q[0] <= x0 + PANEL && q[1] >= top && q[1] <= top + PANEL;
+    out.push(`<g><rect x="${x0}" y="${top}" width="${PANEL}" height="${PANEL}" fill="none" stroke="${colours.context}" stroke-width="1"/>`);
+    out.push(`<text x="${x0 + 6}" y="${top + 14}" font-size="11" fill="${colours.muted}">${esc(pr.label)}</text>`);
+    const dots: { q: [number, number, number]; fill: string; r: number; o: number; order: number }[] = [];
+    layers.forEach((l, order) => {
+      for (const p of l.pts) {
+        const q = S(p);
+        if (inside(q)) dots.push({ q, fill: l.fill, r: l.r, o: l.opacity, order });
+      }
+    });
+    dots.sort((a, b) => a.q[2] - b.q[2] || a.order - b.order);
+    for (const d of dots) out.push(`<circle cx="${d.q[0].toFixed(1)}" cy="${d.q[1].toFixed(1)}" r="${d.r}" fill="${d.fill}" fill-opacity="${d.o}"/>`);
+    for (const m of marks) {
+      const q = S(m.at);
+      out.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="7" fill="none" stroke="${m.colour}" stroke-width="2.5"/><text x="${(q[0] + 10).toFixed(1)}" y="${(q[1] + 4).toFixed(1)}" font-size="12" font-weight="600" fill="${m.colour}">${esc(m.label)}</text>`);
+    }
+    out.push('</g>');
+  });
+  out.push('</svg>');
+  return out.join('\n');
+}
