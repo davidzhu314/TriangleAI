@@ -1,0 +1,45 @@
+{
+  "case": "ts-s1404-cta",
+  "device": {
+    "name": "Constant-curvature catheter (default, assumed)",
+    "outerDiameterMm": 3.3,
+    "maxInsertMm": 150,
+    "segments": [
+      {
+        "lengthMm": 40,
+        "maxCurvature": 0.04
+      },
+      {
+        "lengthMm": 20,
+        "maxCurvature": 0.08333333333333333
+      }
+    ],
+    "maxInsertRate": 20,
+    "maxRollRate": 1.5,
+    "maxCurvatureRate": 0.05,
+    "maxPlaneRate": 1.5,
+    "sampleMm": 1,
+    "maxIndentMm": 3
+  },
+  "straight": {
+    "insertMm": 47.8,
+    "tipToMitralMm": 5,
+    "wallContactEvents": 0,
+    "peakWallForceN": 0,
+    "peakPortLoadN": 0,
+    "timeS": 2.4
+  },
+  "intoWall": {
+    "insertMm": 36.2,
+    "tipToMitralMm": 29.8,
+    "wallContactEvents": 1,
+    "peakWallForceN": 0.3,
+    "peakPortLoadN": 0.759,
+    "timeS": 6.5
+  },
+  "stepMsNode": {
+    "median": 4.31,
+    "p95": 5.68,
+    "steps": 222
+  }
+}

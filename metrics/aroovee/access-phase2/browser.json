@@ -1,0 +1,18 @@
+{
+  "case": "ts-s1404-cta",
+  "browser": "Chromium (Playwright, headless)",
+  "scriptedSteps": {
+    "count": 222,
+    "medianMs": 1.6,
+    "p95Ms": 2.7,
+    "maxMs": 6.7
+  },
+  "liveLoop": {
+    "frames": 179,
+    "medianFrameMs": 16.7,
+    "fps": 59.88,
+    "stepMedianMs": 2.2,
+    "stepP95Ms": 3,
+    "framesWithContact": 165
+  }
+}

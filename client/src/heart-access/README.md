@@ -51,3 +51,22 @@ ACCESS=write pnpm exec vitest run client/src/heart-access/access-zone.test.ts   
 ```
 
 Every threshold is a named constant with a row in `docs/ASSUMPTIONS.md`. The zone reports why each point is ruled out, so a heat map shows which rule cuts where.
+
+## Phase 2: the steerable device (`device/`)
+
+| File | What it does |
+| --- | --- |
+| `types.ts` | The device interface: config, joint state, backbone, Jacobian, step; contacts and commands |
+| `constant-curvature.ts` | The default catheter [ASSUMPTION]: shaft plus two constant-curvature segments, limits, contact-held steps |
+| `frames.ts` | Rotations and poses |
+| `bvh.ts` | Triangle BVH for closest-point queries (no new dependency) |
+| `contact.ts` | Penalty contact per tissue; the LV cavity as a contact surface; the path through the wall |
+| `port.ts` | The apical port: base pose, motion with the heart, tilt, load on the apex |
+| `sim.ts` | A run: device, port and contact stepped together, with contact events and peak loads |
+| `scripted.ts` | The two Phase 2 runs, shared by the Node test and the browser check |
+
+```sh
+pnpm exec vitest run client/src/heart-access/device/                                  # kinematics, contact, port, patient runs
+DEVICE=write pnpm exec vitest run client/src/heart-access/device/device-scene.test.ts  # also the picture and runs.json
+pnpm exec playwright test tests/e2e/heart-access-device.spec.ts                       # frame rate in Chromium (browser.json)
+```

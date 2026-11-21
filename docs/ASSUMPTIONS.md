@@ -4,7 +4,7 @@ Every default the access module uses that is not measured from a scan or given b
 
 Nothing in this module is a clinical claim. Outputs are engineering and training measures for research and education only.
 
-Status 2026-11-18 (end of Phase 1): rows 1 to 4, 7 and 13 to 20 are in use in `client/src/heart-access/`. Rows 5, 6 and 8 to 12 wait for Phases 2 and 3.
+Status 2026-11-20 (end of Phase 2): rows 1 to 4, 7 to 10 and 13 to 24 are in use in `client/src/heart-access/`. Rows 5, 6, 11 and 12 wait for Phase 3 and later.
 
 | # | Assumption | Starting value | Where it will be used | What would replace it |
 | --- | --- | --- | --- | --- |
@@ -15,9 +15,9 @@ Status 2026-11-18 (end of Phase 1): rows 1 to 4, 7 and 13 to 20 are in use in `c
 | 5 | Chordae and papillary muscles | Generated from the mitral annulus and two papillary landmarks | Collision bodies for Scenarios A and B (Phases 2, 3) | Parts from David's heartgen, or segmented from CT or echo |
 | 6 | Valve leaflets and their open and closed states | Generated from the flat valve planes in the template | Scenarios A, B, E (Phases 3, 4) | Leaflets from heartgen or a scan |
 | 7 | PFO septum | Fossa radius 10 mm; tunnel 8 mm long, 6 mm wide, 30° off the septal plane; septal excursion 5 mm; all case options | `septum.ts` `DEFAULT_PFO` | Echo measurements of a real septum |
-| 8 | Steerable device | Tendon-driven tip with 1 or 2 constant-curvature segments on a straight shaft | `ConstantCurvatureCatheter` (Phase 2) | Swift CV's device parameters (private config, never in the repo) |
-| 9 | Apical sheath size | Not set. For scale only: published transapical mitral systems use sheaths around 34 Fr | Apical port, access-site fit (Phases 2, 6) | Swift CV's sheath size |
-| 10 | Tissue contact stiffness and force limits | Not set | Penalty contact, safety supervisor (Phases 2, 5) | Measured tissue properties; the client's limits |
+| 8 | Steerable device | 10 Fr; straight shaft plus two constant-curvature segments: 40 mm to a 25 mm bend radius, 20 mm tip to 12 mm; 150 mm reach; rates 20 mm/s, 1.5 rad/s, 0.05 /mm/s, 1.5 rad/s | `device/constant-curvature.ts` `DEFAULT_CATHETER` | Swift CV's device parameters (private config, never in the repo) |
+| 9 | Apical sheath size | 8 mm outer diameter (the Apex plan's illustrative sheath). For scale only: published transapical mitral systems use sheaths around 34 Fr | `device/port.ts` `SHEATH_OUTER_DIAMETER_MM`; access-site fit (Phase 6) | Swift CV's sheath size |
+| 10 | Tissue contact stiffness and force limits | Stiffness, N/mm: wall and septum 0.1, papillary 0.08, leaflet 0.05, chordae 0.03. Force limits not set (Phase 5) | `device/contact.ts` `STIFFNESS_N_PER_MM`; safety supervisor (Phase 5) | Measured tissue properties; the client's limits |
 | 11 | Circulatory-support inflow target | Cannula axis toward the mitral orifice with clearance from septum and free wall | Scenario C (Phase 3) | The client's device and placement rule |
 | 12 | Cardiac motion | None: one static phase | All scenarios | A second phase from heartgen, then interpolation |
 | 13 | Heart and body are one patient | The template heart, placed and uniformly scaled into a CT case (`heart-fit.json`). Its chamber sizes, wall thickness and valves stay the template's, not the patient's | Everything inside the heart, on the CT cases (from Phase 1) | A heart segmented with chamber labels from the same CT |
@@ -28,6 +28,10 @@ Status 2026-11-18 (end of Phase 1): rows 1 to 4, 7 and 13 to 20 are in use in `c
 | 18 | Entry window | Between neighbouring left ribs, 4th to 7th intercostal space, the line passing within 25 mm of both | `access-zone.ts` `ENTRY_SPACES`, `WINDOW_REACH_MM` | The client's approach; a body outline and diaphragm from the CT |
 | 19 | The septum's plane and the fossa's place | Plane fitted where the atrial walls come within 6 mm; fossa a quarter of the way toward the IVC opening | `septum.ts` | A septum seen on echo or CT |
 | 20 | No diaphragm, liver or skin in the model | A line below the rib cage is treated as blocked (row 18), not as clear | Access zone | Body outline and diaphragm from the CT (TotalSegmentator has no skin class) |
+| 21 | Port protrusion | The sheath tip sits 5 mm past where the port's axis leaves the wall | `device/port.ts` `PORT_PROTRUSION_MM` | The client's port design |
+| 22 | Largest port tilt | 15° | `device/port.ts` `MAX_TILT_RAD` | The client's robot and port |
+| 23 | Wall load from port tilt | 3 N per radian | `device/port.ts` `TILT_STIFFNESS_N_PER_RAD` | Measured apex stiffness |
+| 24 | Largest tissue indentation before a step is held back | 3 mm | `device/constant-curvature.ts` `maxIndentMm` | Tissue properties; the supervisor's force limits (Phase 5) |
 
 ## Sources named in the brief and not yet checked
 
